@@ -1,0 +1,16 @@
+{
+    "name": "BastionMarch.Presentation",
+    "rootNamespace": "",
+    "references": [
+        "GUID:927d92e7b928f4e499050e79265df5b2"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
