@@ -134,5 +134,16 @@ namespace BastionMarch.Simulation.Modules
             feature = Features.OfType<TFeature>().FirstOrDefault();
             return feature != null;
         }
+<<<<<<< HEAD
+=======
+
+        public IReadOnlyList<TFeature> GetFeatures<TFeature>()
+            where TFeature : class, IModuleFeatureDefinition
+        {
+            return Features
+                .OfType<TFeature>()
+                .ToArray();
+        }
+>>>>>>> 4949ad8 (feat: add initial module features and catalog)
     }
 }
