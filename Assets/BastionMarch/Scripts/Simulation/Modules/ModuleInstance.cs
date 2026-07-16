@@ -10,7 +10,7 @@ namespace BastionMarch.Simulation.Modules
         public Guid Id { get; }
         public ModuleDefinition Definition { get; }
 
-        public GridPosition Position { get; private set; }
+        public GridPosition Position { get; }
 
         public int CurrentDurability { get; private set; }
 
@@ -55,11 +55,6 @@ namespace BastionMarch.Simulation.Modules
             Position = position;
             CurrentDurability = definition.MaxDurability;
             ControlState = ModuleControlState.Friendly;
-        }
-
-        public void SetPosition(GridPosition position)
-        {
-            Position = position;
         }
 
         public void ApplyDamage(int damage)

@@ -140,14 +140,10 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
         }
 
         [Test]
-        public void ModulePositionCanBeChanged()
+        public void NewModuleUsesProvidedPosition()
         {
-            var newPosition = new GridPosition(x: 4, deck: 2);
-
-            _instance.SetPosition(newPosition);
-
-            Assert.That(_instance.Position.X, Is.EqualTo(4));
-            Assert.That(_instance.Position.Deck, Is.EqualTo(2));
+            Assert.That(_instance.Position.X, Is.Zero);
+            Assert.That(_instance.Position.Deck, Is.Zero);
         }
     }
 }
