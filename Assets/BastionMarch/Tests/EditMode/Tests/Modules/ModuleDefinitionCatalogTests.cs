@@ -16,7 +16,7 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
             ModuleDefinitionCatalog catalog =
                 InitialModuleDefinitions.CreateCatalog();
 
-            Assert.That(catalog.All.Count, Is.EqualTo(4));
+            Assert.That(catalog.All.Count, Is.EqualTo(5));
 
             Assert.That(
                 catalog.GetRequired(ModuleDefinitionIds.SmallMachineRoom),
@@ -32,6 +32,11 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
 
             Assert.That(
                 catalog.GetRequired(ModuleDefinitionIds.StandardAmmoStorage),
+                Is.Not.Null);
+
+            Assert.That(
+                catalog.GetRequired(
+                    ModuleDefinitionIds.StandardGeneratorRoom),
                 Is.Not.Null);
         }
 
@@ -113,6 +118,25 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
 
             Assert.That(found, Is.False);
             Assert.That(feature, Is.Null);
+        }
+
+        [Test]
+        public void GeneratorRoomProvidesPowerGenerationFeature()
+        {
+            ModuleDefinitionCatalog catalog =
+                InitialModuleDefinitions.CreateCatalog();
+
+            ModuleDefinition definition =
+                catalog.GetRequired(
+                    ModuleDefinitionIds.StandardGeneratorRoom);
+
+            bool found = definition.TryGetFeature(
+                out PowerGenerationFeatureDefinition feature);
+
+            Assert.That(found, Is.True);
+            Assert.That(feature, Is.Not.Null);
+            Assert.That(feature.MaximumPowerOutput, Is.EqualTo(40));
+            Assert.That(feature.FuelConsumptionPerTurn, Is.EqualTo(18));
         }
     }
 }

@@ -25,6 +25,7 @@ namespace BastionMarch.Simulation.Modules
         WeaponPlatform,
         MedicalBay,
         Corridor,
+        GeneratorRoom,
         Stairwell
     }
 

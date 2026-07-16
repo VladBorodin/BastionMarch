@@ -13,5 +13,8 @@ namespace BastionMarch.Simulation.Modules.Catalog
 
         public const string StandardAmmoStorage =
             "ammo-storage.standard";
+
+        public const string StandardGeneratorRoom =
+            "generator-room.standard";
     }
 }

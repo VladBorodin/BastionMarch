@@ -24,6 +24,7 @@ namespace BastionMarch.Simulation.Modules.Catalog
             {
                 CreateSmallMachineRoom(),
                 CreateLargeMachineRoom(),
+                CreateStandardGeneratorRoom(),
                 CreateStandardRepairBay(),
                 CreateStandardAmmoStorage()
             };
@@ -141,6 +142,34 @@ namespace BastionMarch.Simulation.Modules.Catalog
                     new AmmoStorageFeatureDefinition(
                         capacityVolumeUnits: 120,
                         outputThroughputPerTurn: 24)
+                });
+        }
+
+        private static ModuleDefinition CreateStandardGeneratorRoom()
+        {
+            return new ModuleDefinition(
+                id: ModuleDefinitionIds.StandardGeneratorRoom,
+                name: "Стандартный генераторный отсек",
+                category: ModuleCategory.Power,
+                type: ModuleType.GeneratorRoom,
+                size: new GridSize(2, 1),
+                massKg: 20_000,
+                cost: 1_800,
+                maxDurability: 130,
+                damagedDurabilityThreshold: 80,
+                criticalDurabilityThreshold: 30,
+                idlePowerConsumption: 1,
+                activePowerConsumption: 2,
+                heatGeneration: 15,
+                crewRequirement: new CrewRequirement(
+                    minimumPersonnel: 2,
+                    optimalPersonnel: 4,
+                    maximumPersonnel: 6),
+                features: new IModuleFeatureDefinition[]
+                {
+                    new PowerGenerationFeatureDefinition(
+                        maximumPowerOutput: 40,
+                        fuelConsumptionPerTurn: 18)
                 });
         }
     }

@@ -190,5 +190,45 @@ namespace BastionMarch.Simulation.Bastions
                 maximumPersonnel: maximumPersonnel,
                 totalHorsePower: totalHorsePower);
         }
+
+        public BastionPowerBalance CalculateDesignPowerBalance()
+        {
+            long totalPowerGeneration = 0;
+            long totalIdlePowerDemand = 0;
+            long totalActivePowerDemand = 0;
+
+            foreach (ModuleInstance module in Modules)
+            {
+                ModuleDefinition definition =
+                    module.Definition;
+
+                totalIdlePowerDemand +=
+                    definition.IdlePowerConsumption;
+
+                totalActivePowerDemand +=
+                    definition.ActivePowerConsumption;
+
+                IReadOnlyList<PowerGenerationFeatureDefinition>
+                    generationFeatures =
+                        definition.GetFeatures<
+                            PowerGenerationFeatureDefinition>();
+
+                foreach (
+                    PowerGenerationFeatureDefinition generation
+                    in generationFeatures)
+                {
+                    totalPowerGeneration +=
+                        generation.MaximumPowerOutput;
+                }
+            }
+
+            return new BastionPowerBalance(
+                totalPowerGeneration:
+                    totalPowerGeneration,
+                totalIdlePowerDemand:
+                    totalIdlePowerDemand,
+                totalActivePowerDemand:
+                    totalActivePowerDemand);
+        }
     }
 }
