@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BastionMarch.Simulation.Power;
 
 namespace BastionMarch.Simulation.Modules
 {
@@ -15,6 +16,32 @@ namespace BastionMarch.Simulation.Modules
         public int CurrentDurability { get; private set; }
 
         public ModuleControlState ControlState { get; private set; }
+
+        public ModulePowerMode PowerMode { get; private set; }
+
+        public PowerPriority PowerPriority { get; private set; }
+
+        public int CurrentContinuousPowerDemand
+        {
+            get
+            {
+                switch (PowerMode)
+                {
+                    case ModulePowerMode.Offline:
+                        return 0;
+
+                    case ModulePowerMode.Standby:
+                        return Definition.IdlePowerConsumption;
+
+                    case ModulePowerMode.Active:
+                        return Definition.ActivePowerConsumption;
+
+                    default:
+                        throw new InvalidOperationException(
+                            $"Unsupported power mode: {PowerMode}.");
+                }
+            }
+        }
 
         public IReadOnlyCollection<Guid> AssignedBrigadeIds =>
             _assignedBrigadeIds;
@@ -55,6 +82,34 @@ namespace BastionMarch.Simulation.Modules
             Position = position;
             CurrentDurability = definition.MaxDurability;
             ControlState = ModuleControlState.Friendly;
+            PowerMode = ModulePowerMode.Standby;
+            PowerPriority = PowerPriority.Normal;
+        }
+
+        public void SetPowerMode(ModulePowerMode powerMode)
+        {
+            if (!Enum.IsDefined(
+                    typeof(ModulePowerMode),
+                    powerMode))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(powerMode));
+            }
+
+            PowerMode = powerMode;
+        }
+
+        public void SetPowerPriority(PowerPriority powerPriority)
+        {
+            if (!Enum.IsDefined(
+                    typeof(PowerPriority),
+                    powerPriority))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(powerPriority));
+            }
+
+            PowerPriority = powerPriority;
         }
 
         public void ApplyDamage(int damage)

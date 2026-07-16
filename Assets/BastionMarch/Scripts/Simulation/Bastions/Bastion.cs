@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Modules.Features;
+using BastionMarch.Simulation.Power;
 
 namespace BastionMarch.Simulation.Bastions
 {
@@ -229,6 +230,57 @@ namespace BastionMarch.Simulation.Bastions
                     totalIdlePowerDemand,
                 totalActivePowerDemand:
                     totalActivePowerDemand);
+        }
+
+        public BastionOperationalPowerBalance
+            CalculateOperationalPowerBalance()
+        {
+            long availablePowerGeneration = 0;
+            long currentPowerDemand = 0;
+
+            foreach (ModuleInstance module in Modules)
+            {
+                if (!IsAvailableForPowerOperation(module))
+                {
+                    continue;
+                }
+
+                currentPowerDemand +=
+                    module.CurrentContinuousPowerDemand;
+
+                if (module.PowerMode != ModulePowerMode.Active)
+                {
+                    continue;
+                }
+
+                IReadOnlyList<PowerGenerationFeatureDefinition>
+                    generationFeatures =
+                        module.Definition.GetFeatures<
+                            PowerGenerationFeatureDefinition>();
+
+                foreach (
+                    PowerGenerationFeatureDefinition generation
+                    in generationFeatures)
+                {
+                    availablePowerGeneration +=
+                        generation.MaximumPowerOutput;
+                }
+            }
+
+            return new BastionOperationalPowerBalance(
+                availablePowerGeneration:
+                    availablePowerGeneration,
+                currentPowerDemand:
+                    currentPowerDemand);
+        }
+
+        private static bool IsAvailableForPowerOperation(
+            ModuleInstance module)
+        {
+            return module.TechnicalState !=
+                    ModuleTechnicalState.Destroyed &&
+                module.ControlState ==
+                    ModuleControlState.Friendly;
         }
     }
 }
