@@ -188,8 +188,8 @@ namespace BastionMarch.Simulation.Modules
             ControlState = controlState;
         }
 
-        public bool AssignBrigade(Guid brigadeId)
-        {
+        internal bool AssignBrigade(Guid brigadeId)
+{
             if (brigadeId == Guid.Empty)
             {
                 throw new ArgumentException(
@@ -200,7 +200,7 @@ namespace BastionMarch.Simulation.Modules
             return _assignedBrigadeIds.Add(brigadeId);
         }
 
-        public bool RemoveBrigade(Guid brigadeId)
+        internal bool RemoveBrigade(Guid brigadeId)
         {
             return _assignedBrigadeIds.Remove(brigadeId);
         }

@@ -1,9 +1,10 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Modules.Features;
 using BastionMarch.Simulation.Power;
-using System.Linq;
+using BastionMarch.Simulation.Crew;
 
 namespace BastionMarch.Simulation.Bastions
 {
@@ -29,6 +30,18 @@ namespace BastionMarch.Simulation.Bastions
 
         public IReadOnlyCollection<ModuleInstance> Modules =>
             _grid.Modules;
+
+        private readonly Dictionary<Guid, Brigade> _brigadesById =
+            new();
+
+        private readonly Dictionary<Guid, Guid> _moduleIdByBrigadeId =
+            new();
+
+        public int BrigadeCount =>
+            _brigadesById.Count;
+
+        public IReadOnlyCollection<Brigade> Brigades =>
+            _brigadesById.Values.ToArray();
 
         public Bastion(
             string name,
@@ -80,6 +93,23 @@ namespace BastionMarch.Simulation.Bastions
             Guid moduleId,
             out ModuleInstance removedModule)
         {
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance existingModule))
+            {
+                removedModule = null;
+                return false;
+            }
+
+            Guid[] assignedBrigadeIds =
+                existingModule.AssignedBrigadeIds.ToArray();
+
+            foreach (Guid brigadeId in assignedBrigadeIds)
+            {
+                existingModule.RemoveBrigade(brigadeId);
+                _moduleIdByBrigadeId.Remove(brigadeId);
+            }
+
             return _grid.TryRemoveModule(
                 moduleId,
                 out removedModule);
@@ -451,6 +481,222 @@ namespace BastionMarch.Simulation.Bastions
                     module.RequestedContinuousPowerDemand,
                 grantedDemand:
                     module.CurrentContinuousPowerDemand);
+        }
+
+        public bool TryAddBrigade(Brigade brigade)
+        {
+            if (brigade == null)
+            {
+                throw new ArgumentNullException(nameof(brigade));
+            }
+
+            if (brigade.IsDisbanded)
+            {
+                return false;
+            }
+
+            if (_brigadesById.ContainsKey(brigade.Id))
+            {
+                return false;
+            }
+
+            _brigadesById.Add(
+                brigade.Id,
+                brigade);
+
+            return true;
+        }
+
+        public bool TryGetBrigade(
+            Guid brigadeId,
+            out Brigade brigade)
+        {
+            return _brigadesById.TryGetValue(
+                brigadeId,
+                out brigade);
+        }
+
+        public bool TryRemoveBrigade(
+            Guid brigadeId,
+            out Brigade removedBrigade)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out removedBrigade))
+            {
+                return false;
+            }
+
+            TryUnassignBrigade(
+                brigadeId,
+                out _);
+
+            _brigadesById.Remove(brigadeId);
+
+            return true;
+        }
+
+        public BrigadeAssignmentResult TryAssignBrigadeToModule(
+            Guid brigadeId,
+            Guid moduleId)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out Brigade brigade))
+            {
+                return BrigadeAssignmentResult.Failure(
+                    BrigadeAssignmentFailureReason.BrigadeNotFound);
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                return BrigadeAssignmentResult.Failure(
+                    BrigadeAssignmentFailureReason.ModuleNotFound);
+            }
+
+            if (brigade.IsDisbanded)
+            {
+                return BrigadeAssignmentResult.Failure(
+                    BrigadeAssignmentFailureReason.BrigadeDisbanded);
+            }
+
+            if (_moduleIdByBrigadeId.ContainsKey(brigadeId))
+            {
+                return BrigadeAssignmentResult.Failure(
+                    BrigadeAssignmentFailureReason.BrigadeAlreadyAssigned);
+            }
+
+            module.AssignBrigade(brigadeId);
+
+            _moduleIdByBrigadeId.Add(
+                brigadeId,
+                moduleId);
+
+            return BrigadeAssignmentResult.Success(
+                brigade,
+                module);
+        }
+
+        public bool TryUnassignBrigade(
+            Guid brigadeId,
+            out ModuleInstance previousModule)
+        {
+            if (!_moduleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                previousModule = null;
+                return false;
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out previousModule))
+            {
+                _moduleIdByBrigadeId.Remove(brigadeId);
+                return false;
+            }
+
+            previousModule.RemoveBrigade(brigadeId);
+            _moduleIdByBrigadeId.Remove(brigadeId);
+
+            return true;
+        }
+
+        public bool TryGetAssignedModule(
+            Guid brigadeId,
+            out ModuleInstance module)
+        {
+            if (!_moduleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                module = null;
+                return false;
+            }
+
+            return _grid.TryGetModule(
+                moduleId,
+                out module);
+        }
+
+        public ModuleStaffingAssessment CalculateModuleStaffing(
+            Guid moduleId)
+        {
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                throw new KeyNotFoundException(
+                    $"Module '{moduleId}' was not found.");
+            }
+
+            int assignedBrigadeCount = 0;
+            int totalPersonnel = 0;
+
+            long totalExperience = 0;
+            long totalMorale = 0;
+            long totalFatigue = 0;
+
+            foreach (Guid brigadeId in module.AssignedBrigadeIds)
+            {
+                if (!_brigadesById.TryGetValue(
+                        brigadeId,
+                        out Brigade brigade))
+                {
+                    continue;
+                }
+
+                assignedBrigadeCount++;
+
+                int personnel =
+                    brigade.CurrentPersonnel;
+
+                totalPersonnel += personnel;
+
+                totalExperience +=
+                    (long)brigade.Experience * personnel;
+
+                totalMorale +=
+                    (long)brigade.Morale * personnel;
+
+                totalFatigue +=
+                    (long)brigade.Fatigue * personnel;
+            }
+
+            int averageExperience =
+                totalPersonnel > 0
+                    ? (int)(totalExperience / totalPersonnel)
+                    : 0;
+
+            int averageMorale =
+                totalPersonnel > 0
+                    ? (int)(totalMorale / totalPersonnel)
+                    : 0;
+
+            int averageFatigue =
+                totalPersonnel > 0
+                    ? (int)(totalFatigue / totalPersonnel)
+                    : 0;
+
+            CrewRequirement requirement =
+                module.Definition.CrewRequirement;
+
+            return new ModuleStaffingAssessment(
+                moduleId: module.Id,
+                assignedBrigadeCount: assignedBrigadeCount,
+                totalPersonnel: totalPersonnel,
+                minimumPersonnel:
+                    requirement.MinimumPersonnel,
+                optimalPersonnel:
+                    requirement.OptimalPersonnel,
+                maximumPersonnel:
+                    requirement.MaximumPersonnel,
+                averageExperience: averageExperience,
+                averageMorale: averageMorale,
+                averageFatigue: averageFatigue);
         }
     }
 }

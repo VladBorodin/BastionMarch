@@ -110,36 +110,6 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
         }
 
         [Test]
-        public void SameBrigadeCannotBeAssignedTwice()
-        {
-            Guid brigadeId = Guid.NewGuid();
-
-            bool firstAssignment =
-                _instance.AssignBrigade(brigadeId);
-
-            bool secondAssignment =
-                _instance.AssignBrigade(brigadeId);
-
-            Assert.That(firstAssignment, Is.True);
-            Assert.That(secondAssignment, Is.False);
-            Assert.That(_instance.AssignedBrigadeIds.Count, Is.EqualTo(1));
-        }
-
-        [Test]
-        public void AssignedBrigadeCanBeRemoved()
-        {
-            Guid brigadeId = Guid.NewGuid();
-
-            _instance.AssignBrigade(brigadeId);
-
-            bool removed =
-                _instance.RemoveBrigade(brigadeId);
-
-            Assert.That(removed, Is.True);
-            Assert.That(_instance.AssignedBrigadeIds, Is.Empty);
-        }
-
-        [Test]
         public void NewModuleUsesProvidedPosition()
         {
             Assert.That(_instance.Position.X, Is.Zero);
