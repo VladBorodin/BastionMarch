@@ -7,6 +7,8 @@ namespace BastionMarch.Simulation.Modules
         public int Width { get; }
         public int Height { get; }
 
+        public int CellCount => checked(Width * Height);
+
         public GridSize(int width, int height)
         {
             if (width <= 0)
