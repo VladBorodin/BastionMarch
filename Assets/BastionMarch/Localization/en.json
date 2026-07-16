@@ -1,0 +1,9 @@
+{
+  "module.machine_room.small.name": "Small engine compartment",
+  "module.machine_room.large.name": "Large engine compartment",
+  "module.generator_room.standard.name": "Standard generator compartment",
+  "module.repair_bay.standard.name": "Repair compartment",
+  "module.ammo_storage.standard.name": "Ammunition storage",
+  "module.crew_quarters.standard.name": "Standard crew quarters",
+  "module.ventilation.standard.name": "Standard ventilation compartment"
+}

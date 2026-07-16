@@ -152,7 +152,7 @@ namespace BastionMarch.Simulation.Bastions
 
             int minimumPersonnel = 0;
             int optimalPersonnel = 0;
-            int maximumPersonnel = 0;
+            int maximumUsefulPersonnel = 0;
 
             long totalHorsePower = 0;
 
@@ -188,8 +188,8 @@ namespace BastionMarch.Simulation.Bastions
                 optimalPersonnel +=
                     definition.CrewRequirement.OptimalPersonnel;
 
-                maximumPersonnel +=
-                    definition.CrewRequirement.MaximumPersonnel;
+                maximumUsefulPersonnel +=
+                    definition.CrewRequirement.MaximumUsefulPersonnel;
 
                 IReadOnlyList<PropulsionFeatureDefinition>
                     propulsionFeatures =
@@ -218,7 +218,7 @@ namespace BastionMarch.Simulation.Bastions
                 totalHeatGeneration: totalHeatGeneration,
                 minimumPersonnel: minimumPersonnel,
                 optimalPersonnel: optimalPersonnel,
-                maximumPersonnel: maximumPersonnel,
+                maximumUsefulPersonnel: maximumUsefulPersonnel,
                 totalHorsePower: totalHorsePower);
         }
 
@@ -693,10 +693,125 @@ namespace BastionMarch.Simulation.Bastions
                 optimalPersonnel:
                     requirement.OptimalPersonnel,
                 maximumPersonnel:
-                    requirement.MaximumPersonnel,
+                    requirement.MaximumUsefulPersonnel,
                 averageExperience: averageExperience,
                 averageMorale: averageMorale,
                 averageFatigue: averageFatigue);
+        }
+
+        public BastionCrewRequirements CalculateCrewRequirements()
+        {
+            var totals =
+                new Dictionary<
+                    WorkType,
+                    (int Minimum, int Optimal, int MaximumUseful)>();
+
+            foreach (ModuleInstance module in Modules)
+            {
+                foreach (
+                    ModuleWorkRequirement requirement
+                    in module.Definition
+                        .CrewRequirement
+                        .WorkRequirements)
+                {
+                    if (!totals.TryGetValue(
+                            requirement.WorkType,
+                            out var current))
+                    {
+                        current = (0, 0, 0);
+                    }
+
+                    totals[requirement.WorkType] =
+                    (
+                        current.Minimum +
+                            requirement.MinimumPersonnel,
+
+                        current.Optimal +
+                            requirement.OptimalPersonnel,
+
+                        current.MaximumUseful +
+                            requirement.MaximumUsefulPersonnel
+                    );
+                }
+            }
+
+            IEnumerable<WorkRequirementSummary> summaries =
+                totals
+                    .OrderBy(pair => pair.Key)
+                    .Select(pair =>
+                        new WorkRequirementSummary(
+                            pair.Key,
+                            pair.Value.Minimum,
+                            pair.Value.Optimal,
+                            pair.Value.MaximumUseful));
+
+            return new BastionCrewRequirements(summaries);
+        }
+
+        public BastionCrewCapacity CalculateCrewCapacity()
+        {
+            int totalBerths = 0;
+            int nominalAccommodationCapacity = 0;
+            int emergencyAccommodationCapacity = 0;
+            int ventilationPersonnelCapacity = 0;
+
+            foreach (ModuleInstance module in Modules)
+            {
+                IReadOnlyList<CrewAccommodationFeatureDefinition>
+                    accommodationFeatures =
+                        module.Definition.GetFeatures<
+                            CrewAccommodationFeatureDefinition>();
+
+                foreach (
+                    CrewAccommodationFeatureDefinition accommodation
+                    in accommodationFeatures)
+                {
+                    totalBerths +=
+                        accommodation.BerthCount;
+
+                    nominalAccommodationCapacity +=
+                        accommodation.NominalPersonnelCapacity;
+
+                    emergencyAccommodationCapacity +=
+                        accommodation.EmergencyPersonnelCapacity;
+                }
+
+                IReadOnlyList<VentilationFeatureDefinition>
+                    ventilationFeatures =
+                        module.Definition.GetFeatures<
+                            VentilationFeatureDefinition>();
+
+                foreach (
+                    VentilationFeatureDefinition ventilation
+                    in ventilationFeatures)
+                {
+                    ventilationPersonnelCapacity +=
+                        ventilation.SupportedPersonnelCapacity;
+                }
+            }
+
+            return new BastionCrewCapacity(
+                totalBerths,
+                nominalAccommodationCapacity,
+                emergencyAccommodationCapacity,
+                ventilationPersonnelCapacity);
+        }
+
+        public BastionCrewRosterSummary CalculateCrewRosterSummary()
+        {
+            IEnumerable<BrigadeTypePersonnelSummary> summaries =
+                Brigades
+                    .Where(brigade => !brigade.IsDisbanded)
+                    .GroupBy(brigade => brigade.Type)
+                    .OrderBy(group => group.Key)
+                    .Select(group =>
+                        new BrigadeTypePersonnelSummary(
+                            brigadeType: group.Key,
+                            brigadeCount: group.Count(),
+                            personnel: group.Sum(
+                                brigade => brigade.CurrentPersonnel)));
+
+            return new BastionCrewRosterSummary(summaries);
         }
     }
 }

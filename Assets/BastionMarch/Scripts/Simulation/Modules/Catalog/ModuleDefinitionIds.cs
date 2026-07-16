@@ -16,5 +16,11 @@ namespace BastionMarch.Simulation.Modules.Catalog
 
         public const string StandardGeneratorRoom =
             "generator-room.standard";
+
+        public const string StandardCrewQuarters =
+            "crew-quarters.standard";
+
+        public const string StandardVentilation =
+            "ventilation.standard";
     }
 }

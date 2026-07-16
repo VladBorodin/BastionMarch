@@ -8,7 +8,7 @@ namespace BastionMarch.Simulation.Modules
     public sealed class ModuleDefinition
     {
         public string Id { get; }
-        public string Name { get; }
+        public string NameLocalizationKey { get; }
 
         public ModuleCategory Category { get; }
         public ModuleType Type { get; }
@@ -32,7 +32,7 @@ namespace BastionMarch.Simulation.Modules
 
         public ModuleDefinition(
             string id,
-            string name,
+            string nameLocalizationKey,
             ModuleCategory category,
             ModuleType type,
             GridSize size,
@@ -54,11 +54,11 @@ namespace BastionMarch.Simulation.Modules
                     nameof(id));
             }
 
-            if (string.IsNullOrWhiteSpace(name))
+            if (string.IsNullOrWhiteSpace(nameLocalizationKey))
             {
                 throw new ArgumentException(
                     "Module name cannot be empty.",
-                    nameof(name));
+                    nameof(nameLocalizationKey));
             }
 
             if (massKg < 0)
@@ -102,7 +102,7 @@ namespace BastionMarch.Simulation.Modules
             }
 
             Id = id;
-            Name = name;
+            NameLocalizationKey = nameLocalizationKey;
             Category = category;
             Type = type;
             Size = size;

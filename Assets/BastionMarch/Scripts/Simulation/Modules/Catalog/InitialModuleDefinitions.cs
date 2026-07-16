@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Modules.Features;
 
 namespace BastionMarch.Simulation.Modules.Catalog
@@ -26,7 +27,9 @@ namespace BastionMarch.Simulation.Modules.Catalog
                 CreateLargeMachineRoom(),
                 CreateStandardGeneratorRoom(),
                 CreateStandardRepairBay(),
-                CreateStandardAmmoStorage()
+                CreateStandardAmmoStorage(),
+                CreateStandardCrewQuarters(),
+                CreateStandardVentilation()
             };
         }
 
@@ -34,7 +37,8 @@ namespace BastionMarch.Simulation.Modules.Catalog
         {
             return new ModuleDefinition(
                 id: ModuleDefinitionIds.SmallMachineRoom,
-                name: "Малый машинный отсек",
+                nameLocalizationKey:
+                    ModuleLocalizationKeys.SmallMachineRoomName,
                 category: ModuleCategory.Mobility,
                 type: ModuleType.MachineRoom,
                 size: new GridSize(1, 1),
@@ -47,9 +51,14 @@ namespace BastionMarch.Simulation.Modules.Catalog
                 activePowerConsumption: 4,
                 heatGeneration: 12,
                 crewRequirement: new CrewRequirement(
-                    minimumPersonnel: 2,
-                    optimalPersonnel: 3,
-                    maximumPersonnel: 4),
+                    new[]
+                    {
+                        new ModuleWorkRequirement(
+                            WorkType.Mechanical,
+                            minimumPersonnel: 2,
+                            optimalPersonnel: 3,
+                            maximumUsefulPersonnel: 4)
+                    }),
                 features: new IModuleFeatureDefinition[]
                 {
                     new PropulsionFeatureDefinition(
@@ -63,7 +72,8 @@ namespace BastionMarch.Simulation.Modules.Catalog
         {
             return new ModuleDefinition(
                 id: ModuleDefinitionIds.LargeMachineRoom,
-                name: "Большой машинный отсек",
+                nameLocalizationKey:
+                    ModuleLocalizationKeys.LargeMachineRoomName,
                 category: ModuleCategory.Mobility,
                 type: ModuleType.MachineRoom,
                 size: new GridSize(2, 2),
@@ -76,9 +86,14 @@ namespace BastionMarch.Simulation.Modules.Catalog
                 activePowerConsumption: 10,
                 heatGeneration: 40,
                 crewRequirement: new CrewRequirement(
-                    minimumPersonnel: 4,
-                    optimalPersonnel: 8,
-                    maximumPersonnel: 12),
+                    new[]
+                    {
+                        new ModuleWorkRequirement(
+                            WorkType.Mechanical,
+                            minimumPersonnel: 4,
+                            optimalPersonnel: 8,
+                            maximumUsefulPersonnel: 12)
+                    }),
                 features: new IModuleFeatureDefinition[]
                 {
                     new PropulsionFeatureDefinition(
@@ -92,7 +107,8 @@ namespace BastionMarch.Simulation.Modules.Catalog
         {
             return new ModuleDefinition(
                 id: ModuleDefinitionIds.StandardRepairBay,
-                name: "Ремонтный отсек",
+                nameLocalizationKey:
+                    ModuleLocalizationKeys.StandardRepairBayName,
                 category: ModuleCategory.Maintenance,
                 type: ModuleType.RepairBay,
                 size: new GridSize(2, 1),
@@ -105,9 +121,20 @@ namespace BastionMarch.Simulation.Modules.Catalog
                 activePowerConsumption: 12,
                 heatGeneration: 8,
                 crewRequirement: new CrewRequirement(
-                    minimumPersonnel: 3,
-                    optimalPersonnel: 6,
-                    maximumPersonnel: 9),
+                    new[]
+                    {
+                        new ModuleWorkRequirement(
+                            WorkType.Mechanical,
+                            minimumPersonnel: 2,
+                            optimalPersonnel: 4,
+                            maximumUsefulPersonnel: 6),
+
+                        new ModuleWorkRequirement(
+                            WorkType.General,
+                            minimumPersonnel: 1,
+                            optimalPersonnel: 2,
+                            maximumUsefulPersonnel: 3)
+                    }),
                 features: new IModuleFeatureDefinition[]
                 {
                     new RepairSupportFeatureDefinition(
@@ -121,7 +148,8 @@ namespace BastionMarch.Simulation.Modules.Catalog
         {
             return new ModuleDefinition(
                 id: ModuleDefinitionIds.StandardAmmoStorage,
-                name: "Склад боеприпасов",
+                nameLocalizationKey:
+                    ModuleLocalizationKeys.StandardAmmoStorageName,
                 category: ModuleCategory.Logistics,
                 type: ModuleType.AmmoStorage,
                 size: new GridSize(2, 1),
@@ -134,9 +162,20 @@ namespace BastionMarch.Simulation.Modules.Catalog
                 activePowerConsumption: 1,
                 heatGeneration: 0,
                 crewRequirement: new CrewRequirement(
-                    minimumPersonnel: 1,
-                    optimalPersonnel: 3,
-                    maximumPersonnel: 6),
+                    new[]
+                    {
+                        new ModuleWorkRequirement(
+                            WorkType.Logistics,
+                            minimumPersonnel: 1,
+                            optimalPersonnel: 2,
+                            maximumUsefulPersonnel: 4),
+
+                        new ModuleWorkRequirement(
+                            WorkType.General,
+                            minimumPersonnel: 0,
+                            optimalPersonnel: 1,
+                            maximumUsefulPersonnel: 2)
+                    }),
                 features: new IModuleFeatureDefinition[]
                 {
                     new AmmoStorageFeatureDefinition(
@@ -149,7 +188,8 @@ namespace BastionMarch.Simulation.Modules.Catalog
         {
             return new ModuleDefinition(
                 id: ModuleDefinitionIds.StandardGeneratorRoom,
-                name: "Стандартный генераторный отсек",
+                nameLocalizationKey:
+                    ModuleLocalizationKeys.StandardGeneratorRoomName,
                 category: ModuleCategory.Power,
                 type: ModuleType.GeneratorRoom,
                 size: new GridSize(2, 1),
@@ -162,14 +202,79 @@ namespace BastionMarch.Simulation.Modules.Catalog
                 activePowerConsumption: 2,
                 heatGeneration: 15,
                 crewRequirement: new CrewRequirement(
-                    minimumPersonnel: 2,
-                    optimalPersonnel: 4,
-                    maximumPersonnel: 6),
+                new[]
+                {
+                    new ModuleWorkRequirement(
+                        WorkType.Engineering,
+                        minimumPersonnel: 2,
+                        optimalPersonnel: 4,
+                        maximumUsefulPersonnel: 6)
+                }),
                 features: new IModuleFeatureDefinition[]
                 {
                     new PowerGenerationFeatureDefinition(
                         maximumPowerOutput: 40,
                         fuelConsumptionPerTurn: 18)
+                });
+        }
+
+        private static ModuleDefinition CreateStandardCrewQuarters()
+        {
+            return new ModuleDefinition(
+                id: ModuleDefinitionIds.StandardCrewQuarters,
+                nameLocalizationKey:
+                    ModuleLocalizationKeys.StandardCrewQuartersName,
+                category: ModuleCategory.CrewSupport,
+                type: ModuleType.CrewQuarters,
+                size: new GridSize(2, 1),
+                massKg: 10_000,
+                cost: 900,
+                maxDurability: 100,
+                damagedDurabilityThreshold: 60,
+                criticalDurabilityThreshold: 25,
+                idlePowerConsumption: 1,
+                activePowerConsumption: 2,
+                heatGeneration: 3,
+                crewRequirement: new CrewRequirement(
+                    minimumPersonnel: 0,
+                    optimalPersonnel: 0,
+                    maximumUsefulPersonnel: 0),
+                features: new IModuleFeatureDefinition[]
+                {
+                    new CrewAccommodationFeatureDefinition(
+                        berthCount: 8,
+                        nominalPersonnelCapacity: 12,
+                        emergencyPersonnelCapacity: 18)
+                });
+        }
+
+        private static ModuleDefinition CreateStandardVentilation()
+        {
+            return new ModuleDefinition(
+                id: ModuleDefinitionIds.StandardVentilation,
+                nameLocalizationKey:
+                    ModuleLocalizationKeys.StandardVentilationName,
+                category: ModuleCategory.CrewSupport,
+                type: ModuleType.Ventilation,
+                size: new GridSize(1, 1),
+                massKg: 8_000,
+                cost: 1_100,
+                maxDurability: 90,
+                damagedDurabilityThreshold: 55,
+                criticalDurabilityThreshold: 20,
+                idlePowerConsumption: 2,
+                activePowerConsumption: 6,
+                heatGeneration: 2,
+                crewRequirement: new CrewRequirement(
+                    minimumPersonnel: 0,
+                    optimalPersonnel: 0,
+                    maximumUsefulPersonnel: 0),
+                features: new IModuleFeatureDefinition[]
+                {
+                    new VentilationFeatureDefinition(
+                        supportedPersonnelCapacity: 24,
+                        smokeExtractionPerTurn: 8,
+                        heatRemovalPerTurn: 10)
                 });
         }
     }

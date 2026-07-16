@@ -28,36 +28,36 @@ namespace BastionMarch.Simulation.Bastions
 
         public int OptimalPersonnel { get; }
 
-        public int MaximumPersonnel { get; }
+        public int MaximumUsefulPersonnel { get; }
 
         public long TotalHorsePower { get; }
 
         public BastionDesignStatistics(
-            int moduleCount,
-            int occupiedCellCount,
-            long totalMassKg,
-            long totalCost,
-            long totalMaxDurability,
-            long totalIdlePowerConsumption,
-            long totalActivePowerConsumption,
-            long totalHeatGeneration,
-            int minimumPersonnel,
-            int optimalPersonnel,
-            int maximumPersonnel,
-            long totalHorsePower)
-        {
-            ModuleCount = moduleCount;
-            OccupiedCellCount = occupiedCellCount;
-            TotalMassKg = totalMassKg;
-            TotalCost = totalCost;
-            TotalMaxDurability = totalMaxDurability;
-            TotalIdlePowerConsumption = totalIdlePowerConsumption;
-            TotalActivePowerConsumption = totalActivePowerConsumption;
-            TotalHeatGeneration = totalHeatGeneration;
-            MinimumPersonnel = minimumPersonnel;
-            OptimalPersonnel = optimalPersonnel;
-            MaximumPersonnel = maximumPersonnel;
-            TotalHorsePower = totalHorsePower;
-        }
+        int moduleCount,
+        int occupiedCellCount,
+        long totalMassKg,
+        long totalCost,
+        long totalMaxDurability,
+        long totalIdlePowerConsumption,
+        long totalActivePowerConsumption,
+        long totalHeatGeneration,
+        int minimumPersonnel,
+        int optimalPersonnel,
+        int maximumUsefulPersonnel,
+        long totalHorsePower)
+    {
+        ModuleCount = moduleCount;
+        OccupiedCellCount = occupiedCellCount;
+        TotalMassKg = totalMassKg;
+        TotalCost = totalCost;
+        TotalMaxDurability = totalMaxDurability;
+        TotalIdlePowerConsumption = totalIdlePowerConsumption;
+        TotalActivePowerConsumption = totalActivePowerConsumption;
+        TotalHeatGeneration = totalHeatGeneration;
+        MinimumPersonnel = minimumPersonnel;
+        OptimalPersonnel = optimalPersonnel;
+        MaximumUsefulPersonnel = maximumUsefulPersonnel;
+        TotalHorsePower = totalHorsePower;
+    }
     }
 }

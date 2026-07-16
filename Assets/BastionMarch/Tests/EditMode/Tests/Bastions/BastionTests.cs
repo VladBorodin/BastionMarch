@@ -158,7 +158,7 @@ namespace BastionMarch.Simulation.EditModeTests.Bastions
                 Is.EqualTo(20));
 
             Assert.That(
-                statistics.MaximumPersonnel,
+                statistics.MaximumUsefulPersonnel,
                 Is.EqualTo(31));
 
             Assert.That(

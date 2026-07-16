@@ -16,7 +16,7 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
             ModuleDefinitionCatalog catalog =
                 InitialModuleDefinitions.CreateCatalog();
 
-            Assert.That(catalog.All.Count, Is.EqualTo(5));
+            Assert.That(catalog.All.Count, Is.EqualTo(7));
 
             Assert.That(
                 catalog.GetRequired(ModuleDefinitionIds.SmallMachineRoom),
@@ -37,6 +37,16 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
             Assert.That(
                 catalog.GetRequired(
                     ModuleDefinitionIds.StandardGeneratorRoom),
+                Is.Not.Null);
+
+            Assert.That(
+                catalog.GetRequired(
+                    ModuleDefinitionIds.StandardCrewQuarters),
+                Is.Not.Null);
+
+            Assert.That(
+                catalog.GetRequired(
+                    ModuleDefinitionIds.StandardVentilation),
                 Is.Not.Null);
         }
 
