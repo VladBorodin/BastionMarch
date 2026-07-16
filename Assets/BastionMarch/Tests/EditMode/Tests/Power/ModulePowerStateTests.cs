@@ -72,5 +72,50 @@ namespace BastionMarch.Simulation.EditModeTests.Power
                 _module.PowerPriority,
                 Is.EqualTo(PowerPriority.Critical));
         }
+
+        [Test]
+        public void PlayerCanManuallyPowerModuleOff()
+        {
+            _module.SetPowerMode(
+                ModulePowerMode.Offline);
+
+            Assert.That(
+                _module.RequestedPowerMode,
+                Is.EqualTo(ModulePowerMode.Offline));
+
+            Assert.That(
+                _module.EffectivePowerMode,
+                Is.EqualTo(ModulePowerMode.Offline));
+
+            Assert.That(
+                _module.IsManuallyPoweredOff,
+                Is.True);
+
+            Assert.That(
+                _module.CurrentContinuousPowerDemand,
+                Is.Zero);
+        }
+
+        [Test]
+        public void PlayerCanRequestModulePowerAfterManualShutdown()
+        {
+            _module.SetPowerMode(
+                ModulePowerMode.Offline);
+
+            _module.SetPowerMode(
+                ModulePowerMode.Active);
+
+            Assert.That(
+                _module.RequestedPowerMode,
+                Is.EqualTo(ModulePowerMode.Active));
+
+            Assert.That(
+                _module.EffectivePowerMode,
+                Is.EqualTo(ModulePowerMode.Active));
+
+            Assert.That(
+                _module.IsManuallyPoweredOff,
+                Is.False);
+        }
     }
 }

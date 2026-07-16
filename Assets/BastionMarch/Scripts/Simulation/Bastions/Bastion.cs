@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Modules.Features;
 using BastionMarch.Simulation.Power;
+using System.Linq;
 
 namespace BastionMarch.Simulation.Bastions
 {
     /// <summary>
     /// Главная доменная сущность боевой машины.
-    ///
     /// Bastion владеет сеткой и предоставляет операции над установленными
     /// модулями. Внешний код не должен самостоятельно поддерживать
     /// согласованность сетки и характеристик машины.
@@ -281,6 +281,176 @@ namespace BastionMarch.Simulation.Bastions
                     ModuleTechnicalState.Destroyed &&
                 module.ControlState ==
                     ModuleControlState.Friendly;
+        }
+
+        public BastionPowerDistributionResult ResolvePowerDistribution()
+        {
+            var allocations =
+                new List<ModulePowerAllocation>();
+
+            List<ModuleInstance> availableModules =
+                Modules
+                    .Where(IsAvailableForPowerOperation)
+                    .ToList();
+
+            // Недоступные модули физически не могут получать питание.
+            foreach (ModuleInstance module in Modules)
+            {
+                if (!IsAvailableForPowerOperation(module))
+                {
+                    module.ApplyPowerAllocation(
+                        ModulePowerMode.Offline);
+                }
+            }
+
+            long grossPowerGeneration = 0;
+            long totalRequestedDemand = 0;
+            long totalGrantedDemand = 0;
+
+            var activeGeneratorIds =
+                new HashSet<Guid>();
+
+            foreach (ModuleInstance module in availableModules)
+            {
+                totalRequestedDemand +=
+                    module.RequestedContinuousPowerDemand;
+
+                if (module.RequestedPowerMode ==
+                    ModulePowerMode.Offline)
+                {
+                    module.ApplyPowerAllocation(
+                        ModulePowerMode.Offline);
+
+                    allocations.Add(
+                        CreatePowerAllocation(module));
+
+                    continue;
+                }
+
+                IReadOnlyList<PowerGenerationFeatureDefinition>
+                    generationFeatures =
+                        module.Definition.GetFeatures<
+                            PowerGenerationFeatureDefinition>();
+
+                bool isActiveGenerator =
+                    module.RequestedPowerMode ==
+                        ModulePowerMode.Active &&
+                    generationFeatures.Count > 0;
+
+                if (!isActiveGenerator)
+                {
+                    continue;
+                }
+
+                module.ApplyPowerAllocation(
+                    ModulePowerMode.Active);
+
+                activeGeneratorIds.Add(module.Id);
+
+                foreach (
+                    PowerGenerationFeatureDefinition generation
+                    in generationFeatures)
+                {
+                    grossPowerGeneration +=
+                        generation.MaximumPowerOutput;
+                }
+
+                totalGrantedDemand +=
+                    module.CurrentContinuousPowerDemand;
+
+                allocations.Add(
+                    CreatePowerAllocation(module));
+            }
+
+            long remainingPower =
+                grossPowerGeneration - totalGrantedDemand;
+
+            IEnumerable<ModuleInstance> consumers =
+                availableModules
+                    .Where(module =>
+                        module.RequestedPowerMode !=
+                            ModulePowerMode.Offline &&
+                        !activeGeneratorIds.Contains(module.Id))
+                    .OrderBy(module => module.PowerPriority)
+                    .ThenBy(module => module.Id);
+
+            foreach (ModuleInstance module in consumers)
+            {
+                ModulePowerMode grantedMode =
+                    ResolveGrantedPowerMode(
+                        module,
+                        remainingPower);
+
+                module.ApplyPowerAllocation(grantedMode);
+
+                int grantedDemand =
+                    module.CurrentContinuousPowerDemand;
+
+                totalGrantedDemand += grantedDemand;
+                remainingPower -= grantedDemand;
+
+                allocations.Add(
+                    CreatePowerAllocation(module));
+            }
+
+            return new BastionPowerDistributionResult(
+                grossPowerGeneration:
+                    grossPowerGeneration,
+                totalRequestedDemand:
+                    totalRequestedDemand,
+                totalGrantedDemand:
+                    totalGrantedDemand,
+                allocations:
+                    allocations);
+        }
+
+        private static ModulePowerMode ResolveGrantedPowerMode(
+            ModuleInstance module,
+            long remainingPower)
+        {
+            int requestedDemand =
+                module.RequestedContinuousPowerDemand;
+
+            // Орудия и другие механические системы с нулевым
+            // потреблением могут работать без электроснабжения.
+            if (requestedDemand == 0)
+            {
+                return module.RequestedPowerMode;
+            }
+
+            if (remainingPower >= requestedDemand)
+            {
+                return module.RequestedPowerMode;
+            }
+
+            if (module.RequestedPowerMode ==
+                ModulePowerMode.Active)
+            {
+                int standbyDemand =
+                    module.Definition.IdlePowerConsumption;
+
+                if (standbyDemand == 0 ||
+                    remainingPower >= standbyDemand)
+                {
+                    return ModulePowerMode.Standby;
+                }
+            }
+
+            return ModulePowerMode.Offline;
+        }
+
+        private static ModulePowerAllocation CreatePowerAllocation(
+            ModuleInstance module)
+        {
+            return new ModulePowerAllocation(
+                moduleId: module.Id,
+                requestedMode: module.RequestedPowerMode,
+                effectiveMode: module.EffectivePowerMode,
+                priority: module.PowerPriority,
+                requestedDemand:
+                    module.RequestedContinuousPowerDemand,
+                grantedDemand:
+                    module.CurrentContinuousPowerDemand);
         }
     }
 }

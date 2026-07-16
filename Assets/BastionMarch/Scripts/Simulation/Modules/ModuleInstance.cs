@@ -17,32 +17,28 @@ namespace BastionMarch.Simulation.Modules
 
         public ModuleControlState ControlState { get; private set; }
 
-        public ModulePowerMode PowerMode { get; private set; }
+        public ModulePowerMode RequestedPowerMode { get; private set; }
+
+        public ModulePowerMode EffectivePowerMode { get; private set; }
+
+        /// <summary>
+        /// Текущий фактический режим.
+        /// Оставлено как короткое представление EffectivePowerMode.
+        /// </summary>
+        public ModulePowerMode PowerMode =>
+            EffectivePowerMode;
 
         public PowerPriority PowerPriority { get; private set; }
 
-        public int CurrentContinuousPowerDemand
-        {
-            get
-            {
-                switch (PowerMode)
-                {
-                    case ModulePowerMode.Offline:
-                        return 0;
+        public bool IsManuallyPoweredOff =>
+            RequestedPowerMode == ModulePowerMode.Offline;
 
-                    case ModulePowerMode.Standby:
-                        return Definition.IdlePowerConsumption;
+        public int RequestedContinuousPowerDemand =>
+            GetContinuousPowerDemand(RequestedPowerMode);
 
-                    case ModulePowerMode.Active:
-                        return Definition.ActivePowerConsumption;
-
-                    default:
-                        throw new InvalidOperationException(
-                            $"Unsupported power mode: {PowerMode}.");
-                }
-            }
-        }
-
+        public int CurrentContinuousPowerDemand =>
+            GetContinuousPowerDemand(EffectivePowerMode);
+        
         public IReadOnlyCollection<Guid> AssignedBrigadeIds =>
             _assignedBrigadeIds;
 
@@ -82,11 +78,64 @@ namespace BastionMarch.Simulation.Modules
             Position = position;
             CurrentDurability = definition.MaxDurability;
             ControlState = ModuleControlState.Friendly;
-            PowerMode = ModulePowerMode.Standby;
+            RequestedPowerMode = ModulePowerMode.Standby;
+            EffectivePowerMode = ModulePowerMode.Standby;
             PowerPriority = PowerPriority.Normal;
         }
 
+        /// <summary>
+        /// Устанавливает желаемый режим модуля.
+        ///
+        /// Это команда игрока. Автоматическое распределение энергии
+        /// может понизить эффективный режим, но не должно изменять запрос.
+        /// </summary>
         public void SetPowerMode(ModulePowerMode powerMode)
+        {
+            ValidatePowerMode(powerMode);
+
+            RequestedPowerMode = powerMode;
+
+            // Сразу отражаем приказ игрока.
+            // После этого распределитель энергии может понизить режим.
+            EffectivePowerMode = powerMode;
+        }
+
+        internal void ApplyPowerAllocation(
+            ModulePowerMode effectivePowerMode)
+        {
+            ValidatePowerMode(effectivePowerMode);
+
+            if (effectivePowerMode > RequestedPowerMode)
+            {
+                throw new InvalidOperationException(
+                    "Effective power mode cannot exceed requested power mode.");
+            }
+
+            EffectivePowerMode = effectivePowerMode;
+        }
+
+        private int GetContinuousPowerDemand(
+            ModulePowerMode powerMode)
+        {
+            switch (powerMode)
+            {
+                case ModulePowerMode.Offline:
+                    return 0;
+
+                case ModulePowerMode.Standby:
+                    return Definition.IdlePowerConsumption;
+
+                case ModulePowerMode.Active:
+                    return Definition.ActivePowerConsumption;
+
+                default:
+                    throw new InvalidOperationException(
+                        $"Unsupported power mode: {powerMode}.");
+            }
+        }
+
+        private static void ValidatePowerMode(
+            ModulePowerMode powerMode)
         {
             if (!Enum.IsDefined(
                     typeof(ModulePowerMode),
@@ -95,8 +144,6 @@ namespace BastionMarch.Simulation.Modules
                 throw new ArgumentOutOfRangeException(
                     nameof(powerMode));
             }
-
-            PowerMode = powerMode;
         }
 
         public void SetPowerPriority(PowerPriority powerPriority)
