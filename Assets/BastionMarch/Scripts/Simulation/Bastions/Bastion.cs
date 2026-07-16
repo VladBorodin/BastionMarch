@@ -813,5 +813,40 @@ namespace BastionMarch.Simulation.Bastions
 
             return new BastionCrewRosterSummary(summaries);
         }
+
+        public ModuleWorkEfficiencyAssessment
+            CalculateModuleWorkEfficiency(
+                Guid moduleId,
+                BrigadeWorkProfileCatalog profileCatalog)
+        {
+            if (profileCatalog == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(profileCatalog));
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                throw new KeyNotFoundException(
+                    $"Module '{moduleId}' was not found.");
+            }
+
+            IEnumerable<Brigade> assignedBrigades =
+                module.AssignedBrigadeIds
+                    .Select(brigadeId =>
+                        _brigadesById.TryGetValue(
+                            brigadeId,
+                            out Brigade brigade)
+                                ? brigade
+                                : null)
+                    .Where(brigade => brigade != null);
+
+            return ModuleWorkEfficiencyCalculator.Calculate(
+                module,
+                assignedBrigades,
+                profileCatalog);
+        }
     }
 }
