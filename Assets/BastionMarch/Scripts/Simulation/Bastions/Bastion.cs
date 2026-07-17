@@ -848,5 +848,34 @@ namespace BastionMarch.Simulation.Bastions
                 assignedBrigades,
                 profileCatalog);
         }
+
+        public ModuleOperationalAssessment
+            CalculateModuleOperationalAssessment(
+                Guid moduleId,
+                BrigadeWorkProfileCatalog profileCatalog)
+        {
+            if (profileCatalog == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(profileCatalog));
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                throw new KeyNotFoundException(
+                    $"Module '{moduleId}' was not found.");
+            }
+
+            ModuleWorkEfficiencyAssessment workEfficiency =
+                CalculateModuleWorkEfficiency(
+                    moduleId,
+                    profileCatalog);
+
+            return ModuleOperationalEfficiencyCalculator.Calculate(
+                module,
+                workEfficiency);
+        }
     }
 }
