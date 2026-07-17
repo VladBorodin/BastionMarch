@@ -107,6 +107,114 @@ namespace BastionMarch.Simulation.Bastions
                 out module);
         }
 
+        public bool TryGetModuleAdjacencies(
+            Guid moduleId,
+            out IReadOnlyList<ModuleAdjacency> adjacencies)
+        {
+            if (!_modulesById.TryGetValue(
+                    moduleId,
+                    out ModuleInstance sourceModule))
+            {
+                adjacencies =
+                    Array.Empty<ModuleAdjacency>();
+
+                return false;
+            }
+
+            var boundariesByNeighbor =
+                new Dictionary<
+                    (Guid TargetModuleId, GridDirection Direction),
+                    HashSet<GridBoundarySegment>>();
+
+            IReadOnlyList<GridPosition> sourceCells =
+                CalculateOccupiedCells(
+                    sourceModule.Definition,
+                    sourceModule.Position);
+
+            foreach (GridPosition sourceCell in sourceCells)
+            {
+                CollectBoundaryContact(
+                    sourceModule,
+                    sourceCell,
+                    new GridPosition(
+                        sourceCell.X - 1,
+                        sourceCell.Deck),
+                    GridDirection.Left,
+                    boundariesByNeighbor);
+
+                CollectBoundaryContact(
+                    sourceModule,
+                    sourceCell,
+                    new GridPosition(
+                        sourceCell.X + 1,
+                        sourceCell.Deck),
+                    GridDirection.Right,
+                    boundariesByNeighbor);
+
+                CollectBoundaryContact(
+                    sourceModule,
+                    sourceCell,
+                    new GridPosition(
+                        sourceCell.X,
+                        sourceCell.Deck - 1),
+                    GridDirection.Down,
+                    boundariesByNeighbor);
+
+                CollectBoundaryContact(
+                    sourceModule,
+                    sourceCell,
+                    new GridPosition(
+                        sourceCell.X,
+                        sourceCell.Deck + 1),
+                    GridDirection.Up,
+                    boundariesByNeighbor);
+            }
+
+            adjacencies =
+                boundariesByNeighbor
+                    .OrderBy(pair =>
+                        pair.Key.Direction)
+                    .ThenBy(pair =>
+                        pair.Key.TargetModuleId)
+                    .Select(pair =>
+                        new ModuleAdjacency(
+                            sourceModuleId:
+                                sourceModule.Id,
+                            targetModuleId:
+                                pair.Key.TargetModuleId,
+                            directionFromSource:
+                                pair.Key.Direction,
+                            sharedBoundaries:
+                                pair.Value))
+                    .ToArray();
+
+            return true;
+        }
+
+        public bool TryGetModuleAdjacency(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            out ModuleAdjacency adjacency)
+        {
+            adjacency = null;
+
+            if (!TryGetModuleAdjacencies(
+                    sourceModuleId,
+                    out IReadOnlyList<ModuleAdjacency>
+                        adjacencies))
+            {
+                return false;
+            }
+
+            adjacency =
+                adjacencies.FirstOrDefault(
+                    item =>
+                        item.TargetModuleId ==
+                        targetModuleId);
+
+            return adjacency != null;
+        }
+
         public bool TryRemoveModule(
             Guid moduleId,
             out ModuleInstance removedModule)
@@ -164,6 +272,53 @@ namespace BastionMarch.Simulation.Bastions
 
             return exclusiveRight <= Width &&
                    exclusiveTopDeck <= DeckCount;
+        }
+
+        private void CollectBoundaryContact(
+            ModuleInstance sourceModule,
+            GridPosition sourceCell,
+            GridPosition neighborCell,
+            GridDirection direction,
+            Dictionary<
+                (Guid TargetModuleId, GridDirection Direction),
+                HashSet<GridBoundarySegment>>
+                    boundariesByNeighbor)
+        {
+            if (!_modulesByCell.TryGetValue(
+                    neighborCell,
+                    out ModuleInstance targetModule))
+            {
+                return;
+            }
+
+            if (targetModule.Id == sourceModule.Id)
+            {
+                return;
+            }
+
+            var key =
+            (
+                TargetModuleId: targetModule.Id,
+                Direction: direction
+            );
+
+            if (!boundariesByNeighbor.TryGetValue(
+                    key,
+                    out HashSet<GridBoundarySegment>
+                        boundaries))
+            {
+                boundaries =
+                    new HashSet<GridBoundarySegment>();
+
+                boundariesByNeighbor.Add(
+                    key,
+                    boundaries);
+            }
+
+            boundaries.Add(
+                new GridBoundarySegment(
+                    sourceCell,
+                    neighborCell));
         }
 
         private static IReadOnlyList<GridPosition>

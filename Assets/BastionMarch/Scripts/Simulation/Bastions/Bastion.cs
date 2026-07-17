@@ -130,6 +130,26 @@ namespace BastionMarch.Simulation.Bastions
                 out module);
         }
 
+        public bool TryGetModuleAdjacencies(
+            Guid moduleId,
+            out IReadOnlyList<ModuleAdjacency> adjacencies)
+        {
+            return _grid.TryGetModuleAdjacencies(
+                moduleId,
+                out adjacencies);
+        }
+
+        public bool TryGetModuleAdjacency(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            out ModuleAdjacency adjacency)
+        {
+            return _grid.TryGetModuleAdjacency(
+                sourceModuleId,
+                targetModuleId,
+                out adjacency);
+        }
+
         public bool TryGetModule(
             Guid moduleId,
             out ModuleInstance module)
