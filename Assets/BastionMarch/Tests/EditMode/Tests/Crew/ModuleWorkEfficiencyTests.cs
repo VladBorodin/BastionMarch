@@ -132,12 +132,12 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                     BrigadeType.Recruit,
                     personnel: 6);
 
-            AddAndAssign(
+            AddDeployAndStartWork(
                 bastion,
                 repairBay,
                 mechanics);
 
-            AddAndAssign(
+            AddDeployAndStartWork(
                 bastion,
                 repairBay,
                 recruits);
@@ -148,11 +148,11 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                     _profileCatalog);
 
             Assert.That(
-                result.AssignedBrigadeCount,
+                result.WorkingBrigadeCount,
                 Is.EqualTo(2));
 
             Assert.That(
-                result.TotalPersonnel,
+                result.TotalWorkingPersonnel,
                 Is.EqualTo(9));
 
             Assert.That(
@@ -175,7 +175,7 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                     BrigadeType.Recruit,
                     personnel: 3);
 
-            AddAndAssign(
+            AddDeployAndStartWork(
                 bastion,
                 repairBay,
                 recruits);
@@ -266,7 +266,7 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                     morale: morale,
                     fatigue: fatigue);
 
-            AddAndAssign(
+            AddDeployAndStartWork(
                 bastion,
                 repairBay,
                 brigade);
@@ -293,7 +293,7 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                     BrigadeType.Mechanic,
                     personnel);
 
-            AddAndAssign(
+            AddDeployAndStartWork(
                 bastion,
                 repairBay,
                 brigade);
@@ -333,16 +333,20 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                 maximumPersonnel: personnel);
         }
 
-        private static void AddAndAssign(
+        private static void AddDeployAndStartWork(
             Bastion bastion,
             ModuleInstance module,
             Brigade brigade)
         {
-            bastion.TryAddBrigade(brigade);
+            bastion.TryAddBrigade(
+                brigade);
 
-            bastion.TryAssignBrigadeToModule(
+            bastion.TryDeployBrigadeToModule(
                 brigade.Id,
                 module.Id);
+
+            bastion.TryStartBrigadeWork(
+                brigade.Id);
         }
     }
 }

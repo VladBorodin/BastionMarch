@@ -267,9 +267,12 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
 
             bastion.TryAddBrigade(recruits);
 
-            bastion.TryAssignBrigadeToModule(
+            bastion.TryDeployBrigadeToModule(
                 recruits.Id,
                 repairBay.Id);
+
+            bastion.TryStartBrigadeWork(
+                recruits.Id);
 
             generator.SetPowerMode(ModulePowerMode.Active);
             repairBay.SetPowerMode(ModulePowerMode.Active);
@@ -398,11 +401,15 @@ namespace BastionMarch.Simulation.EditModeTests.Modules
                 maximumPersonnel: personnel,
                 experience: 50);
 
-            bastion.TryAddBrigade(brigade);
+            bastion.TryAddBrigade(
+                brigade);
 
-            bastion.TryAssignBrigadeToModule(
+            bastion.TryDeployBrigadeToModule(
                 brigade.Id,
                 module.Id);
+
+            bastion.TryStartBrigadeWork(
+                brigade.Id);
         }
     }
 }

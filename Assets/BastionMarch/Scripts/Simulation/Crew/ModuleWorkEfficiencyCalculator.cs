@@ -13,18 +13,25 @@ namespace BastionMarch.Simulation.Crew
 
         public static ModuleWorkEfficiencyAssessment Calculate(
             ModuleInstance module,
-            IEnumerable<Brigade> assignedBrigades,
+            IEnumerable<Brigade> workingBrigades,
+            int totalOccupyingPersonnel,
             BrigadeWorkProfileCatalog profileCatalog)
         {
+            if (totalOccupyingPersonnel < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(totalOccupyingPersonnel));
+            }
+
+            if (workingBrigades == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(workingBrigades));
+            }
+
             if (module == null)
             {
                 throw new ArgumentNullException(nameof(module));
-            }
-
-            if (assignedBrigades == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(assignedBrigades));
             }
 
             if (profileCatalog == null)
@@ -33,23 +40,31 @@ namespace BastionMarch.Simulation.Crew
                     nameof(profileCatalog));
             }
 
-            List<Brigade> brigades =
-                assignedBrigades
+            List<Brigade> workers =
+                workingBrigades
                     .Where(brigade =>
                         brigade != null &&
                         !brigade.IsDisbanded)
                     .ToList();
 
-            int totalPersonnel =
-                brigades.Sum(
+            int totalWorkingPersonnel =
+                workers.Sum(
                     brigade => brigade.CurrentPersonnel);
+
+            if (totalWorkingPersonnel >
+                totalOccupyingPersonnel)
+            {
+                throw new ArgumentException(
+                    "Working personnel cannot exceed occupying personnel.",
+                    nameof(totalOccupyingPersonnel));
+            }
 
             CrewRequirement crewRequirement =
                 module.Definition.CrewRequirement;
 
             double overcrowdingMultiplier =
                 CalculateOvercrowdingMultiplier(
-                    totalPersonnel,
+                    totalOccupyingPersonnel,
                     crewRequirement.MaximumUsefulPersonnel);
 
             var workAssessments =
@@ -61,7 +76,7 @@ namespace BastionMarch.Simulation.Crew
             {
                 double effectivePersonnel = 0;
 
-                foreach (Brigade brigade in brigades)
+                foreach (Brigade brigade in workers)
                 {
                     BrigadeWorkProfile profile =
                         profileCatalog.GetRequired(
@@ -95,8 +110,11 @@ namespace BastionMarch.Simulation.Crew
 
             return new ModuleWorkEfficiencyAssessment(
                 moduleId: module.Id,
-                assignedBrigadeCount: brigades.Count,
-                totalPersonnel: totalPersonnel,
+                workingBrigadeCount: workers.Count,
+                totalWorkingPersonnel:
+                    totalWorkingPersonnel,
+                totalOccupyingPersonnel:
+                    totalOccupyingPersonnel,
                 overcrowdingMultiplier:
                     overcrowdingMultiplier,
                 overallEfficiencyRatio:

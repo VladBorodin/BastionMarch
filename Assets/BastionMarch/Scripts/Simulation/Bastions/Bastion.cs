@@ -34,8 +34,11 @@ namespace BastionMarch.Simulation.Bastions
         private readonly Dictionary<Guid, Brigade> _brigadesById =
             new();
 
-        private readonly Dictionary<Guid, Guid> _moduleIdByBrigadeId =
-            new();
+        private readonly Dictionary<Guid, Guid>
+            _locationModuleIdByBrigadeId = new();
+
+        private readonly HashSet<Guid>
+            _workingBrigadeIds = new();
 
         public int BrigadeCount =>
             _brigadesById.Count;
@@ -101,13 +104,16 @@ namespace BastionMarch.Simulation.Bastions
                 return false;
             }
 
-            Guid[] assignedBrigadeIds =
-                existingModule.AssignedBrigadeIds.ToArray();
+            Guid[] occupyingBrigadeIds =
+                existingModule
+                    .OccupyingBrigadeIds
+                    .ToArray();
 
-            foreach (Guid brigadeId in assignedBrigadeIds)
+            foreach (Guid brigadeId in occupyingBrigadeIds)
             {
-                existingModule.RemoveBrigade(brigadeId);
-                _moduleIdByBrigadeId.Remove(brigadeId);
+                ClearBrigadePlacement(
+                    brigadeId,
+                    existingModule);
             }
 
             return _grid.TryRemoveModule(
@@ -527,16 +533,32 @@ namespace BastionMarch.Simulation.Bastions
                 return false;
             }
 
-            TryUnassignBrigade(
-                brigadeId,
-                out _);
+            if (_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                if (_grid.TryGetModule(
+                        moduleId,
+                        out ModuleInstance module))
+                {
+                    ClearBrigadePlacement(
+                        brigadeId,
+                        module);
+                }
+                else
+                {
+                    ClearStaleBrigadePlacement(
+                        brigadeId);
+                }
+            }
 
-            _brigadesById.Remove(brigadeId);
+            _brigadesById.Remove(
+                brigadeId);
 
             return true;
         }
 
-        public BrigadeAssignmentResult TryAssignBrigadeToModule(
+        public BrigadeOperationalResult TryDeployBrigadeToModule(
             Guid brigadeId,
             Guid moduleId)
         {
@@ -544,72 +566,213 @@ namespace BastionMarch.Simulation.Bastions
                     brigadeId,
                     out Brigade brigade))
             {
-                return BrigadeAssignmentResult.Failure(
-                    BrigadeAssignmentFailureReason.BrigadeNotFound);
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotFound);
             }
 
             if (!_grid.TryGetModule(
                     moduleId,
                     out ModuleInstance module))
             {
-                return BrigadeAssignmentResult.Failure(
-                    BrigadeAssignmentFailureReason.ModuleNotFound);
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .ModuleNotFound);
             }
 
             if (brigade.IsDisbanded)
             {
-                return BrigadeAssignmentResult.Failure(
-                    BrigadeAssignmentFailureReason.BrigadeDisbanded);
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeDisbanded);
             }
 
-            if (_moduleIdByBrigadeId.ContainsKey(brigadeId))
+            if (_locationModuleIdByBrigadeId.ContainsKey(
+                    brigadeId))
             {
-                return BrigadeAssignmentResult.Failure(
-                    BrigadeAssignmentFailureReason.BrigadeAlreadyAssigned);
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeAlreadyDeployed);
             }
 
-            module.AssignBrigade(brigadeId);
+            if (!module.AddOccupyingBrigade(
+                    brigadeId))
+            {
+                throw new InvalidOperationException(
+                    "Module occupancy state is inconsistent.");
+            }
 
-            _moduleIdByBrigadeId.Add(
+            _locationModuleIdByBrigadeId.Add(
                 brigadeId,
                 moduleId);
 
-            return BrigadeAssignmentResult.Success(
+            return BrigadeOperationalResult.Success(
                 brigade,
                 module);
         }
 
-        public bool TryUnassignBrigade(
-            Guid brigadeId,
-            out ModuleInstance previousModule)
+        public BrigadeOperationalResult TryStartBrigadeWork(
+            Guid brigadeId)
         {
-            if (!_moduleIdByBrigadeId.TryGetValue(
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out Brigade brigade))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotFound);
+            }
+
+            if (brigade.IsDisbanded)
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeDisbanded);
+            }
+
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
                     brigadeId,
                     out Guid moduleId))
             {
-                previousModule = null;
-                return false;
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotDeployed);
             }
 
             if (!_grid.TryGetModule(
                     moduleId,
-                    out previousModule))
+                    out ModuleInstance module))
             {
-                _moduleIdByBrigadeId.Remove(brigadeId);
-                return false;
+                ClearStaleBrigadePlacement(
+                    brigadeId);
+
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .ModuleNotFound);
             }
 
-            previousModule.RemoveBrigade(brigadeId);
-            _moduleIdByBrigadeId.Remove(brigadeId);
+            if (_workingBrigadeIds.Contains(
+                    brigadeId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeAlreadyWorking);
+            }
 
-            return true;
+            if (!module.StartBrigadeWork(
+                    brigadeId))
+            {
+                throw new InvalidOperationException(
+                    "Module work state is inconsistent.");
+            }
+
+            _workingBrigadeIds.Add(
+                brigadeId);
+
+            return BrigadeOperationalResult.Success(
+                brigade,
+                module);
         }
 
-        public bool TryGetAssignedModule(
+        public BrigadeOperationalResult TryStopBrigadeWork(
+            Guid brigadeId)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out Brigade brigade))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotFound);
+            }
+
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotDeployed);
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                ClearStaleBrigadePlacement(
+                    brigadeId);
+
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .ModuleNotFound);
+            }
+
+            if (!_workingBrigadeIds.Contains(
+                    brigadeId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotWorking);
+            }
+
+            module.StopBrigadeWork(
+                brigadeId);
+
+            _workingBrigadeIds.Remove(
+                brigadeId);
+
+            return BrigadeOperationalResult.Success(
+                brigade,
+                module);
+        }
+
+        public BrigadeOperationalResult TryUndeployBrigade(
+            Guid brigadeId)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out Brigade brigade))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotFound);
+            }
+
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotDeployed);
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                ClearStaleBrigadePlacement(
+                    brigadeId);
+
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .ModuleNotFound);
+            }
+
+            ClearBrigadePlacement(
+                brigadeId,
+                module);
+
+            return BrigadeOperationalResult.Success(
+                brigade,
+                module);
+        }
+
+        public bool TryGetBrigadeLocation(
             Guid brigadeId,
             out ModuleInstance module)
         {
-            if (!_moduleIdByBrigadeId.TryGetValue(
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
                     brigadeId,
                     out Guid moduleId))
             {
@@ -620,6 +783,62 @@ namespace BastionMarch.Simulation.Bastions
             return _grid.TryGetModule(
                 moduleId,
                 out module);
+        }
+
+        public bool TryGetBrigadeOperationalState(
+            Guid brigadeId,
+            out BrigadeOperationalState state)
+        {
+            if (!_brigadesById.ContainsKey(
+                    brigadeId))
+            {
+                state = null;
+                return false;
+            }
+
+            Guid? currentModuleId = null;
+
+            if (_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                currentModuleId = moduleId;
+            }
+
+            state = new BrigadeOperationalState(
+                brigadeId,
+                currentModuleId,
+                _workingBrigadeIds.Contains(
+                    brigadeId));
+
+            return true;
+        }
+
+        private void ClearBrigadePlacement(
+            Guid brigadeId,
+            ModuleInstance module)
+        {
+            module.StopBrigadeWork(
+                brigadeId);
+
+            module.RemoveOccupyingBrigade(
+                brigadeId);
+
+            _workingBrigadeIds.Remove(
+                brigadeId);
+
+            _locationModuleIdByBrigadeId.Remove(
+                brigadeId);
+        }
+
+        private void ClearStaleBrigadePlacement(
+            Guid brigadeId)
+        {
+            _workingBrigadeIds.Remove(
+                brigadeId);
+
+            _locationModuleIdByBrigadeId.Remove(
+                brigadeId);
         }
 
         public ModuleStaffingAssessment CalculateModuleStaffing(
@@ -633,52 +852,85 @@ namespace BastionMarch.Simulation.Bastions
                     $"Module '{moduleId}' was not found.");
             }
 
-            int assignedBrigadeCount = 0;
-            int totalPersonnel = 0;
+            int occupyingBrigadeCount = 0;
+            int workingBrigadeCount = 0;
+
+            int totalOccupyingPersonnel = 0;
+            int totalWorkingPersonnel = 0;
 
             long totalExperience = 0;
             long totalMorale = 0;
             long totalFatigue = 0;
 
-            foreach (Guid brigadeId in module.AssignedBrigadeIds)
+            foreach (
+                Guid brigadeId
+                in module.OccupyingBrigadeIds)
             {
                 if (!_brigadesById.TryGetValue(
                         brigadeId,
-                        out Brigade brigade))
+                        out Brigade brigade) ||
+                    brigade.IsDisbanded)
                 {
                     continue;
                 }
 
-                assignedBrigadeCount++;
+                occupyingBrigadeCount++;
+                totalOccupyingPersonnel +=
+                    brigade.CurrentPersonnel;
+            }
+
+            foreach (
+                Guid brigadeId
+                in module.WorkingBrigadeIds)
+            {
+                if (!_brigadesById.TryGetValue(
+                        brigadeId,
+                        out Brigade brigade) ||
+                    brigade.IsDisbanded)
+                {
+                    continue;
+                }
+
+                workingBrigadeCount++;
 
                 int personnel =
                     brigade.CurrentPersonnel;
 
-                totalPersonnel += personnel;
+                totalWorkingPersonnel +=
+                    personnel;
 
                 totalExperience +=
-                    (long)brigade.Experience * personnel;
+                    (long)brigade.Experience *
+                    personnel;
 
                 totalMorale +=
-                    (long)brigade.Morale * personnel;
+                    (long)brigade.Morale *
+                    personnel;
 
                 totalFatigue +=
-                    (long)brigade.Fatigue * personnel;
+                    (long)brigade.Fatigue *
+                    personnel;
             }
 
             int averageExperience =
-                totalPersonnel > 0
-                    ? (int)(totalExperience / totalPersonnel)
+                totalWorkingPersonnel > 0
+                    ? (int)(
+                        totalExperience /
+                        totalWorkingPersonnel)
                     : 0;
 
             int averageMorale =
-                totalPersonnel > 0
-                    ? (int)(totalMorale / totalPersonnel)
+                totalWorkingPersonnel > 0
+                    ? (int)(
+                        totalMorale /
+                        totalWorkingPersonnel)
                     : 0;
 
             int averageFatigue =
-                totalPersonnel > 0
-                    ? (int)(totalFatigue / totalPersonnel)
+                totalWorkingPersonnel > 0
+                    ? (int)(
+                        totalFatigue /
+                        totalWorkingPersonnel)
                     : 0;
 
             CrewRequirement requirement =
@@ -686,19 +938,27 @@ namespace BastionMarch.Simulation.Bastions
 
             return new ModuleStaffingAssessment(
                 moduleId: module.Id,
-                assignedBrigadeCount: assignedBrigadeCount,
-                totalPersonnel: totalPersonnel,
+                occupyingBrigadeCount:
+                    occupyingBrigadeCount,
+                workingBrigadeCount:
+                    workingBrigadeCount,
+                totalOccupyingPersonnel:
+                    totalOccupyingPersonnel,
+                totalWorkingPersonnel:
+                    totalWorkingPersonnel,
                 minimumPersonnel:
                     requirement.MinimumPersonnel,
                 optimalPersonnel:
                     requirement.OptimalPersonnel,
-                maximumPersonnel:
+                maximumUsefulPersonnel:
                     requirement.MaximumUsefulPersonnel,
-                averageExperience: averageExperience,
-                averageMorale: averageMorale,
-                averageFatigue: averageFatigue);
+                averageExperience:
+                    averageExperience,
+                averageMorale:
+                    averageMorale,
+                averageFatigue:
+                    averageFatigue);
         }
-
         public BastionCrewRequirements CalculateCrewRequirements()
         {
             var totals =
@@ -833,19 +1093,37 @@ namespace BastionMarch.Simulation.Bastions
                     $"Module '{moduleId}' was not found.");
             }
 
-            IEnumerable<Brigade> assignedBrigades =
-                module.AssignedBrigadeIds
+            List<Brigade> workingBrigades =
+                module.WorkingBrigadeIds
                     .Select(brigadeId =>
                         _brigadesById.TryGetValue(
                             brigadeId,
                             out Brigade brigade)
                                 ? brigade
                                 : null)
-                    .Where(brigade => brigade != null);
+                    .Where(brigade =>
+                        brigade != null &&
+                        !brigade.IsDisbanded)
+                    .ToList();
+
+            int totalOccupyingPersonnel =
+                module.OccupyingBrigadeIds
+                    .Select(brigadeId =>
+                        _brigadesById.TryGetValue(
+                            brigadeId,
+                            out Brigade brigade)
+                                ? brigade
+                                : null)
+                    .Where(brigade =>
+                        brigade != null &&
+                        !brigade.IsDisbanded)
+                    .Sum(brigade =>
+                        brigade.CurrentPersonnel);
 
             return ModuleWorkEfficiencyCalculator.Calculate(
                 module,
-                assignedBrigades,
+                workingBrigades,
+                totalOccupyingPersonnel,
                 profileCatalog);
         }
 

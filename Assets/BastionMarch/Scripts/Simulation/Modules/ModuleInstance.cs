@@ -6,7 +6,11 @@ namespace BastionMarch.Simulation.Modules
 {
     public sealed class ModuleInstance
     {
-        private readonly HashSet<Guid> _assignedBrigadeIds = new();
+        private readonly HashSet<Guid> _occupyingBrigadeIds =
+            new();
+
+        private readonly HashSet<Guid> _workingBrigadeIds =
+            new();
 
         public Guid Id { get; }
         public ModuleDefinition Definition { get; }
@@ -39,8 +43,18 @@ namespace BastionMarch.Simulation.Modules
         public int CurrentContinuousPowerDemand =>
             GetContinuousPowerDemand(EffectivePowerMode);
         
-        public IReadOnlyCollection<Guid> AssignedBrigadeIds =>
-            _assignedBrigadeIds;
+        /// <summary>
+        /// Бригады, физически находящиеся в отсеке.
+        /// </summary>
+        public IReadOnlyCollection<Guid> OccupyingBrigadeIds =>
+            _occupyingBrigadeIds;
+
+        /// <summary>
+        /// Бригады, занявшие рабочие места в отсеке.
+        /// Рабочая бригада всегда также является находящейся в отсеке.
+        /// </summary>
+        public IReadOnlyCollection<Guid> WorkingBrigadeIds =>
+            _workingBrigadeIds;
 
         public ModuleTechnicalState TechnicalState
         {
@@ -188,21 +202,57 @@ namespace BastionMarch.Simulation.Modules
             ControlState = controlState;
         }
 
-        internal bool AssignBrigade(Guid brigadeId)
-{
+        internal bool AddOccupyingBrigade(
+            Guid brigadeId)
+        {
+            ValidateBrigadeId(brigadeId);
+
+            return _occupyingBrigadeIds.Add(
+                brigadeId);
+        }
+
+        internal bool RemoveOccupyingBrigade(
+            Guid brigadeId)
+        {
+            _workingBrigadeIds.Remove(
+                brigadeId);
+
+            return _occupyingBrigadeIds.Remove(
+                brigadeId);
+        }
+
+        internal bool StartBrigadeWork(
+            Guid brigadeId)
+        {
+            ValidateBrigadeId(brigadeId);
+
+            if (!_occupyingBrigadeIds.Contains(
+                    brigadeId))
+            {
+                throw new InvalidOperationException(
+                    "A brigade must occupy the module before starting work.");
+            }
+
+            return _workingBrigadeIds.Add(
+                brigadeId);
+        }
+
+        internal bool StopBrigadeWork(
+            Guid brigadeId)
+        {
+            return _workingBrigadeIds.Remove(
+                brigadeId);
+        }
+
+        private static void ValidateBrigadeId(
+            Guid brigadeId)
+        {
             if (brigadeId == Guid.Empty)
             {
                 throw new ArgumentException(
                     "Brigade id cannot be empty.",
                     nameof(brigadeId));
             }
-
-            return _assignedBrigadeIds.Add(brigadeId);
-        }
-
-        internal bool RemoveBrigade(Guid brigadeId)
-        {
-            return _assignedBrigadeIds.Remove(brigadeId);
         }
     }
 }

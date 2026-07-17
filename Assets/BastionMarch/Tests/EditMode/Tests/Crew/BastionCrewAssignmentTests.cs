@@ -103,19 +103,19 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
 
             bastion.TryAddBrigade(brigade);
 
-            BrigadeAssignmentResult result =
-                bastion.TryAssignBrigadeToModule(
+            BrigadeOperationalResult result =
+                bastion.TryDeployBrigadeToModule(
                     brigade.Id,
                     repairBay.Id);
 
             Assert.That(result.IsSuccess, Is.True);
 
             Assert.That(
-                repairBay.AssignedBrigadeIds,
+                repairBay.OccupyingBrigadeIds,
                 Does.Contain(brigade.Id));
 
             Assert.That(
-                bastion.TryGetAssignedModule(
+                bastion.TryGetBrigadeLocation(
                     brigade.Id,
                     out ModuleInstance assignedModule),
                 Is.True);
@@ -145,12 +145,12 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
 
             bastion.TryAddBrigade(brigade);
 
-            bastion.TryAssignBrigadeToModule(
+            bastion.TryDeployBrigadeToModule(
                 brigade.Id,
                 first.Id);
 
-            BrigadeAssignmentResult secondAssignment =
-                bastion.TryAssignBrigadeToModule(
+            BrigadeOperationalResult secondAssignment =
+                bastion.TryDeployBrigadeToModule(
                     brigade.Id,
                     second.Id);
 
@@ -159,8 +159,8 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
             Assert.That(
                 secondAssignment.FailureReason,
                 Is.EqualTo(
-                    BrigadeAssignmentFailureReason
-                        .BrigadeAlreadyAssigned));
+                    BrigadeOperationalFailureReason
+                        .BrigadeAlreadyDeployed));
         }
 
         [Test]
@@ -188,21 +188,21 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
             bastion.TryAddBrigade(first);
             bastion.TryAddBrigade(second);
 
-            bastion.TryAssignBrigadeToModule(
+            bastion.TryDeployBrigadeToModule(
                 first.Id,
                 repairBay.Id);
 
-            bastion.TryAssignBrigadeToModule(
+            bastion.TryDeployBrigadeToModule(
                 second.Id,
                 repairBay.Id);
 
             Assert.That(
-                repairBay.AssignedBrigadeIds.Count,
+                repairBay.OccupyingBrigadeIds.Count,
                 Is.EqualTo(2));
         }
 
         [Test]
-        public void UnassignedBrigadeCanBeMovedToAnotherModule()
+        public void UndeployedBrigadeCanBeDeployedToAnotherModule()
         {
             var bastion = CreateBastion();
 
@@ -221,23 +221,45 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
 
             bastion.TryAddBrigade(brigade);
 
-            bastion.TryAssignBrigadeToModule(
-                brigade.Id,
-                first.Id);
-
-            bool unassigned =
-                bastion.TryUnassignBrigade(
+            BrigadeOperationalResult firstDeployment =
+                bastion.TryDeployBrigadeToModule(
                     brigade.Id,
-                    out ModuleInstance previousModule);
+                    first.Id);
 
-            BrigadeAssignmentResult reassignment =
-                bastion.TryAssignBrigadeToModule(
+            BrigadeOperationalResult undeployment =
+                bastion.TryUndeployBrigade(
+                    brigade.Id);
+
+            BrigadeOperationalResult secondDeployment =
+                bastion.TryDeployBrigadeToModule(
                     brigade.Id,
                     second.Id);
 
-            Assert.That(unassigned, Is.True);
-            Assert.That(previousModule, Is.SameAs(first));
-            Assert.That(reassignment.IsSuccess, Is.True);
+            Assert.That(
+                firstDeployment.IsSuccess,
+                Is.True);
+
+            Assert.That(
+                undeployment.IsSuccess,
+                Is.True);
+
+            Assert.That(
+                undeployment.Module,
+                Is.SameAs(first));
+
+            Assert.That(
+                secondDeployment.IsSuccess,
+                Is.True);
+
+            Assert.That(
+                bastion.TryGetBrigadeLocation(
+                    brigade.Id,
+                    out ModuleInstance currentModule),
+                Is.True);
+
+            Assert.That(
+                currentModule,
+                Is.SameAs(second));
         }
 
         [Test]
@@ -257,7 +279,7 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
 
             bastion.TryAddBrigade(brigade);
 
-            bastion.TryAssignBrigadeToModule(
+            bastion.TryDeployBrigadeToModule(
                 brigade.Id,
                 repairBay.Id);
 
@@ -266,7 +288,7 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                 out _);
 
             Assert.That(
-                bastion.TryGetAssignedModule(
+                bastion.TryGetBrigadeLocation(
                     brigade.Id,
                     out _),
                 Is.False);
@@ -295,7 +317,7 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
 
             bastion.TryAddBrigade(brigade);
 
-            bastion.TryAssignBrigadeToModule(
+            bastion.TryDeployBrigadeToModule(
                 brigade.Id,
                 repairBay.Id);
 
@@ -304,7 +326,7 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                 out Brigade removedBrigade);
 
             Assert.That(removedBrigade, Is.SameAs(brigade));
-            Assert.That(repairBay.AssignedBrigadeIds, Is.Empty);
+            Assert.That(repairBay.OccupyingBrigadeIds, Is.Empty);
             Assert.That(bastion.BrigadeCount, Is.Zero);
         }
 
@@ -327,8 +349,8 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
 
             brigade.ApplyCasualties(3);
 
-            BrigadeAssignmentResult result =
-                bastion.TryAssignBrigadeToModule(
+            BrigadeOperationalResult result =
+                bastion.TryDeployBrigadeToModule(
                     brigade.Id,
                     repairBay.Id);
 
@@ -337,7 +359,7 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
             Assert.That(
                 result.FailureReason,
                 Is.EqualTo(
-                    BrigadeAssignmentFailureReason
+                    BrigadeOperationalFailureReason
                         .BrigadeDisbanded));
         }
 
@@ -368,24 +390,26 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
             bastion.TryAddBrigade(veterans);
             bastion.TryAddBrigade(recruits);
 
-            bastion.TryAssignBrigadeToModule(
-                veterans.Id,
-                repairBay.Id);
+            DeployAndStartWork(
+                bastion,
+                repairBay,
+                veterans);
 
-            bastion.TryAssignBrigadeToModule(
-                recruits.Id,
-                repairBay.Id);
+            DeployAndStartWork(
+                bastion,
+                repairBay,
+                recruits);
 
             ModuleStaffingAssessment assessment =
                 bastion.CalculateModuleStaffing(
                     repairBay.Id);
 
             Assert.That(
-                assessment.AssignedBrigadeCount,
+                assessment.WorkingBrigadeCount,
                 Is.EqualTo(2));
 
             Assert.That(
-                assessment.TotalPersonnel,
+                assessment.TotalWorkingPersonnel,
                 Is.EqualTo(9));
 
             Assert.That(
@@ -415,9 +439,10 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
 
             bastion.TryAddBrigade(damagedBrigade);
 
-            bastion.TryAssignBrigadeToModule(
-                damagedBrigade.Id,
-                repairBay.Id);
+            DeployAndStartWork(
+                bastion,
+                repairBay,
+                damagedBrigade);
 
             ModuleStaffingAssessment assessment =
                 bastion.CalculateModuleStaffing(
@@ -458,26 +483,28 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
             bastion.TryAddBrigade(first);
             bastion.TryAddBrigade(second);
 
-            bastion.TryAssignBrigadeToModule(
-                first.Id,
-                repairBay.Id);
+            DeployAndStartWork(
+                bastion,
+                repairBay,
+                first);
 
-            bastion.TryAssignBrigadeToModule(
-                second.Id,
-                repairBay.Id);
+            DeployAndStartWork(
+                bastion,
+                repairBay,
+                second);
 
             ModuleStaffingAssessment assessment =
                 bastion.CalculateModuleStaffing(
                     repairBay.Id);
 
             Assert.That(
-                assessment.TotalPersonnel,
+                assessment.TotalWorkingPersonnel,
                 Is.EqualTo(12));
 
             Assert.That(
                 assessment.State,
                 Is.EqualTo(
-                    ModuleStaffingState.Overcrowded));
+                    ModuleStaffingState.AboveOptimal));
 
             Assert.That(
                 assessment.IsOvercrowded,
@@ -516,6 +543,29 @@ namespace BastionMarch.Simulation.EditModeTests.Crew
                 currentPersonnel: personnel,
                 maximumPersonnel: capacity,
                 experience: experience);
+        }
+
+        private static void DeployAndStartWork(
+            Bastion bastion,
+            ModuleInstance module,
+            Brigade brigade)
+        {
+            BrigadeOperationalResult deployment =
+                bastion.TryDeployBrigadeToModule(
+                    brigade.Id,
+                    module.Id);
+
+            Assert.That(
+                deployment.IsSuccess,
+                Is.True);
+
+            BrigadeOperationalResult work =
+                bastion.TryStartBrigadeWork(
+                    brigade.Id);
+
+            Assert.That(
+                work.IsSuccess,
+                Is.True);
         }
     }
 }

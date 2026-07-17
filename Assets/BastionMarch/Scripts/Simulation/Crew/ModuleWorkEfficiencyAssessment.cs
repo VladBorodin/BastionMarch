@@ -13,9 +13,11 @@ namespace BastionMarch.Simulation.Crew
 
         public Guid ModuleId { get; }
 
-        public int AssignedBrigadeCount { get; }
+        public int WorkingBrigadeCount { get; }
 
-        public int TotalPersonnel { get; }
+        public int TotalWorkingPersonnel { get; }
+
+        public int TotalOccupyingPersonnel { get; }
 
         public double OvercrowdingMultiplier { get; }
 
@@ -32,8 +34,9 @@ namespace BastionMarch.Simulation.Crew
 
         public ModuleWorkEfficiencyAssessment(
             Guid moduleId,
-            int assignedBrigadeCount,
-            int totalPersonnel,
+            int workingBrigadeCount,
+            int totalWorkingPersonnel,
+            int totalOccupyingPersonnel,
             double overcrowdingMultiplier,
             double overallEfficiencyRatio,
             IEnumerable<ModuleWorkTypeAssessment> byWorkType)
@@ -46,8 +49,9 @@ namespace BastionMarch.Simulation.Crew
             }
 
             ModuleId = moduleId;
-            AssignedBrigadeCount = assignedBrigadeCount;
-            TotalPersonnel = totalPersonnel;
+            WorkingBrigadeCount = workingBrigadeCount;
+            TotalWorkingPersonnel = totalWorkingPersonnel;
+            TotalOccupyingPersonnel = totalOccupyingPersonnel;
 
             OvercrowdingMultiplier =
                 overcrowdingMultiplier;

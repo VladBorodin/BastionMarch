@@ -6,15 +6,19 @@ namespace BastionMarch.Simulation.Crew
     {
         public Guid ModuleId { get; }
 
-        public int AssignedBrigadeCount { get; }
+        public int OccupyingBrigadeCount { get; }
 
-        public int TotalPersonnel { get; }
+        public int WorkingBrigadeCount { get; }
+
+        public int TotalOccupyingPersonnel { get; }
+
+        public int TotalWorkingPersonnel { get; }
 
         public int MinimumPersonnel { get; }
 
         public int OptimalPersonnel { get; }
 
-        public int MaximumPersonnel { get; }
+        public int MaximumUsefulPersonnel { get; }
 
         public int AverageExperience { get; }
 
@@ -26,19 +30,22 @@ namespace BastionMarch.Simulation.Crew
 
         public bool IsMinimumMet =>
             MinimumPersonnel == 0 ||
-            TotalPersonnel >= MinimumPersonnel;
+            TotalWorkingPersonnel >= MinimumPersonnel;
 
         public bool IsOvercrowded =>
-            MaximumPersonnel > 0 &&
-            TotalPersonnel > MaximumPersonnel;
+            MaximumUsefulPersonnel > 0 &&
+            TotalOccupyingPersonnel >
+                MaximumUsefulPersonnel;
 
         public ModuleStaffingAssessment(
             Guid moduleId,
-            int assignedBrigadeCount,
-            int totalPersonnel,
+            int occupyingBrigadeCount,
+            int workingBrigadeCount,
+            int totalOccupyingPersonnel,
+            int totalWorkingPersonnel,
             int minimumPersonnel,
             int optimalPersonnel,
-            int maximumPersonnel,
+            int maximumUsefulPersonnel,
             int averageExperience,
             int averageMorale,
             int averageFatigue)
@@ -50,82 +57,115 @@ namespace BastionMarch.Simulation.Crew
                     nameof(moduleId));
             }
 
-            if (assignedBrigadeCount < 0)
+            if (occupyingBrigadeCount < 0)
             {
                 throw new ArgumentOutOfRangeException(
-                    nameof(assignedBrigadeCount));
+                    nameof(occupyingBrigadeCount));
             }
 
-            if (totalPersonnel < 0)
+            if (workingBrigadeCount < 0 ||
+                workingBrigadeCount >
+                    occupyingBrigadeCount)
             {
                 throw new ArgumentOutOfRangeException(
-                    nameof(totalPersonnel));
+                    nameof(workingBrigadeCount));
+            }
+
+            if (totalOccupyingPersonnel < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(totalOccupyingPersonnel));
+            }
+
+            if (totalWorkingPersonnel < 0 ||
+                totalWorkingPersonnel >
+                    totalOccupyingPersonnel)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(totalWorkingPersonnel));
             }
 
             if (minimumPersonnel < 0 ||
                 optimalPersonnel < minimumPersonnel ||
-                maximumPersonnel < optimalPersonnel)
+                maximumUsefulPersonnel < optimalPersonnel)
             {
                 throw new ArgumentException(
                     "Invalid module personnel requirements.");
             }
 
             ModuleId = moduleId;
-            AssignedBrigadeCount = assignedBrigadeCount;
-            TotalPersonnel = totalPersonnel;
 
-            MinimumPersonnel = minimumPersonnel;
-            OptimalPersonnel = optimalPersonnel;
-            MaximumPersonnel = maximumPersonnel;
+            OccupyingBrigadeCount =
+                occupyingBrigadeCount;
 
-            AverageExperience = averageExperience;
-            AverageMorale = averageMorale;
-            AverageFatigue = averageFatigue;
+            WorkingBrigadeCount =
+                workingBrigadeCount;
+
+            TotalOccupyingPersonnel =
+                totalOccupyingPersonnel;
+
+            TotalWorkingPersonnel =
+                totalWorkingPersonnel;
+
+            MinimumPersonnel =
+                minimumPersonnel;
+
+            OptimalPersonnel =
+                optimalPersonnel;
+
+            MaximumUsefulPersonnel =
+                maximumUsefulPersonnel;
+
+            AverageExperience =
+                averageExperience;
+
+            AverageMorale =
+                averageMorale;
+
+            AverageFatigue =
+                averageFatigue;
 
             State = ResolveState(
-                totalPersonnel,
+                totalWorkingPersonnel,
                 minimumPersonnel,
-                optimalPersonnel,
-                maximumPersonnel);
+                optimalPersonnel);
         }
 
         private static ModuleStaffingState ResolveState(
-            int totalPersonnel,
+            int totalWorkingPersonnel,
             int minimumPersonnel,
-            int optimalPersonnel,
-            int maximumPersonnel)
+            int optimalPersonnel)
         {
-            if (maximumPersonnel == 0)
+            if (minimumPersonnel == 0 &&
+                optimalPersonnel == 0)
             {
                 return ModuleStaffingState.NotRequired;
             }
 
-            if (totalPersonnel == 0)
+            if (totalWorkingPersonnel == 0)
             {
                 return ModuleStaffingState.Unstaffed;
             }
 
-            if (totalPersonnel < minimumPersonnel)
+            if (totalWorkingPersonnel <
+                minimumPersonnel)
             {
                 return ModuleStaffingState.BelowMinimum;
             }
 
-            if (totalPersonnel < optimalPersonnel)
+            if (totalWorkingPersonnel <
+                optimalPersonnel)
             {
                 return ModuleStaffingState.Functional;
             }
 
-            if (totalPersonnel == optimalPersonnel)
+            if (totalWorkingPersonnel ==
+                optimalPersonnel)
             {
                 return ModuleStaffingState.Optimal;
             }
 
-            if (totalPersonnel <= maximumPersonnel)
-            {
-                return ModuleStaffingState.AboveOptimal;
-            }
-
-            return ModuleStaffingState.Overcrowded;
+            return ModuleStaffingState.AboveOptimal;
         }
     }
 }

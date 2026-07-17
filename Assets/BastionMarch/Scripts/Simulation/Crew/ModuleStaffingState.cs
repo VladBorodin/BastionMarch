@@ -7,7 +7,6 @@ namespace BastionMarch.Simulation.Crew
         BelowMinimum,
         Functional,
         Optimal,
-        AboveOptimal,
-        Overcrowded
+        AboveOptimal
     }
 }
