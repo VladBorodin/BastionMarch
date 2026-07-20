@@ -274,6 +274,11 @@ namespace BastionMarch.Simulation.Bastions
                    position.Deck < DeckCount;
         }
 
+        private static readonly
+            IModulePassageTraversalPolicy
+                DefaultTraversalPolicy =
+                    new DefaultModulePassageTraversalPolicy();
+
         private bool FitsWithinBounds(
             ModuleDefinition definition,
             GridPosition origin)
@@ -587,6 +592,194 @@ namespace BastionMarch.Simulation.Bastions
                     passageId,
                     out _);
             }
+        }
+
+        public ModulePassageTraversalAssessment
+            AssessPassageTraversal(
+                Guid passageId,
+                Guid fromModuleId,
+                Guid toModuleId)
+        {
+            return AssessPassageTraversal(
+                passageId,
+                fromModuleId,
+                toModuleId,
+                DefaultTraversalPolicy);
+        }
+
+        public ModulePassageTraversalAssessment
+            AssessPassageTraversal(
+                Guid passageId,
+                Guid fromModuleId,
+                Guid toModuleId,
+                IModulePassageTraversalPolicy policy)
+        {
+            if (policy == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(policy));
+            }
+
+            if (!_passagesById.TryGetValue(
+                    passageId,
+                    out ModulePassage passage))
+            {
+                return
+                    ModulePassageTraversalAssessment.Failure(
+                        passageId,
+                        fromModuleId,
+                        toModuleId,
+                        ModulePassageTraversalFailureReason
+                            .PassageNotFound);
+            }
+
+            if (!_modulesById.TryGetValue(
+                    fromModuleId,
+                    out ModuleInstance fromModule))
+            {
+                return
+                    ModulePassageTraversalAssessment.Failure(
+                        passageId,
+                        fromModuleId,
+                        toModuleId,
+                        ModulePassageTraversalFailureReason
+                            .SourceModuleNotFound);
+            }
+
+            if (!_modulesById.TryGetValue(
+                    toModuleId,
+                    out ModuleInstance toModule))
+            {
+                return
+                    ModulePassageTraversalAssessment.Failure(
+                        passageId,
+                        fromModuleId,
+                        toModuleId,
+                        ModulePassageTraversalFailureReason
+                            .TargetModuleNotFound);
+            }
+
+            if (fromModuleId == toModuleId)
+            {
+                return
+                    ModulePassageTraversalAssessment.Failure(
+                        passageId,
+                        fromModuleId,
+                        toModuleId,
+                        ModulePassageTraversalFailureReason
+                            .SameModule);
+            }
+
+            if (!passage.ConnectsModule(
+                    fromModuleId) ||
+                !passage.ConnectsModule(
+                    toModuleId))
+            {
+                return
+                    ModulePassageTraversalAssessment.Failure(
+                        passageId,
+                        fromModuleId,
+                        toModuleId,
+                        ModulePassageTraversalFailureReason
+                            .PassageDoesNotConnectModules);
+            }
+
+            var context =
+                new ModulePassageTraversalContext(
+                    passage,
+                    fromModule,
+                    toModule);
+
+            ModulePassageTraversalAssessment assessment =
+                policy.Evaluate(context);
+
+            if (assessment == null)
+            {
+                throw new InvalidOperationException(
+                    "Traversal policy returned null.");
+            }
+
+            return assessment;
+        }
+
+        public ModuleConnectivityGraph
+            BuildTraversalGraph()
+        {
+            return BuildTraversalGraph(
+                DefaultTraversalPolicy);
+        }
+
+        public ModuleConnectivityGraph
+            BuildTraversalGraph(
+                IModulePassageTraversalPolicy policy)
+        {
+            if (policy == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(policy));
+            }
+
+            var edges =
+                new List<ModuleTraversalEdge>();
+
+            IEnumerable<ModulePassage> orderedPassages =
+                _passagesById
+                    .Values
+                    .OrderBy(passage =>
+                        passage.Boundary.CellA.Deck)
+                    .ThenBy(passage =>
+                        passage.Boundary.CellA.X)
+                    .ThenBy(passage =>
+                        passage.Id);
+
+            foreach (
+                ModulePassage passage
+                in orderedPassages)
+            {
+                AddTraversalEdgeIfAllowed(
+                    passage,
+                    passage.SourceModuleId,
+                    passage.TargetModuleId,
+                    policy,
+                    edges);
+
+                AddTraversalEdgeIfAllowed(
+                    passage,
+                    passage.TargetModuleId,
+                    passage.SourceModuleId,
+                    policy,
+                    edges);
+            }
+
+            return new ModuleConnectivityGraph(
+                _modulesById.Keys,
+                edges);
+        }
+
+        private void AddTraversalEdgeIfAllowed(
+            ModulePassage passage,
+            Guid fromModuleId,
+            Guid toModuleId,
+            IModulePassageTraversalPolicy policy,
+            ICollection<ModuleTraversalEdge> edges)
+        {
+            ModulePassageTraversalAssessment assessment =
+                AssessPassageTraversal(
+                    passage.Id,
+                    fromModuleId,
+                    toModuleId,
+                    policy);
+
+            if (!assessment.IsAllowed)
+            {
+                return;
+            }
+
+            edges.Add(
+                new ModuleTraversalEdge(
+                    passage,
+                    fromModuleId,
+                    toModuleId));
         }
     }
 }

@@ -1233,5 +1233,45 @@ namespace BastionMarch.Simulation.Bastions
                 passageId,
                 out removedPassage);
         }
+
+        public ModulePassageTraversalAssessment
+            AssessPassageTraversal(
+                Guid passageId,
+                Guid fromModuleId,
+                Guid toModuleId)
+        {
+            return _grid.AssessPassageTraversal(
+                passageId,
+                fromModuleId,
+                toModuleId);
+        }
+
+        public ModulePassageTraversalAssessment
+            AssessPassageTraversal(
+                Guid passageId,
+                Guid fromModuleId,
+                Guid toModuleId,
+                IModulePassageTraversalPolicy policy)
+        {
+            return _grid.AssessPassageTraversal(
+                passageId,
+                fromModuleId,
+                toModuleId,
+                policy);
+        }
+
+        public ModuleConnectivityGraph
+            BuildTraversalGraph()
+        {
+            return _grid.BuildTraversalGraph();
+        }
+
+        public ModuleConnectivityGraph
+            BuildTraversalGraph(
+                IModulePassageTraversalPolicy policy)
+        {
+            return _grid.BuildTraversalGraph(
+                policy);
+        }
     }
 }
