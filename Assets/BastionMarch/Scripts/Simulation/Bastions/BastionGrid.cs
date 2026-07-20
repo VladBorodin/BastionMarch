@@ -781,5 +781,28 @@ namespace BastionMarch.Simulation.Bastions
                     fromModuleId,
                     toModuleId));
         }
+
+        public ModuleRouteSearchResult FindModuleRoute(
+            Guid sourceModuleId,
+            Guid targetModuleId)
+        {
+            return ModuleRouteFinder.Find(
+                this,
+                sourceModuleId,
+                targetModuleId,
+                DefaultTraversalPolicy);
+        }
+
+        public ModuleRouteSearchResult FindModuleRoute(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            IModulePassageTraversalPolicy policy)
+        {
+            return ModuleRouteFinder.Find(
+                this,
+                sourceModuleId,
+                targetModuleId,
+                policy);
+        }
     }
 }

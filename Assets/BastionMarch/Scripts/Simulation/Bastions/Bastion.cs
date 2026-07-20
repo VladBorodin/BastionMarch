@@ -1273,5 +1273,25 @@ namespace BastionMarch.Simulation.Bastions
             return _grid.BuildTraversalGraph(
                 policy);
         }
+
+        public ModuleRouteSearchResult FindModuleRoute(
+            Guid sourceModuleId,
+            Guid targetModuleId)
+        {
+            return _grid.FindModuleRoute(
+                sourceModuleId,
+                targetModuleId);
+        }
+
+        public ModuleRouteSearchResult FindModuleRoute(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            IModulePassageTraversalPolicy policy)
+        {
+            return _grid.FindModuleRoute(
+                sourceModuleId,
+                targetModuleId,
+                policy);
+        }
     }
 }
