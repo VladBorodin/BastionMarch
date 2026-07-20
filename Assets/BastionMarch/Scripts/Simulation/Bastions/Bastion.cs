@@ -22,6 +22,12 @@ namespace BastionMarch.Simulation.Bastions
 
         public string Name { get; }
 
+        public int PassageCount =>
+            _grid.PassageCount;
+
+        public IReadOnlyCollection<ModulePassage> Passages =>
+            _grid.Passages;
+
         public int Width => _grid.Width;
 
         public int DeckCount => _grid.DeckCount;
@@ -1174,6 +1180,58 @@ namespace BastionMarch.Simulation.Bastions
             return ModuleOperationalEfficiencyCalculator.Calculate(
                 module,
                 workEfficiency);
+        }
+
+        public ModulePassagePlacementResult
+            TryInstallPassage(
+                Guid sourceModuleId,
+                Guid targetModuleId,
+                GridBoundarySegment boundary,
+                ModulePassageType type,
+                ModulePassageTraversalMode traversalMode)
+        {
+            return _grid.TryAddPassage(
+                sourceModuleId,
+                targetModuleId,
+                boundary,
+                type,
+                traversalMode);
+        }
+
+        public bool TryGetPassage(
+            Guid passageId,
+            out ModulePassage passage)
+        {
+            return _grid.TryGetPassage(
+                passageId,
+                out passage);
+        }
+
+        public bool TryGetPassageAtBoundary(
+            GridBoundarySegment boundary,
+            out ModulePassage passage)
+        {
+            return _grid.TryGetPassageAtBoundary(
+                boundary,
+                out passage);
+        }
+
+        public bool TryGetPassagesForModule(
+            Guid moduleId,
+            out IReadOnlyList<ModulePassage> passages)
+        {
+            return _grid.TryGetPassagesForModule(
+                moduleId,
+                out passages);
+        }
+
+        public bool TryRemovePassage(
+            Guid passageId,
+            out ModulePassage removedPassage)
+        {
+            return _grid.TryRemovePassage(
+                passageId,
+                out removedPassage);
         }
     }
 }

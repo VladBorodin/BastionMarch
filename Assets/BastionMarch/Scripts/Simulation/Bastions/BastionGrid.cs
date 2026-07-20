@@ -16,8 +16,24 @@ namespace BastionMarch.Simulation.Bastions
         private readonly Dictionary<GridPosition, ModuleInstance>
             _modulesByCell = new();
 
+        private readonly Dictionary<Guid, ModulePassage>
+            _passagesById = new();
+
+        private readonly Dictionary<
+            GridBoundarySegment,
+            ModulePassage> _passagesByBoundary = new();
+
         private readonly Dictionary<Guid, ModuleInstance>
             _modulesById = new();
+
+        public int PassageCount =>
+            _passagesById.Count;
+
+        public IReadOnlyCollection<ModulePassage> Passages =>
+            _passagesById
+                .Values
+                .OrderBy(passage => passage.Id)
+                .ToArray();
 
         public int Width { get; }
 
@@ -226,6 +242,9 @@ namespace BastionMarch.Simulation.Bastions
                 return false;
             }
 
+            RemovePassagesForModule(
+                moduleId);
+
             IReadOnlyList<GridPosition> occupiedCells =
                 CalculateOccupiedCells(
                     removedModule.Definition,
@@ -346,6 +365,228 @@ namespace BastionMarch.Simulation.Bastions
             }
 
             return cells;
+        }
+
+        public ModulePassagePlacementResult TryAddPassage(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            GridBoundarySegment boundary,
+            ModulePassageType type,
+            ModulePassageTraversalMode traversalMode)
+        {
+            if (!_modulesById.ContainsKey(
+                    sourceModuleId))
+            {
+                return ModulePassagePlacementResult.Failure(
+                    ModulePassagePlacementFailureReason
+                        .SourceModuleNotFound);
+            }
+
+            if (!_modulesById.ContainsKey(
+                    targetModuleId))
+            {
+                return ModulePassagePlacementResult.Failure(
+                    ModulePassagePlacementFailureReason
+                        .TargetModuleNotFound);
+            }
+
+            if (sourceModuleId == targetModuleId)
+            {
+                return ModulePassagePlacementResult.Failure(
+                    ModulePassagePlacementFailureReason
+                        .SameModule);
+            }
+
+            ValidatePassageType(type);
+            ValidateTraversalMode(traversalMode);
+
+            if (!TryGetModuleAdjacency(
+                    sourceModuleId,
+                    targetModuleId,
+                    out ModuleAdjacency adjacency))
+            {
+                return ModulePassagePlacementResult.Failure(
+                    ModulePassagePlacementFailureReason
+                        .ModulesNotAdjacent);
+            }
+
+            if (!adjacency.SharedBoundaries.Contains(
+                    boundary))
+            {
+                return ModulePassagePlacementResult.Failure(
+                    ModulePassagePlacementFailureReason
+                        .BoundaryNotShared);
+            }
+
+            if (!IsPassageTypeCompatible(
+                    type,
+                    boundary))
+            {
+                return ModulePassagePlacementResult.Failure(
+                    ModulePassagePlacementFailureReason
+                        .PassageTypeIncompatibleWithBoundary);
+            }
+
+            if (_passagesByBoundary.ContainsKey(
+                    boundary))
+            {
+                return ModulePassagePlacementResult.Failure(
+                    ModulePassagePlacementFailureReason
+                        .BoundaryAlreadyHasPassage);
+            }
+
+            var passage =
+                new ModulePassage(
+                    sourceModuleId,
+                    targetModuleId,
+                    boundary,
+                    type,
+                    traversalMode);
+
+            _passagesById.Add(
+                passage.Id,
+                passage);
+
+            _passagesByBoundary.Add(
+                boundary,
+                passage);
+
+            return ModulePassagePlacementResult.Success(
+                passage);
+        }
+
+        public bool TryGetPassage(
+            Guid passageId,
+            out ModulePassage passage)
+        {
+            return _passagesById.TryGetValue(
+                passageId,
+                out passage);
+        }
+
+        public bool TryGetPassageAtBoundary(
+            GridBoundarySegment boundary,
+            out ModulePassage passage)
+        {
+            return _passagesByBoundary.TryGetValue(
+                boundary,
+                out passage);
+        }
+
+        public bool TryGetPassagesForModule(
+            Guid moduleId,
+            out IReadOnlyList<ModulePassage> passages)
+        {
+            if (!_modulesById.ContainsKey(
+                    moduleId))
+            {
+                passages =
+                    Array.Empty<ModulePassage>();
+
+                return false;
+            }
+
+            passages =
+                _passagesById
+                    .Values
+                    .Where(passage =>
+                        passage.ConnectsModule(
+                            moduleId))
+                    .OrderBy(passage =>
+                        passage.Boundary.CellA.Deck)
+                    .ThenBy(passage =>
+                        passage.Boundary.CellA.X)
+                    .ThenBy(passage =>
+                        passage.Id)
+                    .ToArray();
+
+            return true;
+        }
+
+        public bool TryRemovePassage(
+            Guid passageId,
+            out ModulePassage removedPassage)
+        {
+            if (!_passagesById.TryGetValue(
+                    passageId,
+                    out removedPassage))
+            {
+                return false;
+            }
+
+            _passagesById.Remove(
+                passageId);
+
+            _passagesByBoundary.Remove(
+                removedPassage.Boundary);
+
+            return true;
+        }
+
+        private static bool IsPassageTypeCompatible(
+            ModulePassageType type,
+            GridBoundarySegment boundary)
+        {
+            switch (type)
+            {
+                case ModulePassageType.Door:
+                    return boundary.IsHorizontalPassage;
+
+                case ModulePassageType.Hatch:
+                case ModulePassageType.Ladder:
+                case ModulePassageType.Stairway:
+                case ModulePassageType.Elevator:
+                    return boundary.IsVerticalPassage;
+
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(type));
+            }
+        }
+
+        private static void ValidatePassageType(
+            ModulePassageType type)
+        {
+            if (!Enum.IsDefined(
+                    typeof(ModulePassageType),
+                    type))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(type));
+            }
+        }
+
+        private static void ValidateTraversalMode(
+            ModulePassageTraversalMode traversalMode)
+        {
+            if (!Enum.IsDefined(
+                    typeof(ModulePassageTraversalMode),
+                    traversalMode))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(traversalMode));
+            }
+        }
+
+        private void RemovePassagesForModule(
+            Guid moduleId)
+        {
+            Guid[] passageIds =
+                _passagesById
+                    .Values
+                    .Where(passage =>
+                        passage.ConnectsModule(
+                            moduleId))
+                    .Select(passage =>
+                        passage.Id)
+                    .ToArray();
+
+            foreach (Guid passageId in passageIds)
+            {
+                TryRemovePassage(
+                    passageId,
+                    out _);
+            }
         }
     }
 }
