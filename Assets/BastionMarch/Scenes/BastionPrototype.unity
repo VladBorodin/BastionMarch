@@ -635,6 +635,7 @@ GameObject:
   - component: {fileID: 1327780987}
   - component: {fileID: 1327780986}
   - component: {fileID: 1327780989}
+  - component: {fileID: 1327780990}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -760,6 +761,22 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &1327780990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1327780985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56666c5a40171f54783dd416a44f42bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.Physics2DRaycaster
+  m_EventMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_MaxRayIntersections: 0
 --- !u!1 &1357190223
 GameObject:
   m_ObjectHideFlags: 0
@@ -769,6 +786,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1357190224}
+  - component: {fileID: 1357190225}
   m_Layer: 0
   m_Name: ModuleSelectionController
   m_TagString: Untagged
@@ -791,6 +809,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1465430677}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1357190225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1357190223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ee8e06acd43bb147beadd6839fddf99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BastionMarch.Presentation::BastionMarch.Presentation.Bastions.ModuleSelectionController
+  _bastionView: {fileID: 1017962501}
 --- !u!1 &1465430676
 GameObject:
   m_ObjectHideFlags: 0

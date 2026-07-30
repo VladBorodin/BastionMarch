@@ -30,6 +30,8 @@ namespace BastionMarch.Presentation.Bastions
         [SerializeField]
         private ModuleView _moduleViewPrefab;
 
+        public event Action<ModuleView> ModuleClicked;
+
         private readonly Dictionary<Guid, ModuleView>
             _moduleViewsById = new();
 
@@ -135,6 +137,8 @@ namespace BastionMarch.Presentation.Bastions
                 module,
                 _layout);
 
+            moduleView.Clicked += HandleModuleViewClicked;
+
             _moduleViewsById.Add(
                 module.Id,
                 moduleView);
@@ -148,6 +152,9 @@ namespace BastionMarch.Presentation.Bastions
             {
                 if (moduleView != null)
                 {
+                    moduleView.Clicked -=
+                        HandleModuleViewClicked;
+
                     Destroy(
                         moduleView.gameObject);
                 }
@@ -207,6 +214,18 @@ namespace BastionMarch.Presentation.Bastions
                 throw new InvalidOperationException(
                     "BastionView requires ModuleView prefab.");
             }
+        }
+
+        private void HandleModuleViewClicked(
+            ModuleView moduleView)
+        {
+            if (moduleView == null)
+            {
+                return;
+            }
+
+            ModuleClicked?.Invoke(
+                moduleView);
         }
     }
 }

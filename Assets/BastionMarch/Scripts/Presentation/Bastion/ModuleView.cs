@@ -1,6 +1,7 @@
 using System;
 using BastionMarch.Simulation.Modules;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace BastionMarch.Presentation.Bastions
 {
@@ -15,9 +16,16 @@ namespace BastionMarch.Presentation.Bastions
     [RequireComponent(
         typeof(SpriteRenderer),
         typeof(BoxCollider2D))]
-    public sealed class ModuleView : MonoBehaviour
+    public sealed class ModuleView : MonoBehaviour, IPointerClickHandler
     {
         private const float MinimumVisualSize = 0.05f;
+
+        public event Action<ModuleView> Clicked;
+
+        private bool _isSelected;
+
+        public bool IsSelected =>
+            _isSelected;
 
         [Header("References")]
 
@@ -172,9 +180,7 @@ namespace BastionMarch.Presentation.Bastions
                     visualHeight,
                     1f);
 
-            _bodyRenderer.color =
-                GetTechnicalStateColor(
-                    _module.TechnicalState);
+            ApplyCurrentColor();
 
             _bodyRenderer.sortingOrder =
                 _sortingOrder;
@@ -246,6 +252,49 @@ namespace BastionMarch.Presentation.Bastions
                     Mathf.Max(0f, _inset.y));
 
             ResolveReferences();
+        }
+
+        public void SetSelected(
+            bool isSelected)
+        {
+            if (_isSelected == isSelected)
+            {
+                return;
+            }
+
+            _isSelected = isSelected;
+
+            if (IsBound)
+            {
+                ApplyCurrentColor();
+            }
+        }
+
+        public void OnPointerClick(
+            PointerEventData eventData)
+        {
+            if (eventData.button !=
+                PointerEventData.InputButton.Left)
+            {
+                return;
+            }
+
+            Clicked?.Invoke(this);
+        }
+
+        private void ApplyCurrentColor()
+        {
+            Color baseColor =
+                GetTechnicalStateColor(
+                    _module.TechnicalState);
+
+            _bodyRenderer.color =
+                _isSelected
+                    ? Color.Lerp(
+                        baseColor,
+                        Color.white,
+                        0.35f)
+                    : baseColor;
         }
     }
 }
