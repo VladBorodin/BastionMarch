@@ -1340,3 +1340,11 @@ Thermal ablation
 
 - [x] P1. Технический прототип бокового разреза.
 - [ ] P2. Базовая архитектура Presentation.
+
+### Прогресс P2
+
+- [x] P2.1. Неизменяемые снимки состояния.
+- [ ] P2.2. BastionPresenter и передача снимков во View.
+- [ ] P2.3. Отображение переходов.
+- [ ] P2.4. Заготовки BrigadeView и RouteView.
+- [ ] P2.5. TurnPlanView и CombatEffectPresenter.

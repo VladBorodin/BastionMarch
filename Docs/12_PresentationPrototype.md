@@ -141,3 +141,28 @@ PlayMode-тесты подтверждают:
 - RouteView;
 - TurnPlanView;
 - CombatEffectPresenter как точку расширения.
+
+## 12. Снимки состояния
+
+Presentation больше не должен постепенно усиливать
+прямую зависимость View от изменяемых объектов Simulation.
+
+Добавлены:
+
+- BastionPresentationState;
+- ModulePresentationState;
+- BastionPresentationStateFactory.
+
+Снимок является неизменяемым.
+
+Изменение ModuleInstance после создания снимка
+не изменяет уже созданный ModulePresentationState.
+
+Модули в снимке упорядочены детерминированно:
+
+1. Deck;
+2. X;
+3. ModuleId.
+
+На следующем подэтапе BastionPresenter начнёт
+передавать такие снимки в BastionView и ModuleView.
