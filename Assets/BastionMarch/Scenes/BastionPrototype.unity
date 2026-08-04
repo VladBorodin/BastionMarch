@@ -455,7 +455,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfd276dd2a6c1b841b5ca43cc48ea810, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BastionMarch.Presentation::BastionMarch.Presentation.Prototype.BastionPrototypeBootstrap
-  _bastionView: {fileID: 1017962501}
+  _bastionPresenter: {fileID: 1017962502}
 --- !u!1 &875554031
 GameObject:
   m_ObjectHideFlags: 0
@@ -546,6 +546,7 @@ GameObject:
   - component: {fileID: 1017962499}
   - component: {fileID: 1017962500}
   - component: {fileID: 1017962501}
+  - component: {fileID: 1017962502}
   m_Layer: 0
   m_Name: BastionView
   m_TagString: Untagged
@@ -604,6 +605,19 @@ MonoBehaviour:
   _gridView: {fileID: 605030200}
   _moduleContainer: {fileID: 146712004}
   _moduleViewPrefab: {fileID: 6048147538407362195, guid: 780f8f8b24a4b424fb60c268de755e72, type: 3}
+--- !u!114 &1017962502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1017962498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1eaf09cd360d1546a3c143bdd6e6df9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BastionMarch.Presentation::BastionMarch.Presentation.Bastions.BastionPresenter
+  _view: {fileID: 1017962501}
 --- !u!1 &1035551369
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,4 +1,5 @@
 using System;
+using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Simulation.Modules;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -6,26 +7,19 @@ using UnityEngine.EventSystems;
 namespace BastionMarch.Presentation.Bastions
 {
     /// <summary>
-    /// Временное визуальное представление одного
-    /// установленного модуля бастиона.
+    /// Визуальное представление неизменяемого
+    /// снимка одного модуля.
     ///
-    /// Компонент только отображает состояние Simulation
-    /// и не изменяет игровые правила.
+    /// Не хранит ModuleInstance.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(
         typeof(SpriteRenderer),
         typeof(BoxCollider2D))]
-    public sealed class ModuleView : MonoBehaviour, IPointerClickHandler
+    public sealed class ModuleView
+        : MonoBehaviour, IPointerClickHandler
     {
         private const float MinimumVisualSize = 0.05f;
-
-        public event Action<ModuleView> Clicked;
-
-        private bool _isSelected;
-
-        public bool IsSelected =>
-            _isSelected;
 
         [Header("References")]
 
@@ -37,8 +31,6 @@ namespace BastionMarch.Presentation.Bastions
 
         [Header("Layout")]
 
-        [Tooltip(
-            "Отступ прямоугольника модуля от линий сетки.")]
         [SerializeField]
         private Vector2 _inset =
             new Vector2(
@@ -82,20 +74,26 @@ namespace BastionMarch.Presentation.Bastions
                 0.20f,
                 1f);
 
-        private ModuleInstance _module;
+        private ModulePresentationState _state;
         private BastionGridLayout _layout;
+        private bool _isSelected;
+
+        public event Action<ModuleView> Clicked;
 
         public Guid ModuleId =>
-            _module != null
-                ? _module.Id
+            _state != null
+                ? _state.ModuleId
                 : Guid.Empty;
 
-        public ModuleInstance Module =>
-            _module;
+        public ModulePresentationState State =>
+            _state;
 
         public bool IsBound =>
-            _module != null &&
+            _state != null &&
             _layout != null;
+
+        public bool IsSelected =>
+            _isSelected;
 
         private void Reset()
         {
@@ -114,32 +112,51 @@ namespace BastionMarch.Presentation.Bastions
             ResolveReferences();
         }
 
-        /// <summary>
-        /// Привязывает View к конкретному экземпляру модуля.
-        /// </summary>
         public void Bind(
-            ModuleInstance module,
+            ModulePresentationState state,
             BastionGridLayout layout)
         {
-            _module = module ??
+            if (state == null)
+            {
                 throw new ArgumentNullException(
-                    nameof(module));
+                    nameof(state));
+            }
 
             _layout = layout ??
                 throw new ArgumentNullException(
                     nameof(layout));
 
+            ApplyState(state);
+        }
+
+        /// <summary>
+        /// Обновляет View новым снимком того же модуля.
+        /// </summary>
+        public void ApplyState(
+            ModulePresentationState state)
+        {
+            if (state == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(state));
+            }
+
+            if (_state != null &&
+                _state.ModuleId != state.ModuleId)
+            {
+                throw new InvalidOperationException(
+                    "ModuleView cannot be rebound to another module.");
+            }
+
+            _state = state;
+
             gameObject.name =
-                $"ModuleView_{module.Definition.Id}_" +
-                $"{module.Id:N}";
+                $"ModuleView_{state.DefinitionId}_" +
+                $"{state.ModuleId:N}";
 
             Refresh();
         }
 
-        /// <summary>
-        /// Обновляет положение, размер и цвет
-        /// из текущего состояния Simulation.
-        /// </summary>
         public void Refresh()
         {
             if (!IsBound)
@@ -152,7 +169,7 @@ namespace BastionMarch.Presentation.Bastions
 
             Vector2 fullSize =
                 _layout.GetModuleSizeLocal(
-                    _module.Definition.Size);
+                    _state.Size);
 
             float visualWidth =
                 Mathf.Max(
@@ -168,8 +185,8 @@ namespace BastionMarch.Presentation.Bastions
 
             transform.localPosition =
                 _layout.GetModuleCenterLocal(
-                    _module.Position,
-                    _module.Definition.Size);
+                    _state.Position,
+                    _state.Size);
 
             transform.localRotation =
                 Quaternion.identity;
@@ -188,10 +205,51 @@ namespace BastionMarch.Presentation.Bastions
             _hitCollider.offset =
                 Vector2.zero;
 
-            // Sprite имеет базовый размер 1 × 1,
-            // поэтому Collider масштабируется Transform.
             _hitCollider.size =
                 Vector2.one;
+        }
+
+        public void SetSelected(
+            bool isSelected)
+        {
+            if (_isSelected == isSelected)
+            {
+                return;
+            }
+
+            _isSelected = isSelected;
+
+            if (IsBound)
+            {
+                ApplyCurrentColor();
+            }
+        }
+
+        public void OnPointerClick(
+            PointerEventData eventData)
+        {
+            if (eventData.button !=
+                PointerEventData.InputButton.Left)
+            {
+                return;
+            }
+
+            Clicked?.Invoke(this);
+        }
+
+        private void ApplyCurrentColor()
+        {
+            Color baseColor =
+                GetTechnicalStateColor(
+                    _state.TechnicalState);
+
+            _bodyRenderer.color =
+                _isSelected
+                    ? Color.Lerp(
+                        baseColor,
+                        Color.white,
+                        0.35f)
+                    : baseColor;
         }
 
         private Color GetTechnicalStateColor(
@@ -252,49 +310,6 @@ namespace BastionMarch.Presentation.Bastions
                     Mathf.Max(0f, _inset.y));
 
             ResolveReferences();
-        }
-
-        public void SetSelected(
-            bool isSelected)
-        {
-            if (_isSelected == isSelected)
-            {
-                return;
-            }
-
-            _isSelected = isSelected;
-
-            if (IsBound)
-            {
-                ApplyCurrentColor();
-            }
-        }
-
-        public void OnPointerClick(
-            PointerEventData eventData)
-        {
-            if (eventData.button !=
-                PointerEventData.InputButton.Left)
-            {
-                return;
-            }
-
-            Clicked?.Invoke(this);
-        }
-
-        private void ApplyCurrentColor()
-        {
-            Color baseColor =
-                GetTechnicalStateColor(
-                    _module.TechnicalState);
-
-            _bodyRenderer.color =
-                _isSelected
-                    ? Color.Lerp(
-                        baseColor,
-                        Color.white,
-                        0.35f)
-                    : baseColor;
         }
     }
 }

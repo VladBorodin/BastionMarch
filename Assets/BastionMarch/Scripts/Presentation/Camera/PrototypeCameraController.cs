@@ -389,11 +389,11 @@ namespace BastionMarch.Presentation.CameraControl
             out Vector2 maximum)
         {
             float width =
-                _bastionView.Bastion.Width *
+                _bastionView.State.Width *
                 _layout.CellWidth;
 
             float height =
-                _bastionView.Bastion.DeckCount *
+                _bastionView.State.DeckCount *
                 _layout.DeckHeight;
 
             Vector3 bottomLeft =

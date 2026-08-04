@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 using BastionMarch.Presentation.Bastions;
-using BastionMarch.Simulation.Modules;
+using BastionMarch.Presentation.Bastions.State;
 using TMPro;
 using UnityEngine;
 
@@ -55,7 +55,7 @@ namespace BastionMarch.Presentation.UI
         private void Start()
         {
             Refresh(
-                _selectionController.SelectedModule);
+                _selectionController.SelectedState);
         }
 
         private void OnDisable()
@@ -68,13 +68,13 @@ namespace BastionMarch.Presentation.UI
         }
 
         private void HandleSelectionChanged(
-            ModuleInstance module)
+            ModulePresentationState module)
         {
             Refresh(module);
         }
 
         public void Refresh(
-            ModuleInstance module)
+            ModulePresentationState module)
         {
             ResolveReferences();
 
@@ -94,24 +94,23 @@ namespace BastionMarch.Presentation.UI
 
             AppendLine(
                 "Instance Id",
-                module.Id.ToString());
+                module.ModuleId.ToString());
 
             AppendLine(
                 "Definition Id",
-                module.Definition.Id);
+                module.DefinitionId);
 
             AppendLine(
                 "Name Key",
-                module.Definition
-                    .NameLocalizationKey);
+                module.NameLocalizationKey);
 
             AppendLine(
                 "Type",
-                module.Definition.Type.ToString());
+                module.Type.ToString());
 
             AppendLine(
                 "Category",
-                module.Definition.Category.ToString());
+                module.Category.ToString());
 
             AppendLine(
                 "Position",
@@ -120,15 +119,15 @@ namespace BastionMarch.Presentation.UI
 
             AppendLine(
                 "Size",
-                $"{module.Definition.Size.Width}" +
+                $"{module.Size.Width}" +
                 " × " +
-                $"{module.Definition.Size.Height}");
+                $"{module.Size.Height}");
 
             AppendLine(
                 "Durability",
                 $"{module.CurrentDurability}" +
                 " / " +
-                $"{module.Definition.MaxDurability}");
+                $"{module.MaximumDurability}");
 
             AppendLine(
                 "Technical State",
@@ -152,15 +151,11 @@ namespace BastionMarch.Presentation.UI
 
             AppendLine(
                 "Occupying Brigades",
-                module.OccupyingBrigadeIds
-                    .Count
-                    .ToString());
+                module.OccupyingBrigadeCount.ToString());
 
             AppendLine(
                 "Working Brigades",
-                module.WorkingBrigadeIds
-                    .Count
-                    .ToString());
+                module.WorkingBrigadeCount.ToString());
 
             _moduleInfoText.text =
                 _builder.ToString();

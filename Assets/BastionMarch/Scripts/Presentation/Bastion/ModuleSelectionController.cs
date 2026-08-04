@@ -1,13 +1,14 @@
 using System;
-using BastionMarch.Simulation.Modules;
+using BastionMarch.Presentation.Bastions.State;
 using UnityEngine;
 
 namespace BastionMarch.Presentation.Bastions
 {
     /// <summary>
-    /// Управляет выбором одного визуального модуля.
+    /// Управляет выбором одного ModuleView.
     ///
-    /// Контроллер не изменяет состояние Simulation.
+    /// Наружу передаёт неизменяемый снимок,
+    /// а не ModuleInstance.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ModuleSelectionController
@@ -22,12 +23,12 @@ namespace BastionMarch.Presentation.Bastions
             private set;
         }
 
-        public ModuleInstance SelectedModule =>
+        public ModulePresentationState SelectedState =>
             SelectedView != null
-                ? SelectedView.Module
+                ? SelectedView.State
                 : null;
 
-        public event Action<ModuleInstance>
+        public event Action<ModulePresentationState>
             SelectionChanged;
 
         private void Reset()
@@ -42,20 +43,30 @@ namespace BastionMarch.Presentation.Bastions
 
         private void OnEnable()
         {
-            if (_bastionView != null)
+            if (_bastionView == null)
             {
-                _bastionView.ModuleClicked +=
-                    HandleModuleClicked;
+                return;
             }
+
+            _bastionView.ModuleClicked +=
+                HandleModuleClicked;
+
+            _bastionView.StateRendered +=
+                HandleStateRendered;
         }
 
         private void OnDisable()
         {
-            if (_bastionView != null)
+            if (_bastionView == null)
             {
-                _bastionView.ModuleClicked -=
-                    HandleModuleClicked;
+                return;
             }
+
+            _bastionView.ModuleClicked -=
+                HandleModuleClicked;
+
+            _bastionView.StateRendered -=
+                HandleStateRendered;
         }
 
         public void Select(
@@ -84,7 +95,7 @@ namespace BastionMarch.Presentation.Bastions
                 true);
 
             SelectionChanged?.Invoke(
-                SelectedModule);
+                SelectedState);
         }
 
         public void ClearSelection()
@@ -107,6 +118,48 @@ namespace BastionMarch.Presentation.Bastions
             ModuleView moduleView)
         {
             Select(moduleView);
+        }
+
+        private void HandleStateRendered(
+            BastionPresentationState state)
+        {
+            if (state == null)
+            {
+                ClearSelection();
+                return;
+            }
+
+            if (SelectedView == null)
+            {
+                return;
+            }
+
+            Guid selectedModuleId =
+                SelectedView.ModuleId;
+
+            if (!_bastionView.TryGetModuleView(
+                    selectedModuleId,
+                    out ModuleView currentView))
+            {
+                ClearSelection();
+                return;
+            }
+
+            if (!ReferenceEquals(
+                    SelectedView,
+                    currentView))
+            {
+                SelectedView.SetSelected(
+                    false);
+
+                SelectedView = currentView;
+
+                SelectedView.SetSelected(
+                    true);
+            }
+
+            SelectionChanged?.Invoke(
+                SelectedState);
         }
 
         private void ResolveBastionView()

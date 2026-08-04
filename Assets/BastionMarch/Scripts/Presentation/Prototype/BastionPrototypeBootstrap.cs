@@ -13,35 +13,51 @@ namespace BastionMarch.Presentation.Prototype
         : MonoBehaviour
     {
         [SerializeField]
-        private BastionView _bastionView;
+        private BastionPresenter _bastionPresenter;
 
-        public Bastion Bastion { get; private set; }
+        public Bastion Bastion
+        {
+            get;
+            private set;
+        }
 
         private void Reset()
         {
-            if (_bastionView == null &&
-                transform.parent != null)
-            {
-                _bastionView =
-                    transform.parent
-                        .GetComponentInChildren<BastionView>(
-                            includeInactive: true);
-            }
+            ResolvePresenter();
         }
 
         private void Start()
         {
-            if (_bastionView == null)
+            if (_bastionPresenter == null)
             {
                 throw new InvalidOperationException(
-                    "Prototype bootstrap requires BastionView.");
+                    "Prototype bootstrap requires BastionPresenter.");
             }
 
             Bastion =
                 PrototypeBastionFactory.Create();
 
-            _bastionView.Bind(
+            _bastionPresenter.Initialize(
                 Bastion);
+        }
+
+        private void ResolvePresenter()
+        {
+            if (_bastionPresenter != null)
+            {
+                return;
+            }
+
+            if (transform.parent == null)
+            {
+                return;
+            }
+
+            _bastionPresenter =
+                transform.parent
+                    .GetComponentInChildren<
+                        BastionPresenter>(
+                            includeInactive: true);
         }
     }
 }
