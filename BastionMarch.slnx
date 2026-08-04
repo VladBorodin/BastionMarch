@@ -1,5 +1,6 @@
 ﻿<Solution>
   <Project Path="BastionMarch.Simulation.csproj" />
+  <Project Path="BastionMarch.Presentation.PlayModeTests.csproj" />
   <Project Path="BastionMarch.Simulation.EditModeTests.csproj" />
   <Project Path="BastionMarch.Presentation.csproj" />
 </Solution>

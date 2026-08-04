@@ -1,0 +1,20 @@
+{
+    "name": "BastionMarch.Presentation.PlayModeTests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:80505c2aeafc34d4488ef873e613d06c",
+        "GUID:927d92e7b928f4e499050e79265df5b2"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}
