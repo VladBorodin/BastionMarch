@@ -197,5 +197,249 @@ namespace BastionMarch.Presentation.PlayModeTests
                         module.ModuleId)
                     .ToArray());
         }
+
+        [Test]
+        public void CapturesPassageState()
+        {
+            var bastion =
+                new Bastion(
+                    name: "passage-snapshot-test",
+                    width: 4,
+                    deckCount: 2);
+
+            ModuleDefinition definition =
+                _catalog.GetRequired(
+                    ModuleDefinitionIds
+                        .SmallMachineRoom);
+
+            ModuleInstance left =
+                bastion.TryInstallModule(
+                        definition,
+                        new GridPosition(0, 0))
+                    .Module;
+
+            ModuleInstance right =
+                bastion.TryInstallModule(
+                        definition,
+                        new GridPosition(1, 0))
+                    .Module;
+
+            bool adjacencyFound =
+                bastion.TryGetModuleAdjacency(
+                    left.Id,
+                    right.Id,
+                    out ModuleAdjacency adjacency);
+
+            Assert.That(
+                adjacencyFound,
+                Is.True);
+
+            ModulePassagePlacementResult placement =
+                bastion.TryInstallPassage(
+                    left.Id,
+                    right.Id,
+                    adjacency.SharedBoundaries[0],
+                    ModulePassageType.Door,
+                    ModulePassageTraversalMode
+                        .Bidirectional);
+
+            Assert.That(
+                placement.IsSuccess,
+                Is.True);
+
+            placement.Passage.SetState(
+                ModulePassageState.Locked);
+
+            BastionPresentationState state =
+                BastionPresentationStateFactory
+                    .Capture(bastion);
+
+            Assert.That(
+                state.PassageCount,
+                Is.EqualTo(1));
+
+            PassagePresentationState passageState =
+                state.Passages[0];
+
+            Assert.That(
+                passageState.PassageId,
+                Is.EqualTo(
+                    placement.Passage.Id));
+
+            Assert.That(
+                passageState.SourceModuleId,
+                Is.EqualTo(left.Id));
+
+            Assert.That(
+                passageState.TargetModuleId,
+                Is.EqualTo(right.Id));
+
+            Assert.That(
+                passageState.Type,
+                Is.EqualTo(
+                    ModulePassageType.Door));
+
+            Assert.That(
+                passageState.State,
+                Is.EqualTo(
+                    ModulePassageState.Locked));
+
+            Assert.That(
+                passageState.IsHorizontal,
+                Is.True);
+        }
+
+        [Test]
+        public void CapturedPassageDoesNotChangeWithSimulation()
+        {
+            var bastion =
+                new Bastion(
+                    name: "immutable-passage-test",
+                    width: 4,
+                    deckCount: 2);
+
+            ModuleDefinition definition =
+                _catalog.GetRequired(
+                    ModuleDefinitionIds
+                        .SmallMachineRoom);
+
+            ModuleInstance left =
+                bastion.TryInstallModule(
+                        definition,
+                        new GridPosition(0, 0))
+                    .Module;
+
+            ModuleInstance right =
+                bastion.TryInstallModule(
+                        definition,
+                        new GridPosition(1, 0))
+                    .Module;
+
+            bastion.TryGetModuleAdjacency(
+                left.Id,
+                right.Id,
+                out ModuleAdjacency adjacency);
+
+            ModulePassage passage =
+                bastion.TryInstallPassage(
+                        left.Id,
+                        right.Id,
+                        adjacency.SharedBoundaries[0],
+                        ModulePassageType.Door,
+                        ModulePassageTraversalMode
+                            .Bidirectional)
+                    .Passage;
+
+            BastionPresentationState state =
+                BastionPresentationStateFactory
+                    .Capture(bastion);
+
+            PassagePresentationState captured =
+                state.Passages[0];
+
+            passage.SetState(
+                ModulePassageState.Blocked);
+
+            Assert.That(
+                captured.State,
+                Is.EqualTo(
+                    ModulePassageState.Open));
+
+            Assert.That(
+                passage.State,
+                Is.EqualTo(
+                    ModulePassageState.Blocked));
+        }
+
+        [Test]
+        public void PassagesAreCapturedInDeterministicBoundaryOrder()
+        {
+            var bastion =
+                new Bastion(
+                    name: "passage-order-test",
+                    width: 4,
+                    deckCount: 2);
+
+            ModuleDefinition definition =
+                _catalog.GetRequired(
+                    ModuleDefinitionIds
+                        .SmallMachineRoom);
+
+            ModuleInstance first =
+                bastion.TryInstallModule(
+                        definition,
+                        new GridPosition(0, 0))
+                    .Module;
+
+            ModuleInstance second =
+                bastion.TryInstallModule(
+                        definition,
+                        new GridPosition(1, 0))
+                    .Module;
+
+            ModuleInstance third =
+                bastion.TryInstallModule(
+                        definition,
+                        new GridPosition(2, 0))
+                    .Module;
+
+            ModulePassage rightPassage =
+                AddDoor(
+                    bastion,
+                    second,
+                    third);
+
+            ModulePassage leftPassage =
+                AddDoor(
+                    bastion,
+                    first,
+                    second);
+
+            BastionPresentationState state =
+                BastionPresentationStateFactory
+                    .Capture(bastion);
+
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    leftPassage.Id,
+                    rightPassage.Id
+                },
+                state.Passages
+                    .Select(passage =>
+                        passage.PassageId)
+                    .ToArray());
+        }
+
+        private static ModulePassage AddDoor(
+            Bastion bastion,
+            ModuleInstance source,
+            ModuleInstance target)
+        {
+            bool adjacencyFound =
+                bastion.TryGetModuleAdjacency(
+                    source.Id,
+                    target.Id,
+                    out ModuleAdjacency adjacency);
+
+            Assert.That(
+                adjacencyFound,
+                Is.True);
+
+            ModulePassagePlacementResult result =
+                bastion.TryInstallPassage(
+                    source.Id,
+                    target.Id,
+                    adjacency.SharedBoundaries[0],
+                    ModulePassageType.Door,
+                    ModulePassageTraversalMode
+                        .Bidirectional);
+
+            Assert.That(
+                result.IsSuccess,
+                Is.True);
+
+            return result.Passage;
+        }
     }
 }

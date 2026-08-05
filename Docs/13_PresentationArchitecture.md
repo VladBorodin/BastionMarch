@@ -88,3 +88,28 @@ BastionPresenter.RefreshPresentation()
 - RoutePresentationState и RouteView;
 - TurnPlanView;
 - CombatEffectPresenter.
+
+## 10. Снимки переходов
+
+PassagePresentationState содержит:
+
+- PassageId;
+- SourceModuleId;
+- TargetModuleId;
+- GridBoundarySegment;
+- ModulePassageType;
+- ModulePassageTraversalMode;
+- ModulePassageState.
+
+Снимок перехода неизменяем.
+
+Изменение ModulePassage после захвата не изменяет
+уже переданный объект Presentation.
+
+BastionPresentationState теперь содержит одновременно:
+
+- Modules;
+- Passages.
+
+Переходы упорядочиваются детерминированно
+по координатам общей границы, затем по PassageId.

@@ -32,12 +32,28 @@ namespace BastionMarch.Presentation.Bastions.State
                             module.Id)
                         .Select(CaptureModule);
 
+            IEnumerable<PassagePresentationState>
+                passageStates =
+                    bastion.Passages
+                        .OrderBy(passage =>
+                            passage.Boundary.CellA.Deck)
+                        .ThenBy(passage =>
+                            passage.Boundary.CellA.X)
+                        .ThenBy(passage =>
+                            passage.Boundary.CellB.Deck)
+                        .ThenBy(passage =>
+                            passage.Boundary.CellB.X)
+                        .ThenBy(passage =>
+                            passage.Id)
+                        .Select(CapturePassage);
+
             return new BastionPresentationState(
                 bastionId: bastion.Id,
                 name: bastion.Name,
                 width: bastion.Width,
                 deckCount: bastion.DeckCount,
-                modules: moduleStates);
+                modules: moduleStates,
+                passages: passageStates);
         }
 
         public static ModulePresentationState CaptureModule(
@@ -82,6 +98,32 @@ namespace BastionMarch.Presentation.Bastions.State
                     module.OccupyingBrigadeIds.Count,
                 workingBrigadeCount:
                     module.WorkingBrigadeIds.Count);
+        }
+
+        public static PassagePresentationState
+            CapturePassage(
+                ModulePassage passage)
+        {
+            if (passage == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(passage));
+            }
+
+            return new PassagePresentationState(
+                passageId: passage.Id,
+                sourceModuleId:
+                    passage.SourceModuleId,
+                targetModuleId:
+                    passage.TargetModuleId,
+                boundary:
+                    passage.Boundary,
+                type:
+                    passage.Type,
+                traversalMode:
+                    passage.TraversalMode,
+                state:
+                    passage.State);
         }
     }
 }
