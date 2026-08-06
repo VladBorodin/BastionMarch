@@ -1,4 +1,5 @@
 using System;
+using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Modules;
 using UnityEngine;
 
@@ -105,6 +106,39 @@ namespace BastionMarch.Presentation.Bastions
             return new Vector2(
                 size.Width * _cellWidth,
                 size.Height * _deckHeight);
+        }
+
+        /// <summary>
+        /// Центр общей границы двух соседних клеток
+        /// в локальных координатах BastionView.
+        /// </summary>
+        public Vector3 GetBoundaryCenterLocal(
+            GridBoundarySegment boundary)
+        {
+            Vector3 firstCellCenter =
+                GetCellCenterLocal(
+                    boundary.CellA);
+
+            Vector3 secondCellCenter =
+                GetCellCenterLocal(
+                    boundary.CellB);
+
+            return
+                (firstCellCenter +
+                secondCellCenter) *
+                0.5f;
+        }
+
+        /// <summary>
+        /// Центр общей границы двух соседних клеток
+        /// в мировых координатах.
+        /// </summary>
+        public Vector3 GetBoundaryCenterWorld(
+            GridBoundarySegment boundary)
+        {
+            return transform.TransformPoint(
+                GetBoundaryCenterLocal(
+                    boundary));
         }
 
         public Vector3 GetCellCenterWorld(

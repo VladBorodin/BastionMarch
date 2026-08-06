@@ -14,7 +14,7 @@ namespace BastionMarch.Presentation.Bastions
     [DisallowMultipleComponent]
     public sealed class BastionView : MonoBehaviour
     {
-        [Header("References")]
+        [Header("Common references")]
 
         [SerializeField]
         private BastionGridLayout _layout;
@@ -22,14 +22,27 @@ namespace BastionMarch.Presentation.Bastions
         [SerializeField]
         private BastionGridView _gridView;
 
+        [Header("Module presentation")]
+
         [SerializeField]
         private Transform _moduleContainer;
 
         [SerializeField]
         private ModuleView _moduleViewPrefab;
 
+        [Header("Passage presentation")]
+
+        [SerializeField]
+        private Transform _passageContainer;
+
+        [SerializeField]
+        private PassageView _passageViewPrefab;
+
         private readonly Dictionary<Guid, ModuleView>
             _moduleViewsById = new();
+
+        private readonly Dictionary<Guid, PassageView>
+            _passageViewsById = new();
 
         public BastionPresentationState State
         {
@@ -49,6 +62,21 @@ namespace BastionMarch.Presentation.Bastions
                     view.State.Position.X)
                 .ThenBy(view =>
                     view.ModuleId)
+                .ToArray();
+
+        public IReadOnlyCollection<PassageView> PassageViews =>
+            _passageViewsById
+                .Values
+                .OrderBy(view =>
+                    view.State.Boundary.CellA.Deck)
+                .ThenBy(view =>
+                    view.State.Boundary.CellA.X)
+                .ThenBy(view =>
+                    view.State.Boundary.CellB.Deck)
+                .ThenBy(view =>
+                    view.State.Boundary.CellB.X)
+                .ThenBy(view =>
+                    view.PassageId)
                 .ToArray();
 
         public event Action<ModuleView> ModuleClicked;
@@ -94,9 +122,51 @@ namespace BastionMarch.Presentation.Bastions
                     state.DeckCount);
             }
 
+            RenderModules(
+                state.Modules);
+
+            RenderPassages(
+                state.Passages);
+
+            StateRendered?.Invoke(State);
+        }
+
+        public bool TryGetModuleView(
+            Guid moduleId,
+            out ModuleView moduleView)
+        {
+            return _moduleViewsById.TryGetValue(
+                moduleId,
+                out moduleView);
+        }
+
+        public bool TryGetPassageView(
+            Guid passageId,
+            out PassageView passageView)
+        {
+            return _passageViewsById.TryGetValue(
+                passageId,
+                out passageView);
+        }
+
+        public void Clear()
+        {
+            ClearPassageViews();
+            ClearModuleViews();
+            _gridView.ClearGrid();
+
+            State = null;
+
+            StateRendered?.Invoke(null);
+        }
+
+        private void RenderModules(
+            IReadOnlyList<ModulePresentationState>
+                moduleStates)
+        {
             var incomingModuleIds =
                 new HashSet<Guid>(
-                    state.Modules.Select(
+                    moduleStates.Select(
                         module =>
                             module.ModuleId));
 
@@ -105,7 +175,7 @@ namespace BastionMarch.Presentation.Bastions
 
             foreach (
                 ModulePresentationState moduleState
-                in state.Modules)
+                in moduleStates)
             {
                 if (_moduleViewsById.TryGetValue(
                         moduleState.ModuleId,
@@ -120,27 +190,38 @@ namespace BastionMarch.Presentation.Bastions
                 CreateModuleView(
                     moduleState);
             }
-
-            StateRendered?.Invoke(State);
         }
 
-        public bool TryGetModuleView(
-            Guid moduleId,
-            out ModuleView moduleView)
+        private void RenderPassages(
+            IReadOnlyList<PassagePresentationState>
+                passageStates)
         {
-            return _moduleViewsById.TryGetValue(
-                moduleId,
-                out moduleView);
-        }
+            var incomingPassageIds =
+                new HashSet<Guid>(
+                    passageStates.Select(
+                        passage =>
+                            passage.PassageId));
 
-        public void Clear()
-        {
-            ClearModuleViews();
-            _gridView.ClearGrid();
+            RemoveMissingPassageViews(
+                incomingPassageIds);
 
-            State = null;
+            foreach (
+                PassagePresentationState passageState
+                in passageStates)
+            {
+                if (_passageViewsById.TryGetValue(
+                        passageState.PassageId,
+                        out PassageView existingView))
+                {
+                    existingView.ApplyState(
+                        passageState);
 
-            StateRendered?.Invoke(null);
+                    continue;
+                }
+
+                CreatePassageView(
+                    passageState);
+            }
         }
 
         private void CreateModuleView(
@@ -163,6 +244,23 @@ namespace BastionMarch.Presentation.Bastions
                 moduleView);
         }
 
+        private void CreatePassageView(
+            PassagePresentationState state)
+        {
+            PassageView passageView =
+                Instantiate(
+                    _passageViewPrefab,
+                    _passageContainer);
+
+            passageView.Bind(
+                state,
+                _layout);
+
+            _passageViewsById.Add(
+                state.PassageId,
+                passageView);
+        }
+
         private void RemoveMissingModuleViews(
             ISet<Guid> incomingModuleIds)
         {
@@ -174,7 +272,9 @@ namespace BastionMarch.Presentation.Bastions
                             moduleId))
                     .ToArray();
 
-            foreach (Guid moduleId in removedModuleIds)
+            foreach (
+                Guid moduleId
+                in removedModuleIds)
             {
                 ModuleView moduleView =
                     _moduleViewsById[moduleId];
@@ -189,6 +289,35 @@ namespace BastionMarch.Presentation.Bastions
                 {
                     Destroy(
                         moduleView.gameObject);
+                }
+            }
+        }
+
+        private void RemoveMissingPassageViews(
+            ISet<Guid> incomingPassageIds)
+        {
+            Guid[] removedPassageIds =
+                _passageViewsById
+                    .Keys
+                    .Where(passageId =>
+                        !incomingPassageIds.Contains(
+                            passageId))
+                    .ToArray();
+
+            foreach (
+                Guid passageId
+                in removedPassageIds)
+            {
+                PassageView passageView =
+                    _passageViewsById[passageId];
+
+                _passageViewsById.Remove(
+                    passageId);
+
+                if (passageView != null)
+                {
+                    Destroy(
+                        passageView.gameObject);
                 }
             }
         }
@@ -212,6 +341,24 @@ namespace BastionMarch.Presentation.Bastions
             }
 
             _moduleViewsById.Clear();
+        }
+
+        private void ClearPassageViews()
+        {
+            foreach (
+                PassageView passageView
+                in _passageViewsById.Values)
+            {
+                if (passageView == null)
+                {
+                    continue;
+                }
+
+                Destroy(
+                    passageView.gameObject);
+            }
+
+            _passageViewsById.Clear();
         }
 
         private void HandleModuleViewClicked(
@@ -244,39 +391,69 @@ namespace BastionMarch.Presentation.Bastions
 
             if (_moduleContainer == null)
             {
-                Transform child =
-                    transform.Find(
+                _moduleContainer =
+                    FindDirectChild(
                         "ModuleContainer");
+            }
 
-                if (child != null)
-                {
-                    _moduleContainer = child;
-                }
+            if (_passageContainer == null)
+            {
+                _passageContainer =
+                    FindDirectChild(
+                        "PassageContainer");
             }
 
             if (_layout == null)
             {
                 throw new InvalidOperationException(
-                    "BastionView requires BastionGridLayout.");
+                    "BastionView requires " +
+                    "BastionGridLayout.");
             }
 
             if (_gridView == null)
             {
                 throw new InvalidOperationException(
-                    "BastionView requires BastionGridView.");
+                    "BastionView requires " +
+                    "BastionGridView.");
             }
 
             if (_moduleContainer == null)
             {
                 throw new InvalidOperationException(
-                    "BastionView requires ModuleContainer.");
+                    "BastionView requires " +
+                    "ModuleContainer.");
             }
 
             if (_moduleViewPrefab == null)
             {
                 throw new InvalidOperationException(
-                    "BastionView requires ModuleView prefab.");
+                    "BastionView requires " +
+                    "ModuleView prefab.");
             }
+
+            if (_passageContainer == null)
+            {
+                throw new InvalidOperationException(
+                    "BastionView requires " +
+                    "PassageContainer.");
+            }
+
+            if (_passageViewPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "BastionView requires " +
+                    "PassageView prefab.");
+            }
+        }
+
+        private Transform FindDirectChild(
+            string childName)
+        {
+            Transform child =
+                transform.Find(
+                    childName);
+
+            return child;
         }
     }
 }

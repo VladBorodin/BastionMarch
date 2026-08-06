@@ -1,0 +1,1000 @@
+﻿==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Presentation\Bastion\BastionGridLayout.cs
+==================================================
+using System;
+using BastionMarch.Simulation.Modules;
+using UnityEngine;
+
+namespace BastionMarch.Presentation.Bastions
+{
+    /// <summary>
+    /// РџСЂРµРѕР±СЂР°Р·СѓРµС‚ РєРѕРѕСЂРґРёРЅР°С‚С‹ Simulation-СЃРµС‚РєРё
+    /// РІ Р»РѕРєР°Р»СЊРЅС‹Рµ Рё РјРёСЂРѕРІС‹Рµ РєРѕРѕСЂРґРёРЅР°С‚С‹ Unity.
+    ///
+    /// GridPosition РѕР±РѕР·РЅР°С‡Р°РµС‚ РЅРёР¶РЅСЋСЋ Р»РµРІСѓСЋ РєР»РµС‚РєСѓ.
+    /// Р’РёР·СѓР°Р»СЊРЅС‹Рµ РѕР±СЉРµРєС‚С‹ РјРѕРґСѓР»РµР№ СЂР°СЃРїРѕР»Р°РіР°СЋС‚СЃСЏ РїРѕ С†РµРЅС‚СЂСѓ.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class BastionGridLayout : MonoBehaviour
+    {
+        private const float MinimumCellDimension = 0.01f;
+
+        [Header("Cell dimensions")]
+
+        [SerializeField]
+        [Min(MinimumCellDimension)]
+        private float _cellWidth = 3f;
+
+        [SerializeField]
+        [Min(MinimumCellDimension)]
+        private float _deckHeight = 2f;
+
+        [Header("Grid origin")]
+
+        [Tooltip(
+            "Р›РѕРєР°Р»СЊРЅР°СЏ РїРѕР·РёС†РёСЏ РЅРёР¶РЅРµРіРѕ Р»РµРІРѕРіРѕ СѓРіР»Р° РєР»РµС‚РєРё X=0, Deck=0.")]
+        [SerializeField]
+        private Vector2 _localOrigin = Vector2.zero;
+
+        public float CellWidth =>
+            _cellWidth;
+
+        public float DeckHeight =>
+            _deckHeight;
+
+        public Vector2 LocalOrigin =>
+            _localOrigin;
+
+        /// <summary>
+        /// РќРёР¶РЅРёР№ Р»РµРІС‹Р№ СѓРіРѕР» СѓРєР°Р·Р°РЅРЅРѕР№ РєР»РµС‚РєРё
+        /// РІ Р»РѕРєР°Р»СЊРЅС‹С… РєРѕРѕСЂРґРёРЅР°С‚Р°С… BastionView.
+        /// </summary>
+        public Vector3 GetCellBottomLeftLocal(
+            GridPosition position)
+        {
+            return new Vector3(
+                _localOrigin.x +
+                    position.X * _cellWidth,
+                _localOrigin.y +
+                    position.Deck * _deckHeight,
+                0f);
+        }
+
+        /// <summary>
+        /// Р¦РµРЅС‚СЂ СѓРєР°Р·Р°РЅРЅРѕР№ РєР»РµС‚РєРё
+        /// РІ Р»РѕРєР°Р»СЊРЅС‹С… РєРѕРѕСЂРґРёРЅР°С‚Р°С… BastionView.
+        /// </summary>
+        public Vector3 GetCellCenterLocal(
+            GridPosition position)
+        {
+            Vector3 bottomLeft =
+                GetCellBottomLeftLocal(position);
+
+            return bottomLeft +
+                   new Vector3(
+                       _cellWidth * 0.5f,
+                       _deckHeight * 0.5f,
+                       0f);
+        }
+
+        /// <summary>
+        /// Р¦РµРЅС‚СЂ РјРѕРґСѓР»СЏ СЃ СѓС‡С‘С‚РѕРј РµРіРѕ СЂР°Р·РјРµСЂР°.
+        /// </summary>
+        public Vector3 GetModuleCenterLocal(
+            GridPosition position,
+            GridSize size)
+        {
+            Vector3 bottomLeft =
+                GetCellBottomLeftLocal(position);
+
+            return bottomLeft +
+                   new Vector3(
+                       size.Width *
+                           _cellWidth *
+                           0.5f,
+                       size.Height *
+                           _deckHeight *
+                           0.5f,
+                       0f);
+        }
+
+        /// <summary>
+        /// Р’РёР·СѓР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ РјРѕРґСѓР»СЏ
+        /// РІ Р»РѕРєР°Р»СЊРЅС‹С… РµРґРёРЅРёС†Р°С… Unity.
+        /// </summary>
+        public Vector2 GetModuleSizeLocal(
+            GridSize size)
+        {
+            return new Vector2(
+                size.Width * _cellWidth,
+                size.Height * _deckHeight);
+        }
+
+        public Vector3 GetCellCenterWorld(
+            GridPosition position)
+        {
+            return transform.TransformPoint(
+                GetCellCenterLocal(position));
+        }
+
+        public Vector3 GetModuleCenterWorld(
+            GridPosition position,
+            GridSize size)
+        {
+            return transform.TransformPoint(
+                GetModuleCenterLocal(
+                    position,
+                    size));
+        }
+
+        private void Reset()
+        {
+            _cellWidth = 3f;
+            _deckHeight = 2f;
+            _localOrigin = Vector2.zero;
+        }
+
+        private void OnValidate()
+        {
+            _cellWidth =
+                Math.Max(
+                    MinimumCellDimension,
+                    _cellWidth);
+
+            _deckHeight =
+                Math.Max(
+                    MinimumCellDimension,
+                    _deckHeight);
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Presentation\Bastion\BastionView.cs
+==================================================
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using BastionMarch.Presentation.Bastions.State;
+using UnityEngine;
+
+namespace BastionMarch.Presentation.Bastions
+{
+    /// <summary>
+    /// РљРѕСЂРЅРµРІРѕРµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ СЃРЅРёРјРєР° СЃРѕСЃС‚РѕСЏРЅРёСЏ Р±Р°СЃС‚РёРѕРЅР°.
+    ///
+    /// РќРµ С…СЂР°РЅРёС‚ РїСЂСЏРјСѓСЋ СЃСЃС‹Р»РєСѓ РЅР° Simulation Bastion.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class BastionView : MonoBehaviour
+    {
+        [Header("References")]
+
+        [SerializeField]
+        private BastionGridLayout _layout;
+
+        [SerializeField]
+        private BastionGridView _gridView;
+
+        [SerializeField]
+        private Transform _moduleContainer;
+
+        [SerializeField]
+        private ModuleView _moduleViewPrefab;
+
+        private readonly Dictionary<Guid, ModuleView>
+            _moduleViewsById = new();
+
+        public BastionPresentationState State
+        {
+            get;
+            private set;
+        }
+
+        public bool IsBound =>
+            State != null;
+
+        public IReadOnlyCollection<ModuleView> ModuleViews =>
+            _moduleViewsById
+                .Values
+                .OrderBy(view =>
+                    view.State.Position.Deck)
+                .ThenBy(view =>
+                    view.State.Position.X)
+                .ThenBy(view =>
+                    view.ModuleId)
+                .ToArray();
+
+        public event Action<ModuleView> ModuleClicked;
+
+        public event Action<BastionPresentationState>
+            StateRendered;
+
+        private void Reset()
+        {
+            ResolveReferences();
+        }
+
+        private void Awake()
+        {
+            ResolveReferences();
+        }
+
+        public void Render(
+            BastionPresentationState state)
+        {
+            if (state == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(state));
+            }
+
+            ResolveReferences();
+
+            bool gridMustBeRendered =
+                State == null ||
+                State.Width != state.Width ||
+                State.DeckCount != state.DeckCount ||
+                _gridView.RenderedWidth != state.Width ||
+                _gridView.RenderedDeckCount !=
+                    state.DeckCount;
+
+            State = state;
+
+            if (gridMustBeRendered)
+            {
+                _gridView.RenderGrid(
+                    state.Width,
+                    state.DeckCount);
+            }
+
+            var incomingModuleIds =
+                new HashSet<Guid>(
+                    state.Modules.Select(
+                        module =>
+                            module.ModuleId));
+
+            RemoveMissingModuleViews(
+                incomingModuleIds);
+
+            foreach (
+                ModulePresentationState moduleState
+                in state.Modules)
+            {
+                if (_moduleViewsById.TryGetValue(
+                        moduleState.ModuleId,
+                        out ModuleView existingView))
+                {
+                    existingView.ApplyState(
+                        moduleState);
+
+                    continue;
+                }
+
+                CreateModuleView(
+                    moduleState);
+            }
+
+            StateRendered?.Invoke(State);
+        }
+
+        public bool TryGetModuleView(
+            Guid moduleId,
+            out ModuleView moduleView)
+        {
+            return _moduleViewsById.TryGetValue(
+                moduleId,
+                out moduleView);
+        }
+
+        public void Clear()
+        {
+            ClearModuleViews();
+            _gridView.ClearGrid();
+
+            State = null;
+
+            StateRendered?.Invoke(null);
+        }
+
+        private void CreateModuleView(
+            ModulePresentationState state)
+        {
+            ModuleView moduleView =
+                Instantiate(
+                    _moduleViewPrefab,
+                    _moduleContainer);
+
+            moduleView.Bind(
+                state,
+                _layout);
+
+            moduleView.Clicked +=
+                HandleModuleViewClicked;
+
+            _moduleViewsById.Add(
+                state.ModuleId,
+                moduleView);
+        }
+
+        private void RemoveMissingModuleViews(
+            ISet<Guid> incomingModuleIds)
+        {
+            Guid[] removedModuleIds =
+                _moduleViewsById
+                    .Keys
+                    .Where(moduleId =>
+                        !incomingModuleIds.Contains(
+                            moduleId))
+                    .ToArray();
+
+            foreach (Guid moduleId in removedModuleIds)
+            {
+                ModuleView moduleView =
+                    _moduleViewsById[moduleId];
+
+                moduleView.Clicked -=
+                    HandleModuleViewClicked;
+
+                _moduleViewsById.Remove(
+                    moduleId);
+
+                if (moduleView != null)
+                {
+                    Destroy(
+                        moduleView.gameObject);
+                }
+            }
+        }
+
+        private void ClearModuleViews()
+        {
+            foreach (
+                ModuleView moduleView
+                in _moduleViewsById.Values)
+            {
+                if (moduleView == null)
+                {
+                    continue;
+                }
+
+                moduleView.Clicked -=
+                    HandleModuleViewClicked;
+
+                Destroy(
+                    moduleView.gameObject);
+            }
+
+            _moduleViewsById.Clear();
+        }
+
+        private void HandleModuleViewClicked(
+            ModuleView moduleView)
+        {
+            if (moduleView == null)
+            {
+                return;
+            }
+
+            ModuleClicked?.Invoke(
+                moduleView);
+        }
+
+        private void ResolveReferences()
+        {
+            if (_layout == null)
+            {
+                _layout =
+                    GetComponent<BastionGridLayout>();
+            }
+
+            if (_gridView == null)
+            {
+                _gridView =
+                    GetComponentInChildren<
+                        BastionGridView>(
+                            includeInactive: true);
+            }
+
+            if (_moduleContainer == null)
+            {
+                Transform child =
+                    transform.Find(
+                        "ModuleContainer");
+
+                if (child != null)
+                {
+                    _moduleContainer = child;
+                }
+            }
+
+            if (_layout == null)
+            {
+                throw new InvalidOperationException(
+                    "BastionView requires BastionGridLayout.");
+            }
+
+            if (_gridView == null)
+            {
+                throw new InvalidOperationException(
+                    "BastionView requires BastionGridView.");
+            }
+
+            if (_moduleContainer == null)
+            {
+                throw new InvalidOperationException(
+                    "BastionView requires ModuleContainer.");
+            }
+
+            if (_moduleViewPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "BastionView requires ModuleView prefab.");
+            }
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Presentation\Prototype\PrototypeBastionFactory.cs
+==================================================
+using System;
+using System.Collections.Generic;
+using BastionMarch.Simulation.Bastions;
+using BastionMarch.Simulation.Modules;
+using BastionMarch.Simulation.Modules.Catalog;
+using BastionMarch.Simulation.Power;
+
+namespace BastionMarch.Presentation.Prototype
+{
+    /// <summary>
+    /// РЎРѕР·РґР°С‘С‚ РІСЂРµРјРµРЅРЅСѓСЋ РјРѕРґРµР»СЊ Р±Р°СЃС‚РёРѕРЅР° РґР»СЏ СЂР°Р·СЂР°Р±РѕС‚РєРё
+    /// Presentation-СЃР»РѕСЏ.
+    ///
+    /// Р­С‚Рѕ РЅРµ РєР°С‚Р°Р»РѕРі РёРіСЂРѕРІРѕРіРѕ РєРѕРЅС‚РµРЅС‚Р° Рё РЅРµ СЃРѕС…СЂР°РЅРµРЅРёРµ.
+    /// </summary>
+    public static class PrototypeBastionFactory
+    {
+        private const int PrototypeWidth = 8;
+        private const int PrototypeDeckCount = 3;
+
+        public static Bastion Create()
+        {
+            ModuleDefinitionCatalog catalog =
+                InitialModuleDefinitions.CreateCatalog();
+
+            var bastion =
+                new Bastion(
+                    name: "presentation-prototype",
+                    width: PrototypeWidth,
+                    deckCount: PrototypeDeckCount);
+
+            var installedModules =
+                new List<ModuleInstance>();
+
+            installedModules.Add(
+                InstallFirstAvailable(
+                    bastion,
+                    catalog.GetRequired(
+                        ModuleDefinitionIds
+                            .LargeMachineRoom)));
+
+            installedModules.Add(
+                InstallFirstAvailable(
+                    bastion,
+                    catalog.GetRequired(
+                        ModuleDefinitionIds
+                            .StandardGeneratorRoom)));
+
+            installedModules.Add(
+                InstallFirstAvailable(
+                    bastion,
+                    catalog.GetRequired(
+                        ModuleDefinitionIds
+                            .StandardRepairBay)));
+
+            installedModules.Add(
+                InstallFirstAvailable(
+                    bastion,
+                    catalog.GetRequired(
+                        ModuleDefinitionIds
+                            .StandardAmmoStorage)));
+
+            installedModules.Add(
+                InstallFirstAvailable(
+                    bastion,
+                    catalog.GetRequired(
+                        ModuleDefinitionIds
+                            .StandardCrewQuarters)));
+
+            installedModules.Add(
+                InstallFirstAvailable(
+                    bastion,
+                    catalog.GetRequired(
+                        ModuleDefinitionIds
+                            .StandardVentilation)));
+
+            installedModules.Add(
+                InstallFirstAvailable(
+                    bastion,
+                    catalog.GetRequired(
+                        ModuleDefinitionIds
+                            .SmallMachineRoom)));
+
+            PreparePowerState(
+                bastion,
+                installedModules);
+
+            ApplyPrototypeDamage(
+                installedModules);
+
+            return bastion;
+        }
+
+        private static ModuleInstance InstallFirstAvailable(
+            Bastion bastion,
+            ModuleDefinition definition)
+        {
+            for (int deck = 0;
+                 deck < bastion.DeckCount;
+                 deck++)
+            {
+                for (int x = 0;
+                     x < bastion.Width;
+                     x++)
+                {
+                    ModulePlacementResult result =
+                        bastion.TryInstallModule(
+                            definition,
+                            new GridPosition(
+                                x,
+                                deck));
+
+                    if (result.IsSuccess)
+                    {
+                        return result.Module;
+                    }
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"Prototype module '{definition.Id}' " +
+                "could not be installed.");
+        }
+
+        private static void PreparePowerState(
+            Bastion bastion,
+            IReadOnlyList<ModuleInstance> modules)
+        {
+            foreach (
+                ModuleInstance module
+                in modules)
+            {
+                module.SetPowerMode(
+                    ModulePowerMode.Active);
+            }
+
+            bastion.ResolvePowerDistribution();
+        }
+
+        private static void ApplyPrototypeDamage(
+            IReadOnlyList<ModuleInstance> modules)
+        {
+            if (modules.Count < 3)
+            {
+                return;
+            }
+
+            ModuleInstance damagedModule =
+                modules[1];
+
+            int damagedStateDamage =
+                Math.Max(
+                    0,
+                    damagedModule.Definition.MaxDurability -
+                    damagedModule.Definition
+                        .DamagedDurabilityThreshold);
+
+            damagedModule.ApplyDamage(
+                damagedStateDamage);
+
+            ModuleInstance criticalModule =
+                modules[2];
+
+            int criticalStateDamage =
+                Math.Max(
+                    0,
+                    criticalModule.Definition.MaxDurability -
+                    criticalModule.Definition
+                        .CriticalDurabilityThreshold);
+
+            criticalModule.ApplyDamage(
+                criticalStateDamage);
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\GridBoundarySegment.cs
+==================================================
+using System;
+using BastionMarch.Simulation.Modules;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РљР°РЅРѕРЅРёС‡РµСЃРєРѕРµ РѕРїРёСЃР°РЅРёРµ РіСЂР°РЅРёС†С‹ РјРµР¶РґСѓ РґРІСѓРјСЏ
+    /// СЃРѕСЃРµРґРЅРёРјРё РєР»РµС‚РєР°РјРё СЃРµС‚РєРё.
+    ///
+    /// РџРѕСЂСЏРґРѕРє РїРµСЂРµРґР°РЅРЅС‹С… РєР»РµС‚РѕРє РЅРµ РІР»РёСЏРµС‚ РЅР° СЂР°РІРµРЅСЃС‚РІРѕ.
+    /// </summary>
+    public readonly struct GridBoundarySegment
+        : IEquatable<GridBoundarySegment>
+    {
+        public GridPosition CellA { get; }
+
+        public GridPosition CellB { get; }
+
+        /// <summary>
+        /// РџРµСЂРµС…РѕРґ РјРµР¶РґСѓ РєР»РµС‚РєР°РјРё РЅР°С…РѕРґРёС‚СЃСЏ РЅР° РѕРґРЅРѕРј СЌС‚Р°Р¶Рµ.
+        /// Р Р°Р·РґРµР»СЏСЋС‰Р°СЏ РёС… СЃС‚РµРЅР° РїСЂРё СЌС‚РѕРј РІРµСЂС‚РёРєР°Р»СЊРЅР°.
+        /// </summary>
+        public bool IsHorizontalPassage =>
+            CellA.Deck == CellB.Deck;
+
+        /// <summary>
+        /// РљР»РµС‚РєРё РЅР°С…РѕРґСЏС‚СЃСЏ РѕРґРЅР° РЅР°Рґ РґСЂСѓРіРѕР№.
+        /// Р”Р»СЏ СЂРµР°Р»СЊРЅРѕРіРѕ РїСЂРѕС…РѕРґР° РїРѕР·РґРЅРµРµ РїРѕС‚СЂРµР±СѓРµС‚СЃСЏ
+        /// Р»РµСЃС‚РЅРёС†Р°, Р»СЋРє РёР»Рё Р»РёС„С‚.
+        /// </summary>
+        public bool IsVerticalPassage =>
+            CellA.X == CellB.X;
+
+        public GridBoundarySegment(
+            GridPosition firstCell,
+            GridPosition secondCell)
+        {
+            int distance =
+                Math.Abs(
+                    firstCell.X -
+                    secondCell.X) +
+                Math.Abs(
+                    firstCell.Deck -
+                    secondCell.Deck);
+
+            if (distance != 1)
+            {
+                throw new ArgumentException(
+                    "Boundary cells must share exactly one side.");
+            }
+
+            if (ComesBefore(
+                    firstCell,
+                    secondCell))
+            {
+                CellA = firstCell;
+                CellB = secondCell;
+            }
+            else
+            {
+                CellA = secondCell;
+                CellB = firstCell;
+            }
+        }
+
+        private static bool ComesBefore(
+            GridPosition first,
+            GridPosition second)
+        {
+            if (first.Deck != second.Deck)
+            {
+                return first.Deck < second.Deck;
+            }
+
+            return first.X < second.X;
+        }
+
+        public bool Equals(
+            GridBoundarySegment other)
+        {
+            return CellA.Equals(other.CellA) &&
+                   CellB.Equals(other.CellB);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is GridBoundarySegment other &&
+                   Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return
+                    (CellA.GetHashCode() * 397) ^
+                    CellB.GetHashCode();
+            }
+        }
+
+        public static bool operator ==(
+            GridBoundarySegment left,
+            GridBoundarySegment right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(
+            GridBoundarySegment left,
+            GridBoundarySegment right)
+        {
+            return !left.Equals(right);
+        }
+
+        public override string ToString()
+        {
+            return $"{CellA} <-> {CellB}";
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModulePassage.cs
+==================================================
+using System;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РљРѕРЅРєСЂРµС‚РЅС‹Р№ РїРµСЂРµС…РѕРґ, СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹Р№ РЅР° СѓС‡Р°СЃС‚РєРµ
+    /// РѕР±С‰РµР№ РіСЂР°РЅРёС†С‹ РґРІСѓС… РјРѕРґСѓР»РµР№.
+    /// </summary>
+    public sealed class ModulePassage
+    {
+        public Guid Id { get; }
+
+        public Guid SourceModuleId { get; }
+
+        public Guid TargetModuleId { get; }
+
+        public GridBoundarySegment Boundary { get; }
+
+        public ModulePassageType Type { get; }
+
+        public ModulePassageTraversalMode TraversalMode
+        {
+            get;
+        }
+
+        public ModulePassageState State
+        {
+            get;
+            private set;
+        }
+
+        internal ModulePassage(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            GridBoundarySegment boundary,
+            ModulePassageType type,
+            ModulePassageTraversalMode traversalMode)
+        {
+            if (sourceModuleId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Source module id cannot be empty.",
+                    nameof(sourceModuleId));
+            }
+
+            if (targetModuleId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Target module id cannot be empty.",
+                    nameof(targetModuleId));
+            }
+
+            if (sourceModuleId == targetModuleId)
+            {
+                throw new ArgumentException(
+                    "A passage must connect two different modules.",
+                    nameof(targetModuleId));
+            }
+
+            ValidatePassageType(type);
+            ValidateTraversalMode(traversalMode);
+
+            Id = Guid.NewGuid();
+
+            SourceModuleId =
+                sourceModuleId;
+
+            TargetModuleId =
+                targetModuleId;
+
+            Boundary = boundary;
+            Type = type;
+            TraversalMode = traversalMode;
+
+            State =
+                ModulePassageState.Open;
+        }
+
+        public bool ConnectsModule(
+            Guid moduleId)
+        {
+            return moduleId == SourceModuleId ||
+                   moduleId == TargetModuleId;
+        }
+
+        public Guid GetOtherModuleId(
+            Guid moduleId)
+        {
+            if (moduleId == SourceModuleId)
+            {
+                return TargetModuleId;
+            }
+
+            if (moduleId == TargetModuleId)
+            {
+                return SourceModuleId;
+            }
+
+            throw new ArgumentException(
+                "The module is not connected by this passage.",
+                nameof(moduleId));
+        }
+
+        /// <summary>
+        /// РџСЂРѕРІРµСЂСЏРµС‚ С‚РѕР»СЊРєРѕ РєРѕРЅСЃС‚СЂСѓРєС‚РёРІРЅРѕРµ РЅР°РїСЂР°РІР»РµРЅРёРµ.
+        ///
+        /// РЎРѕСЃС‚РѕСЏРЅРёРµ, РїРёС‚Р°РЅРёРµ, РѕРіРѕРЅСЊ Рё РґСЂСѓРіРёРµ Р±Р»РѕРєРёСЂРѕРІРєРё
+        /// Р·РґРµСЃСЊ РЅР°РјРµСЂРµРЅРЅРѕ РЅРµ СѓС‡РёС‚С‹РІР°СЋС‚СЃСЏ.
+        /// </summary>
+        public bool AllowsDirection(
+            Guid fromModuleId,
+            Guid toModuleId)
+        {
+            if (fromModuleId == SourceModuleId &&
+                toModuleId == TargetModuleId)
+            {
+                return TraversalMode !=
+                    ModulePassageTraversalMode
+                        .TargetToSourceOnly;
+            }
+
+            if (fromModuleId == TargetModuleId &&
+                toModuleId == SourceModuleId)
+            {
+                return TraversalMode !=
+                    ModulePassageTraversalMode
+                        .SourceToTargetOnly;
+            }
+
+            return false;
+        }
+
+        public void SetState(
+            ModulePassageState state)
+        {
+            if (!Enum.IsDefined(
+                    typeof(ModulePassageState),
+                    state))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(state));
+            }
+
+            State = state;
+        }
+
+        private static void ValidatePassageType(
+            ModulePassageType type)
+        {
+            if (!Enum.IsDefined(
+                    typeof(ModulePassageType),
+                    type))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(type));
+            }
+        }
+
+        private static void ValidateTraversalMode(
+            ModulePassageTraversalMode traversalMode)
+        {
+            if (!Enum.IsDefined(
+                    typeof(ModulePassageTraversalMode),
+                    traversalMode))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(traversalMode));
+            }
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModulePassageState.cs
+==================================================
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// Р¤РёР·РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РїРµСЂРµС…РѕРґР°.
+    ///
+    /// РЎР°РјРѕ РїРѕ СЃРµР±Рµ СЃРѕСЃС‚РѕСЏРЅРёРµ РїРѕРєР° РЅРµ РѕРїСЂРµРґРµР»СЏРµС‚
+    /// РѕРєРѕРЅС‡Р°С‚РµР»СЊРЅСѓСЋ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїРµСЂРµРјРµС‰РµРЅРёСЏ.
+    /// Р­С‚Рѕ Р±СѓРґРµС‚ Р·Р°РґР°С‡РµР№ СЃРёСЃС‚РµРјС‹ РїСЂРѕС…РѕРґРёРјРѕСЃС‚Рё.
+    /// </summary>
+    public enum ModulePassageState
+    {
+        Open,
+
+        Closed,
+
+        Locked,
+
+        Blocked,
+
+        Destroyed
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModulePassageTraversalMode.cs
+==================================================
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// Р Р°Р·СЂРµС€С‘РЅРЅРѕРµ РЅР°РїСЂР°РІР»РµРЅРёРµ РґРІРёР¶РµРЅРёСЏ С‡РµСЂРµР· РїРµСЂРµС…РѕРґ.
+    ///
+    /// Source Рё Target СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‚ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°Рј,
+    /// СЃРѕС…СЂР°РЅС‘РЅРЅС‹Рј РІ ModulePassage.
+    /// </summary>
+    public enum ModulePassageTraversalMode
+    {
+        Bidirectional,
+
+        SourceToTargetOnly,
+
+        TargetToSourceOnly
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModulePassageType.cs
+==================================================
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// Р¤РёР·РёС‡РµСЃРєР°СЏ РєРѕРЅСЃС‚СЂСѓРєС†РёСЏ, РїРѕР·РІРѕР»СЏСЋС‰Р°СЏ РїРµСЂРµРјРµС‰Р°С‚СЊСЃСЏ
+    /// РјРµР¶РґСѓ РґРІСѓРјСЏ СЃРѕСЃРµРґРЅРёРјРё РѕС‚СЃРµРєР°РјРё.
+    /// </summary>
+    public enum ModulePassageType
+    {
+        /// <summary>
+        /// Р“РѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Р№ РїСЂРѕС…РѕРґ С‡РµСЂРµР· РѕР±С‰СѓСЋ СЃС‚РµРЅСѓ.
+        /// </summary>
+        Door,
+
+        /// <summary>
+        /// Р’РµСЂС‚РёРєР°Р»СЊРЅС‹Р№ РїСЂРѕС…РѕРґ С‡РµСЂРµР· РїРѕР» РёР»Рё РїРѕС‚РѕР»РѕРє.
+        /// </summary>
+        Hatch,
+
+        /// <summary>
+        /// Р’РµСЂС‚РёРєР°Р»СЊРЅР°СЏ РїРѕРґСЉС‘РјРЅР°СЏ Р»РµСЃС‚РЅРёС†Р°.
+        /// </summary>
+        Ladder,
+
+        /// <summary>
+        /// Р’РµСЂС‚РёРєР°Р»СЊРЅС‹Р№ Р»РµСЃС‚РЅРёС‡РЅС‹Р№ РїРµСЂРµС…РѕРґ.
+        /// </summary>
+        Stairway,
+
+        /// <summary>
+        /// Р’РµСЂС‚РёРєР°Р»СЊРЅС‹Р№ РјРµС…Р°РЅРёР·РёСЂРѕРІР°РЅРЅС‹Р№ РїРµСЂРµС…РѕРґ.
+        /// </summary>
+        Elevator
+    }
+}
+

@@ -605,6 +605,8 @@ MonoBehaviour:
   _gridView: {fileID: 605030200}
   _moduleContainer: {fileID: 146712004}
   _moduleViewPrefab: {fileID: 6048147538407362195, guid: 780f8f8b24a4b424fb60c268de755e72, type: 3}
+  _passageContainer: {fileID: 450914330}
+  _passageViewPrefab: {fileID: 4015774819001712555, guid: cb0dfc24c47fbe743aab5009f44d8f3f, type: 3}
 --- !u!114 &1017962502
 MonoBehaviour:
   m_ObjectHideFlags: 0

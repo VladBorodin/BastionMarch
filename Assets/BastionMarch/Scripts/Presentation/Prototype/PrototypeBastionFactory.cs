@@ -88,6 +88,10 @@ namespace BastionMarch.Presentation.Prototype
             ApplyPrototypeDamage(
                 installedModules);
 
+            InstallPrototypePassages(
+                bastion,
+                installedModules);
+
             return bastion;
         }
 
@@ -120,6 +124,167 @@ namespace BastionMarch.Presentation.Prototype
             throw new InvalidOperationException(
                 $"Prototype module '{definition.Id}' " +
                 "could not be installed.");
+        }
+
+        private static void InstallPrototypePassages(
+            Bastion bastion,
+            IReadOnlyList<ModuleInstance> modules)
+        {
+            if (bastion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(bastion));
+            }
+
+            if (modules == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(modules));
+            }
+
+            int verticalPassageIndex = 0;
+
+            for (int sourceIndex = 0;
+                sourceIndex < modules.Count;
+                sourceIndex++)
+            {
+                for (int targetIndex = sourceIndex + 1;
+                    targetIndex < modules.Count;
+                    targetIndex++)
+                {
+                    ModuleInstance source =
+                        modules[sourceIndex];
+
+                    ModuleInstance target =
+                        modules[targetIndex];
+
+                    bool adjacencyFound =
+                        bastion.TryGetModuleAdjacency(
+                            source.Id,
+                            target.Id,
+                            out ModuleAdjacency adjacency);
+
+                    if (!adjacencyFound ||
+                        adjacency.SharedBoundaries.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    foreach (
+                        GridBoundarySegment boundary
+                        in adjacency.SharedBoundaries)
+                    {
+                        ModulePassageType passageType =
+                            GetPrototypePassageType(
+                                boundary,
+                                verticalPassageIndex);
+
+                        ModulePassagePlacementResult result =
+                            bastion.TryInstallPassage(
+                                source.Id,
+                                target.Id,
+                                boundary,
+                                passageType,
+                                ModulePassageTraversalMode
+                                    .Bidirectional);
+
+                        if (!result.IsSuccess)
+                        {
+                            continue;
+                        }
+
+                        ApplyPrototypePassageState(
+                            result.Passage,
+                            bastion.Passages.Count - 1);
+
+                        if (boundary.IsVerticalPassage)
+                        {
+                            verticalPassageIndex++;
+                        }
+
+                        // Для соседних модулей на одном этаже
+                        // достаточно одной двери.
+                        if (boundary.IsHorizontalPassage)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (bastion.Passages.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    "Prototype bastion did not produce any passages.");
+            }
+        }
+
+        private static ModulePassageType GetPrototypePassageType(
+            GridBoundarySegment boundary,
+            int verticalPassageIndex)
+        {
+            if (boundary.IsHorizontalPassage)
+            {
+                return ModulePassageType.Door;
+            }
+
+            switch (verticalPassageIndex % 4)
+            {
+                case 0:
+                    return ModulePassageType.Hatch;
+
+                case 1:
+                    return ModulePassageType.Ladder;
+
+                case 2:
+                    return ModulePassageType.Stairway;
+
+                case 3:
+                    return ModulePassageType.Elevator;
+
+                default:
+                    throw new InvalidOperationException(
+                        "Unsupported prototype passage index.");
+            }
+        }
+
+        private static void ApplyPrototypePassageState(
+            ModulePassage passage,
+            int passageIndex)
+        {
+            if (passage == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(passage));
+            }
+
+            switch (passageIndex % 5)
+            {
+                case 0:
+                    passage.SetState(
+                        ModulePassageState.Open);
+                    break;
+
+                case 1:
+                    passage.SetState(
+                        ModulePassageState.Closed);
+                    break;
+
+                case 2:
+                    passage.SetState(
+                        ModulePassageState.Locked);
+                    break;
+
+                case 3:
+                    passage.SetState(
+                        ModulePassageState.Blocked);
+                    break;
+
+                case 4:
+                    passage.SetState(
+                        ModulePassageState.Destroyed);
+                    break;
+            }
         }
 
         private static void PreparePowerState(

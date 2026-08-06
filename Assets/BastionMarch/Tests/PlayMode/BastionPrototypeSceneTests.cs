@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Simulation.Modules;
+using BastionMarch.Simulation.Bastions;
 
 namespace BastionMarch.Presentation.PlayModeTests
 {
@@ -206,6 +207,156 @@ namespace BastionMarch.Presentation.PlayModeTests
             Assert.That(
                 presenter.CurrentState,
                 Is.SameAs(bastionView.State));
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PrototypeSceneCreatesPassageViews()
+        {
+            BastionPresenter presenter =
+                Object.FindAnyObjectByType<
+                    BastionPresenter>();
+
+            BastionView bastionView =
+                Object.FindAnyObjectByType<
+                    BastionView>();
+
+            Assert.That(
+                presenter,
+                Is.Not.Null);
+
+            Assert.That(
+                bastionView,
+                Is.Not.Null);
+
+            Assert.That(
+                presenter.CurrentState,
+                Is.Not.Null);
+
+            Assert.That(
+                presenter.CurrentState.PassageCount,
+                Is.GreaterThan(0));
+
+            Assert.That(
+                bastionView.PassageViews.Count,
+                Is.EqualTo(
+                    presenter.CurrentState.PassageCount));
+
+            foreach (
+                PassageView passageView
+                in bastionView.PassageViews)
+            {
+                Assert.That(
+                    passageView,
+                    Is.Not.Null);
+
+                Assert.That(
+                    passageView.IsBound,
+                    Is.True);
+
+                Assert.That(
+                    passageView.State,
+                    Is.Not.Null);
+
+                bool stateFound =
+                    presenter.CurrentState.TryGetPassage(
+                        passageView.PassageId,
+                        out PassagePresentationState
+                            passageState);
+
+                Assert.That(
+                    stateFound,
+                    Is.True);
+
+                Assert.That(
+                    passageView.State,
+                    Is.SameAs(
+                        passageState));
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PresenterRefreshesExistingPassageView()
+        {
+            BastionPrototypeBootstrap bootstrap =
+                Object.FindAnyObjectByType<
+                    BastionPrototypeBootstrap>();
+
+            BastionPresenter presenter =
+                Object.FindAnyObjectByType<
+                    BastionPresenter>();
+
+            BastionView bastionView =
+                Object.FindAnyObjectByType<
+                    BastionView>();
+
+            Assert.That(bootstrap, Is.Not.Null);
+            Assert.That(presenter, Is.Not.Null);
+            Assert.That(bastionView, Is.Not.Null);
+
+            PassagePresentationState beforeState =
+                presenter.CurrentState.Passages.First();
+
+            bool viewFoundBefore =
+                bastionView.TryGetPassageView(
+                    beforeState.PassageId,
+                    out PassageView beforeView);
+
+            Assert.That(
+                viewFoundBefore,
+                Is.True);
+
+            ModulePassage modelPassage =
+                bootstrap.Bastion.Passages.First(
+                    passage =>
+                        passage.Id ==
+                        beforeState.PassageId);
+
+            ModulePassageState newState =
+                modelPassage.State ==
+                ModulePassageState.Blocked
+                    ? ModulePassageState.Open
+                    : ModulePassageState.Blocked;
+
+            modelPassage.SetState(
+                newState);
+
+            // Старый снимок не меняется самостоятельно.
+            Assert.That(
+                beforeState.State,
+                Is.Not.EqualTo(
+                    newState));
+
+            presenter.RefreshPresentation();
+
+            bool viewFoundAfter =
+                bastionView.TryGetPassageView(
+                    beforeState.PassageId,
+                    out PassageView afterView);
+
+            Assert.That(
+                viewFoundAfter,
+                Is.True);
+
+            // GameObject не пересоздан.
+            Assert.That(
+                afterView,
+                Is.SameAs(
+                    beforeView));
+
+            // Но новый снимок получен.
+            Assert.That(
+                afterView.State,
+                Is.Not.SameAs(
+                    beforeState));
+
+            Assert.That(
+                afterView.State.State,
+                Is.EqualTo(
+                    newState));
 
             yield return null;
         }
