@@ -1,6 +1,8 @@
+using System;
 using System.Linq;
 using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Simulation.Bastions;
+using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Modules.Catalog;
 using BastionMarch.Simulation.Power;
@@ -440,6 +442,271 @@ namespace BastionMarch.Presentation.PlayModeTests
                 Is.True);
 
             return result.Passage;
+        }
+
+        [Test]
+        public void CapturesBrigadeStateAndOperationalPlacement()
+        {
+            var bastion =
+                new Bastion(
+                    name: "brigade-snapshot-test",
+                    width: 6,
+                    deckCount: 2);
+
+            ModuleInstance repairBay =
+                bastion.TryInstallModule(
+                        _catalog.GetRequired(
+                            ModuleDefinitionIds
+                                .StandardRepairBay),
+                        new GridPosition(0, 0))
+                    .Module;
+
+            var brigade =
+                new Brigade(
+                    number: 7,
+                    type: BrigadeType.Mechanic,
+                    currentPersonnel: 5,
+                    maximumPersonnel: 6,
+                    experience: 65,
+                    morale: 80,
+                    fatigue: 15,
+                    nickname: "Стальные руки");
+
+            Assert.That(
+                bastion.TryAddBrigade(
+                    brigade),
+                Is.True);
+
+            BrigadeOperationalResult deployment =
+                bastion.TryDeployBrigadeToModule(
+                    brigade.Id,
+                    repairBay.Id);
+
+            Assert.That(
+                deployment.IsSuccess,
+                Is.True);
+
+            BrigadeOperationalResult work =
+                bastion.TryStartBrigadeWork(
+                    brigade.Id);
+
+            Assert.That(
+                work.IsSuccess,
+                Is.True);
+
+            BastionPresentationState state =
+                BastionPresentationStateFactory
+                    .Capture(bastion);
+
+            Assert.That(
+                state.BrigadeCount,
+                Is.EqualTo(1));
+
+            BrigadePresentationState brigadeState =
+                state.Brigades[0];
+
+            Assert.That(
+                brigadeState.BrigadeId,
+                Is.EqualTo(brigade.Id));
+
+            Assert.That(
+                brigadeState.Number,
+                Is.EqualTo(7));
+
+            Assert.That(
+                brigadeState.Type,
+                Is.EqualTo(
+                    BrigadeType.Mechanic));
+
+            Assert.That(
+                brigadeState.CurrentPersonnel,
+                Is.EqualTo(5));
+
+            Assert.That(
+                brigadeState.MaximumUsefulPersonnel,
+                Is.EqualTo(6));
+
+            Assert.That(
+                brigadeState.Experience,
+                Is.EqualTo(65));
+
+            Assert.That(
+                brigadeState.Morale,
+                Is.EqualTo(80));
+
+            Assert.That(
+                brigadeState.Fatigue,
+                Is.EqualTo(15));
+
+            Assert.That(
+                brigadeState.Nickname,
+                Is.EqualTo(
+                    "Стальные руки"));
+
+            Assert.That(
+                brigadeState.CurrentModuleId,
+                Is.EqualTo(
+                    repairBay.Id));
+
+            Assert.That(
+                brigadeState.IsDeployed,
+                Is.True);
+
+            Assert.That(
+                brigadeState.IsWorking,
+                Is.True);
+        }
+
+        [Test]
+        public void CapturedBrigadeDoesNotChangeWithSimulation()
+        {
+            var bastion =
+                new Bastion(
+                    name: "immutable-brigade-test",
+                    width: 6,
+                    deckCount: 2);
+
+            ModuleInstance module =
+                bastion.TryInstallModule(
+                        _catalog.GetRequired(
+                            ModuleDefinitionIds
+                                .StandardRepairBay),
+                        new GridPosition(0, 0))
+                    .Module;
+
+            var brigade =
+                new Brigade(
+                    number: 1,
+                    type: BrigadeType.Mechanic,
+                    currentPersonnel: 6,
+                    maximumPersonnel: 6,
+                    experience: 50,
+                    morale: 90,
+                    fatigue: 10);
+
+            bastion.TryAddBrigade(
+                brigade);
+
+            bastion.TryDeployBrigadeToModule(
+                brigade.Id,
+                module.Id);
+
+            bastion.TryStartBrigadeWork(
+                brigade.Id);
+
+            BastionPresentationState state =
+                BastionPresentationStateFactory
+                    .Capture(bastion);
+
+            BrigadePresentationState captured =
+                state.Brigades[0];
+
+            brigade.ApplyCasualties(2);
+            brigade.ChangeMorale(-30);
+            brigade.ChangeFatigue(25);
+
+            bastion.TryStopBrigadeWork(
+                brigade.Id);
+
+            Assert.That(
+                captured.CurrentPersonnel,
+                Is.EqualTo(6));
+
+            Assert.That(
+                captured.Morale,
+                Is.EqualTo(90));
+
+            Assert.That(
+                captured.Fatigue,
+                Is.EqualTo(10));
+
+            Assert.That(
+                captured.IsWorking,
+                Is.True);
+
+            Assert.That(
+                brigade.CurrentPersonnel,
+                Is.EqualTo(4));
+
+            Assert.That(
+                brigade.Morale,
+                Is.EqualTo(60));
+
+            Assert.That(
+                brigade.Fatigue,
+                Is.EqualTo(35));
+        }
+
+        [Test]
+        public void BrigadesAreCapturedInDeterministicOrder()
+        {
+            var bastion =
+                new Bastion(
+                    name: "brigade-order-test",
+                    width: 4,
+                    deckCount: 2);
+
+            var firstId =
+                Guid.Parse(
+                    "00000000-0000-0000-0000-000000000001");
+
+            var secondId =
+                Guid.Parse(
+                    "00000000-0000-0000-0000-000000000002");
+
+            var thirdId =
+                Guid.Parse(
+                    "00000000-0000-0000-0000-000000000003");
+
+            var laterNumber =
+                new Brigade(
+                    id: thirdId,
+                    number: 3,
+                    type: BrigadeType.Gunner,
+                    currentPersonnel: 6,
+                    maximumPersonnel: 6);
+
+            var sameNumberSecond =
+                new Brigade(
+                    id: secondId,
+                    number: 2,
+                    type: BrigadeType.Recruit,
+                    currentPersonnel: 6,
+                    maximumPersonnel: 6);
+
+            var sameNumberFirst =
+                new Brigade(
+                    id: firstId,
+                    number: 2,
+                    type: BrigadeType.Mechanic,
+                    currentPersonnel: 6,
+                    maximumPersonnel: 6);
+
+            // Добавляем в намеренно перемешанном порядке.
+            bastion.TryAddBrigade(
+                laterNumber);
+
+            bastion.TryAddBrigade(
+                sameNumberSecond);
+
+            bastion.TryAddBrigade(
+                sameNumberFirst);
+
+            BastionPresentationState state =
+                BastionPresentationStateFactory
+                    .Capture(bastion);
+
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    sameNumberFirst.Id,
+                    sameNumberSecond.Id,
+                    laterNumber.Id
+                },
+                state.Brigades
+                    .Select(brigade =>
+                        brigade.BrigadeId)
+                    .ToArray());
         }
     }
 }

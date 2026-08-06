@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Modules;
+using BastionMarch.Simulation.Crew;
 
 namespace BastionMarch.Presentation.Bastions.State
 {
@@ -47,13 +48,26 @@ namespace BastionMarch.Presentation.Bastions.State
                             passage.Id)
                         .Select(CapturePassage);
 
+            IEnumerable<BrigadePresentationState>
+                brigadeStates =
+                    bastion.Brigades
+                        .OrderBy(brigade =>
+                            brigade.Number)
+                        .ThenBy(brigade =>
+                            brigade.Id)
+                        .Select(brigade =>
+                            CaptureBrigade(
+                                bastion,
+                                brigade));
+
             return new BastionPresentationState(
                 bastionId: bastion.Id,
                 name: bastion.Name,
                 width: bastion.Width,
                 deckCount: bastion.DeckCount,
                 modules: moduleStates,
-                passages: passageStates);
+                passages: passageStates,
+                brigades: brigadeStates);
         }
 
         public static ModulePresentationState CaptureModule(
@@ -124,6 +138,71 @@ namespace BastionMarch.Presentation.Bastions.State
                     passage.TraversalMode,
                 state:
                     passage.State);
+        }
+
+        public static BrigadePresentationState
+            CaptureBrigade(
+                Bastion bastion,
+                Brigade brigade)
+        {
+            if (bastion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(bastion));
+            }
+
+            if (brigade == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(brigade));
+            }
+
+            Guid? currentModuleId = null;
+            bool isWorking = false;
+
+            if (bastion.TryGetBrigadeLocation(
+                    brigade.Id,
+                    out ModuleInstance currentModule))
+            {
+                currentModuleId =
+                    currentModule.Id;
+
+                isWorking =
+                    currentModule
+                        .WorkingBrigadeIds
+                        .Contains(
+                            brigade.Id);
+            }
+
+            return new BrigadePresentationState(
+                brigadeId:
+                    brigade.Id,
+                number:
+                    brigade.Number,
+                type:
+                    brigade.Type,
+                currentPersonnel:
+                    brigade.CurrentPersonnel,
+                maximumUsefulPersonnel:
+                    brigade.MaximumPersonnel,
+                experience:
+                    brigade.Experience,
+                peakExperience:
+                    brigade.PeakExperience,
+                morale:
+                    brigade.Morale,
+                fatigue:
+                    brigade.Fatigue,
+                nickname:
+                    brigade.Nickname,
+                hasVeteranTradition:
+                    brigade.HasVeteranTradition,
+                isDisbanded:
+                    brigade.IsDisbanded,
+                currentModuleId:
+                    currentModuleId,
+                isWorking:
+                    isWorking);
         }
     }
 }

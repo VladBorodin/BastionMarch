@@ -25,8 +25,26 @@ namespace BastionMarch.Presentation.Bastions.State
             get;
         }
 
+        public IReadOnlyList<PassagePresentationState>
+            Passages
+        {
+            get;
+        }
+
+        public IReadOnlyList<BrigadePresentationState>
+            Brigades
+        {
+            get;
+        }
+
         public int ModuleCount =>
             Modules.Count;
+
+        public int PassageCount =>
+            Passages.Count;
+
+        public int BrigadeCount =>
+            Brigades.Count;
 
         public BastionPresentationState(
             Guid bastionId,
@@ -41,74 +59,11 @@ namespace BastionMarch.Presentation.Bastions.State
                 width,
                 deckCount,
                 modules,
-                Array.Empty<PassagePresentationState>())
+                Array.Empty<
+                    PassagePresentationState>(),
+                Array.Empty<
+                    BrigadePresentationState>())
         {
-            if (bastionId == Guid.Empty)
-            {
-                throw new ArgumentException(
-                    "Bastion id cannot be empty.",
-                    nameof(bastionId));
-            }
-
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException(
-                    "Bastion name cannot be empty.",
-                    nameof(name));
-            }
-
-            if (width <= 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(width));
-            }
-
-            if (deckCount <= 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(deckCount));
-            }
-
-            if (modules == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(modules));
-            }
-
-            ModulePresentationState[] moduleArray =
-                modules.ToArray();
-
-            if (moduleArray.Any(
-                    module => module == null))
-            {
-                throw new ArgumentException(
-                    "Module collection cannot contain null.",
-                    nameof(modules));
-            }
-
-            bool containsDuplicateIds =
-                moduleArray
-                    .GroupBy(module =>
-                        module.ModuleId)
-                    .Any(group =>
-                        group.Count() > 1);
-
-            if (containsDuplicateIds)
-            {
-                throw new ArgumentException(
-                    "Module collection contains duplicate ids.",
-                    nameof(modules));
-            }
-
-            BastionId = bastionId;
-            Name = name;
-            Width = width;
-            DeckCount = deckCount;
-
-            Modules =
-                new ReadOnlyCollection<
-                    ModulePresentationState>(
-                        moduleArray);
         }
 
         public BastionPresentationState(
@@ -120,6 +75,29 @@ namespace BastionMarch.Presentation.Bastions.State
                 modules,
             IEnumerable<PassagePresentationState>
                 passages)
+            : this(
+                bastionId,
+                name,
+                width,
+                deckCount,
+                modules,
+                passages,
+                Array.Empty<
+                    BrigadePresentationState>())
+        {
+        }
+
+        public BastionPresentationState(
+            Guid bastionId,
+            string name,
+            int width,
+            int deckCount,
+            IEnumerable<ModulePresentationState>
+                modules,
+            IEnumerable<PassagePresentationState>
+                passages,
+            IEnumerable<BrigadePresentationState>
+                brigades)
         {
             if (bastionId == Guid.Empty)
             {
@@ -159,55 +137,53 @@ namespace BastionMarch.Presentation.Bastions.State
                     nameof(passages));
             }
 
+            if (brigades == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(brigades));
+            }
+
             ModulePresentationState[] moduleArray =
                 modules.ToArray();
-
-            if (moduleArray.Any(
-                    module => module == null))
-            {
-                throw new ArgumentException(
-                    "Module collection cannot contain null.",
-                    nameof(modules));
-            }
-
-            bool containsDuplicateModuleIds =
-                moduleArray
-                    .GroupBy(module =>
-                        module.ModuleId)
-                    .Any(group =>
-                        group.Count() > 1);
-
-            if (containsDuplicateModuleIds)
-            {
-                throw new ArgumentException(
-                    "Module collection contains duplicate ids.",
-                    nameof(modules));
-            }
 
             PassagePresentationState[] passageArray =
                 passages.ToArray();
 
-            if (passageArray.Any(
-                    passage => passage == null))
-            {
-                throw new ArgumentException(
-                    "Passage collection cannot contain null.",
-                    nameof(passages));
-            }
+            BrigadePresentationState[] brigadeArray =
+                brigades.ToArray();
 
-            bool containsDuplicatePassageIds =
-                passageArray
-                    .GroupBy(passage =>
-                        passage.PassageId)
-                    .Any(group =>
-                        group.Count() > 1);
+            ValidateNoNullItems(
+                moduleArray,
+                nameof(modules));
 
-            if (containsDuplicatePassageIds)
-            {
-                throw new ArgumentException(
-                    "Passage collection contains duplicate ids.",
-                    nameof(passages));
-            }
+            ValidateNoNullItems(
+                passageArray,
+                nameof(passages));
+
+            ValidateNoNullItems(
+                brigadeArray,
+                nameof(brigades));
+
+            ValidateUniqueIds(
+                moduleArray.Select(
+                    module =>
+                        module.ModuleId),
+                "Module collection contains duplicate ids.",
+                nameof(modules));
+
+            ValidateUniqueIds(
+                passageArray.Select(
+                    passage =>
+                        passage.PassageId),
+                "Passage collection contains duplicate ids.",
+                nameof(passages));
+
+            ValidateUniqueIds(
+                brigadeArray.Select(
+                    brigade =>
+                        brigade.BrigadeId),
+                "Brigade collection contains duplicate ids.",
+                nameof(brigades));
 
             var moduleIds =
                 new HashSet<Guid>(
@@ -226,8 +202,24 @@ namespace BastionMarch.Presentation.Bastions.State
             if (passageReferencesMissingModule)
             {
                 throw new ArgumentException(
-                    "Passage references a module outside the snapshot.",
+                    "Passage references a module " +
+                    "outside the snapshot.",
                     nameof(passages));
+            }
+
+            bool brigadeReferencesMissingModule =
+                brigadeArray.Any(
+                    brigade =>
+                        brigade.CurrentModuleId.HasValue &&
+                        !moduleIds.Contains(
+                            brigade.CurrentModuleId.Value));
+
+            if (brigadeReferencesMissingModule)
+            {
+                throw new ArgumentException(
+                    "Brigade references a module " +
+                    "outside the snapshot.",
+                    nameof(brigades));
             }
 
             BastionId = bastionId;
@@ -244,6 +236,11 @@ namespace BastionMarch.Presentation.Bastions.State
                 new ReadOnlyCollection<
                     PassagePresentationState>(
                         passageArray);
+
+            Brigades =
+                new ReadOnlyCollection<
+                    BrigadePresentationState>(
+                        brigadeArray);
         }
 
         public bool TryGetModule(
@@ -272,13 +269,49 @@ namespace BastionMarch.Presentation.Bastions.State
             return passage != null;
         }
 
-        public IReadOnlyList<PassagePresentationState>
-            Passages
+        public bool TryGetBrigade(
+            Guid brigadeId,
+            out BrigadePresentationState brigade)
         {
-            get;
+            brigade =
+                Brigades.FirstOrDefault(
+                    item =>
+                        item.BrigadeId ==
+                        brigadeId);
+
+            return brigade != null;
         }
 
-        public int PassageCount =>
-            Passages.Count;
+        private static void ValidateNoNullItems<T>(
+            IEnumerable<T> items,
+            string parameterName)
+            where T : class
+        {
+            if (items.Any(
+                    item => item == null))
+            {
+                throw new ArgumentException(
+                    "Collection cannot contain null.",
+                    parameterName);
+            }
+        }
+
+        private static void ValidateUniqueIds(
+            IEnumerable<Guid> ids,
+            string message,
+            string parameterName)
+        {
+            bool containsDuplicates =
+                ids.GroupBy(id => id)
+                    .Any(group =>
+                        group.Count() > 1);
+
+            if (containsDuplicates)
+            {
+                throw new ArgumentException(
+                    message,
+                    parameterName);
+            }
+        }
     }
 }

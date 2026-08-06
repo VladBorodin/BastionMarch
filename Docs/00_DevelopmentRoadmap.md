@@ -1346,7 +1346,10 @@ Thermal ablation
 - [x] P2.1. Неизменяемые снимки состояния.
 - [x] P2.2. BastionPresenter и передача снимков во View.
 - [x] P2.3.1. Неизменяемые снимки переходов.
-- [ ] P2.3.2. PassageView и отображение переходов.
-- [ ] P2.4. Заготовки BrigadeView и RouteView.
+- [x] P2.3.2. PassageView и отображение переходов.
+- [x] P2.4.1. Неизменяемые снимки бригад.
+- [ ] P2.4.2. Технический BrigadeView.
+- [ ] P2.4.3. Отображение бригад в модулях.
+- [ ] P2.4.4. RouteView.
 - [ ] P2.5. TurnPlanView и CombatEffectPresenter.
 
