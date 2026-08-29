@@ -1339,7 +1339,7 @@ Thermal ablation
 ### Presentation
 
 - [x] P1. Технический прототип бокового разреза.
-- [ ] P2. Базовая архитектура Presentation.
+- [x] P2. Базовая архитектура Presentation.
 
 ### Прогресс P2
 
@@ -1351,5 +1351,5 @@ Thermal ablation
 - [x] P2.4.2. Технический BrigadeView.
 - [x] P2.4.3. Отображение бригад в модулях.
 - [x] P2.4.4. RouteView.
-- [ ] P2.5. TurnPlanView и CombatEffectPresenter.
+- [x] P2.5. TurnPlanView и CombatEffectPresenter.
 
