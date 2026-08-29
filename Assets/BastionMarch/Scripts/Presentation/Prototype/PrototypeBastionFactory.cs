@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BastionMarch.Simulation.Bastions;
+using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Modules.Catalog;
 using BastionMarch.Simulation.Power;
@@ -89,6 +90,10 @@ namespace BastionMarch.Presentation.Prototype
                 installedModules);
 
             InstallPrototypePassages(
+                bastion,
+                installedModules);
+
+            InstallPrototypeBrigades(
                 bastion,
                 installedModules);
 
@@ -284,6 +289,129 @@ namespace BastionMarch.Presentation.Prototype
                     passage.SetState(
                         ModulePassageState.Destroyed);
                     break;
+            }
+        }
+
+        private static void InstallPrototypeBrigades(
+            Bastion bastion,
+            IReadOnlyList<ModuleInstance> modules)
+        {
+            if (bastion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(bastion));
+            }
+
+            if (modules == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(modules));
+            }
+
+            if (modules.Count < 5)
+            {
+                throw new InvalidOperationException(
+                    "Prototype requires at least five modules " +
+                    "for brigade placement.");
+            }
+
+            // Две бригады намеренно находятся
+            // в одном ремонтном отсеке:
+            // одна работает, вторая остаётся свободной.
+            AddPrototypeBrigade(
+                bastion,
+                modules[2],
+                new Brigade(
+                    number: 1,
+                    type: BrigadeType.Mechanic,
+                    currentPersonnel: 6,
+                    maximumPersonnel: 6,
+                    experience: 65,
+                    morale: 85,
+                    fatigue: 20,
+                    nickname: "Молот"),
+                startWorking: true);
+
+            AddPrototypeBrigade(
+                bastion,
+                modules[2],
+                new Brigade(
+                    number: 2,
+                    type: BrigadeType.Recruit,
+                    currentPersonnel: 4,
+                    maximumPersonnel: 6,
+                    experience: 20,
+                    morale: 70,
+                    fatigue: 10),
+                startWorking: false);
+
+            AddPrototypeBrigade(
+                bastion,
+                modules[3],
+                new Brigade(
+                    number: 3,
+                    type: BrigadeType.Gunner,
+                    currentPersonnel: 6,
+                    maximumPersonnel: 6,
+                    experience: 55,
+                    morale: 80,
+                    fatigue: 15),
+                startWorking: false);
+
+            AddPrototypeBrigade(
+                bastion,
+                modules[4],
+                new Brigade(
+                    number: 4,
+                    type: BrigadeType.Signal,
+                    currentPersonnel: 3,
+                    maximumPersonnel: 4,
+                    experience: 40,
+                    morale: 75,
+                    fatigue: 25),
+                startWorking: false);
+        }
+
+        private static void AddPrototypeBrigade(
+            Bastion bastion,
+            ModuleInstance module,
+            Brigade brigade,
+            bool startWorking)
+        {
+            if (!bastion.TryAddBrigade(
+                    brigade))
+            {
+                throw new InvalidOperationException(
+                    $"Prototype brigade #{brigade.Number} " +
+                    "could not be added.");
+            }
+
+            BrigadeOperationalResult deployment =
+                bastion.TryDeployBrigadeToModule(
+                    brigade.Id,
+                    module.Id);
+
+            if (!deployment.IsSuccess)
+            {
+                throw new InvalidOperationException(
+                    $"Prototype brigade #{brigade.Number} " +
+                    "could not be deployed.");
+            }
+
+            if (!startWorking)
+            {
+                return;
+            }
+
+            BrigadeOperationalResult work =
+                bastion.TryStartBrigadeWork(
+                    brigade.Id);
+
+            if (!work.IsSuccess)
+            {
+                throw new InvalidOperationException(
+                    $"Prototype brigade #{brigade.Number} " +
+                    "could not start work.");
             }
         }
 

@@ -607,6 +607,8 @@ MonoBehaviour:
   _moduleViewPrefab: {fileID: 6048147538407362195, guid: 780f8f8b24a4b424fb60c268de755e72, type: 3}
   _passageContainer: {fileID: 450914330}
   _passageViewPrefab: {fileID: 4015774819001712555, guid: cb0dfc24c47fbe743aab5009f44d8f3f, type: 3}
+  _brigadeContainer: {fileID: 1650413426}
+  _brigadeViewPrefab: {fileID: 7245406128285923003, guid: f677c1f7bfbbced46bc7de3223c2b9b6, type: 3}
 --- !u!114 &1017962502
 MonoBehaviour:
   m_ObjectHideFlags: 0

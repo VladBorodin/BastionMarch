@@ -109,6 +109,113 @@ namespace BastionMarch.Presentation.Bastions
         }
 
         /// <summary>
+        /// Размер одного технического слота внутри модуля.
+        ///
+        /// Несколько объектов размещаются в строки,
+        /// содержащие не более maxColumns элементов.
+        /// </summary>
+        public Vector2 GetModuleSlotSizeLocal(
+            GridSize moduleSize,
+            int slotCount,
+            int maxColumns)
+        {
+            ValidateSlotGridArguments(
+                slotCount,
+                maxColumns);
+
+            int columnCount =
+                Math.Min(
+                    slotCount,
+                    maxColumns);
+
+            int rowCount =
+                (int)Math.Ceiling(
+                    slotCount /
+                    (double)columnCount);
+
+            Vector2 moduleVisualSize =
+                GetModuleSizeLocal(
+                    moduleSize);
+
+            return new Vector2(
+                moduleVisualSize.x /
+                    columnCount,
+                moduleVisualSize.y /
+                    rowCount);
+        }
+
+        /// <summary>
+        /// Центр одного технического слота
+        /// внутри указанного модуля.
+        /// </summary>
+        public Vector3 GetModuleSlotCenterLocal(
+            GridPosition modulePosition,
+            GridSize moduleSize,
+            int slotIndex,
+            int slotCount,
+            int maxColumns)
+        {
+            ValidateSlotGridArguments(
+                slotCount,
+                maxColumns);
+
+            if (slotIndex < 0 ||
+                slotIndex >= slotCount)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(slotIndex));
+            }
+
+            int columnCount =
+                Math.Min(
+                    slotCount,
+                    maxColumns);
+
+            int columnIndex =
+                slotIndex %
+                columnCount;
+
+            int rowIndex =
+                slotIndex /
+                columnCount;
+
+            Vector2 slotSize =
+                GetModuleSlotSizeLocal(
+                    moduleSize,
+                    slotCount,
+                    maxColumns);
+
+            Vector3 moduleBottomLeft =
+                GetCellBottomLeftLocal(
+                    modulePosition);
+
+            return moduleBottomLeft +
+                new Vector3(
+                    (columnIndex + 0.5f) *
+                        slotSize.x,
+                    (rowIndex + 0.5f) *
+                        slotSize.y,
+                    0f);
+        }
+
+        private static void ValidateSlotGridArguments(
+            int slotCount,
+            int maxColumns)
+        {
+            if (slotCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(slotCount));
+            }
+
+            if (maxColumns <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(maxColumns));
+            }
+        }
+
+        /// <summary>
         /// Центр общей границы двух соседних клеток
         /// в локальных координатах BastionView.
         /// </summary>

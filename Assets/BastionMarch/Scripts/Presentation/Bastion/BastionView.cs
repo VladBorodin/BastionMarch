@@ -38,11 +38,22 @@ namespace BastionMarch.Presentation.Bastions
         [SerializeField]
         private PassageView _passageViewPrefab;
 
+        [Header("Brigade presentation")]
+
+        [SerializeField]
+        private Transform _brigadeContainer;
+
+        [SerializeField]
+        private BrigadeView _brigadeViewPrefab;
+
         private readonly Dictionary<Guid, ModuleView>
             _moduleViewsById = new();
 
         private readonly Dictionary<Guid, PassageView>
             _passageViewsById = new();
+
+        private readonly Dictionary<Guid, BrigadeView>
+            _brigadeViewsById = new();
 
         public BastionPresentationState State
         {
@@ -77,6 +88,17 @@ namespace BastionMarch.Presentation.Bastions
                     view.State.Boundary.CellB.X)
                 .ThenBy(view =>
                     view.PassageId)
+                .ToArray();
+
+        public IReadOnlyCollection<BrigadeView> BrigadeViews =>
+            _brigadeViewsById
+                .Values
+                .OrderBy(view =>
+                    view.State.CurrentModuleId)
+                .ThenBy(view =>
+                    view.State.Number)
+                .ThenBy(view =>
+                    view.BrigadeId)
                 .ToArray();
 
         public event Action<ModuleView> ModuleClicked;
@@ -128,6 +150,9 @@ namespace BastionMarch.Presentation.Bastions
             RenderPassages(
                 state.Passages);
 
+            RenderBrigades(
+                state);
+
             StateRendered?.Invoke(State);
         }
 
@@ -149,8 +174,18 @@ namespace BastionMarch.Presentation.Bastions
                 out passageView);
         }
 
+        public bool TryGetBrigadeView(
+            Guid brigadeId,
+            out BrigadeView brigadeView)
+        {
+            return _brigadeViewsById.TryGetValue(
+                brigadeId,
+                out brigadeView);
+        }
+
         public void Clear()
         {
+            ClearBrigadeViews();
             ClearPassageViews();
             ClearModuleViews();
             _gridView.ClearGrid();
@@ -224,6 +259,83 @@ namespace BastionMarch.Presentation.Bastions
             }
         }
 
+        private void RenderBrigades(
+            BastionPresentationState state)
+        {
+            BrigadePresentationState[] deployedBrigades =
+                state.Brigades
+                    .Where(brigade =>
+                        brigade.IsDeployed)
+                    .ToArray();
+
+            var incomingBrigadeIds =
+                new HashSet<Guid>(
+                    deployedBrigades.Select(
+                        brigade =>
+                            brigade.BrigadeId));
+
+            RemoveMissingBrigadeViews(
+                incomingBrigadeIds);
+
+            var brigadesByModule =
+                deployedBrigades
+                    .GroupBy(brigade =>
+                        brigade.CurrentModuleId.Value)
+                    .OrderBy(group =>
+                        group.Key);
+
+            foreach (var moduleGroup in brigadesByModule)
+            {
+                if (!state.TryGetModule(
+                        moduleGroup.Key,
+                        out ModulePresentationState
+                            moduleState))
+                {
+                    throw new InvalidOperationException(
+                        "Deployed brigade references " +
+                        "a module missing from presentation state.");
+                }
+
+                BrigadePresentationState[] moduleBrigades =
+                    moduleGroup
+                        .OrderBy(brigade =>
+                            brigade.Number)
+                        .ThenBy(brigade =>
+                            brigade.BrigadeId)
+                        .ToArray();
+
+                int slotCount =
+                    moduleBrigades.Length;
+
+                for (int slotIndex = 0;
+                    slotIndex < slotCount;
+                    slotIndex++)
+                {
+                    BrigadePresentationState brigadeState =
+                        moduleBrigades[slotIndex];
+
+                    if (_brigadeViewsById.TryGetValue(
+                            brigadeState.BrigadeId,
+                            out BrigadeView existingView))
+                    {
+                        existingView.ApplyState(
+                            brigadeState,
+                            moduleState,
+                            slotIndex,
+                            slotCount);
+
+                        continue;
+                    }
+
+                    CreateBrigadeView(
+                        brigadeState,
+                        moduleState,
+                        slotIndex,
+                        slotCount);
+                }
+            }
+        }
+
         private void CreateModuleView(
             ModulePresentationState state)
         {
@@ -259,6 +371,29 @@ namespace BastionMarch.Presentation.Bastions
             _passageViewsById.Add(
                 state.PassageId,
                 passageView);
+        }
+
+        private void CreateBrigadeView(
+            BrigadePresentationState brigadeState,
+            ModulePresentationState moduleState,
+            int slotIndex,
+            int slotCount)
+        {
+            BrigadeView brigadeView =
+                Instantiate(
+                    _brigadeViewPrefab,
+                    _brigadeContainer);
+
+            brigadeView.Bind(
+                brigadeState,
+                moduleState,
+                _layout,
+                slotIndex,
+                slotCount);
+
+            _brigadeViewsById.Add(
+                brigadeState.BrigadeId,
+                brigadeView);
         }
 
         private void RemoveMissingModuleViews(
@@ -322,6 +457,35 @@ namespace BastionMarch.Presentation.Bastions
             }
         }
 
+        private void RemoveMissingBrigadeViews(
+            ISet<Guid> incomingBrigadeIds)
+        {
+            Guid[] removedBrigadeIds =
+                _brigadeViewsById
+                    .Keys
+                    .Where(brigadeId =>
+                        !incomingBrigadeIds.Contains(
+                            brigadeId))
+                    .ToArray();
+
+            foreach (
+                Guid brigadeId
+                in removedBrigadeIds)
+            {
+                BrigadeView brigadeView =
+                    _brigadeViewsById[brigadeId];
+
+                _brigadeViewsById.Remove(
+                    brigadeId);
+
+                if (brigadeView != null)
+                {
+                    Destroy(
+                        brigadeView.gameObject);
+                }
+            }
+        }
+
         private void ClearModuleViews()
         {
             foreach (
@@ -341,6 +505,24 @@ namespace BastionMarch.Presentation.Bastions
             }
 
             _moduleViewsById.Clear();
+        }
+
+        private void ClearBrigadeViews()
+        {
+            foreach (
+                BrigadeView brigadeView
+                in _brigadeViewsById.Values)
+            {
+                if (brigadeView == null)
+                {
+                    continue;
+                }
+
+                Destroy(
+                    brigadeView.gameObject);
+            }
+
+            _brigadeViewsById.Clear();
         }
 
         private void ClearPassageViews()
@@ -403,6 +585,13 @@ namespace BastionMarch.Presentation.Bastions
                         "PassageContainer");
             }
 
+            if (_brigadeContainer == null)
+            {
+                _brigadeContainer =
+                    FindDirectChild(
+                        "BrigadeContainer");
+            }
+
             if (_layout == null)
             {
                 throw new InvalidOperationException(
@@ -443,6 +632,20 @@ namespace BastionMarch.Presentation.Bastions
                 throw new InvalidOperationException(
                     "BastionView requires " +
                     "PassageView prefab.");
+            }
+
+            if (_brigadeContainer == null)
+            {
+                throw new InvalidOperationException(
+                    "BastionView requires " +
+                    "BrigadeContainer.");
+            }
+
+            if (_brigadeViewPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "BastionView requires " +
+                    "BrigadeView prefab.");
             }
         }
 

@@ -9,6 +9,8 @@ using UnityEngine.TestTools;
 using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Bastions;
+using BastionMarch.Simulation.Crew;
+using BastionMarch.Presentation.Bastions.State;
 
 namespace BastionMarch.Presentation.PlayModeTests
 {
@@ -357,6 +359,155 @@ namespace BastionMarch.Presentation.PlayModeTests
                 afterView.State.State,
                 Is.EqualTo(
                     newState));
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PrototypeSceneCreatesDeployedBrigadeViews()
+        {
+            BastionPresenter presenter =
+                Object.FindAnyObjectByType<
+                    BastionPresenter>();
+
+            BastionView bastionView =
+                Object.FindAnyObjectByType<
+                    BastionView>();
+
+            Assert.That(
+                presenter,
+                Is.Not.Null);
+
+            Assert.That(
+                bastionView,
+                Is.Not.Null);
+
+            BrigadePresentationState[] deployedBrigades =
+                presenter.CurrentState.Brigades
+                    .Where(brigade =>
+                        brigade.IsDeployed)
+                    .ToArray();
+
+            Assert.That(
+                deployedBrigades.Length,
+                Is.GreaterThan(0));
+
+            Assert.That(
+                bastionView.BrigadeViews.Count,
+                Is.EqualTo(
+                    deployedBrigades.Length));
+
+            foreach (
+                BrigadePresentationState brigadeState
+                in deployedBrigades)
+            {
+                bool viewFound =
+                    bastionView.TryGetBrigadeView(
+                        brigadeState.BrigadeId,
+                        out BrigadeView brigadeView);
+
+                Assert.That(
+                    viewFound,
+                    Is.True);
+
+                Assert.That(
+                    brigadeView,
+                    Is.Not.Null);
+
+                Assert.That(
+                    brigadeView.IsBound,
+                    Is.True);
+
+                Assert.That(
+                    brigadeView.State,
+                    Is.SameAs(
+                        brigadeState));
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PresenterRefreshesExistingBrigadeView()
+        {
+            BastionPrototypeBootstrap bootstrap =
+                Object.FindAnyObjectByType<
+                    BastionPrototypeBootstrap>();
+
+            BastionPresenter presenter =
+                Object.FindAnyObjectByType<
+                    BastionPresenter>();
+
+            BastionView bastionView =
+                Object.FindAnyObjectByType<
+                    BastionView>();
+
+            Assert.That(
+                bootstrap,
+                Is.Not.Null);
+
+            Assert.That(
+                presenter,
+                Is.Not.Null);
+
+            Assert.That(
+                bastionView,
+                Is.Not.Null);
+
+            BrigadePresentationState beforeState =
+                presenter.CurrentState.Brigades
+                    .First(brigade =>
+                        brigade.IsWorking);
+
+            bool viewFoundBefore =
+                bastionView.TryGetBrigadeView(
+                    beforeState.BrigadeId,
+                    out BrigadeView beforeView);
+
+            Assert.That(
+                viewFoundBefore,
+                Is.True);
+
+            BrigadeOperationalResult stopResult =
+                bootstrap.Bastion
+                    .TryStopBrigadeWork(
+                        beforeState.BrigadeId);
+
+            Assert.That(
+                stopResult.IsSuccess,
+                Is.True);
+
+            // Старый снимок остаётся неизменным.
+            Assert.That(
+                beforeState.IsWorking,
+                Is.True);
+
+            presenter.RefreshPresentation();
+
+            bool viewFoundAfter =
+                bastionView.TryGetBrigadeView(
+                    beforeState.BrigadeId,
+                    out BrigadeView afterView);
+
+            Assert.That(
+                viewFoundAfter,
+                Is.True);
+
+            // Тот же Unity-объект.
+            Assert.That(
+                afterView,
+                Is.SameAs(
+                    beforeView));
+
+            // Но снимок уже новый.
+            Assert.That(
+                afterView.State,
+                Is.Not.SameAs(
+                    beforeState));
+
+            Assert.That(
+                afterView.State.IsWorking,
+                Is.False);
 
             yield return null;
         }
