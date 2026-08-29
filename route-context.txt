@@ -1,0 +1,2628 @@
+﻿==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\DefaultModulePassageTraversalPolicy.cs
+==================================================
+using System;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// Р‘Р°Р·РѕРІР°СЏ РїРѕР»РёС‚РёРєР° СЌС‚Р°РїР° 11.
+    ///
+    /// РЈС‡РёС‚С‹РІР°РµС‚ РЅР°РїСЂР°РІР»РµРЅРёРµ Рё С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РїРµСЂРµС…РѕРґР°.
+    /// РќРµ СѓС‡РёС‚С‹РІР°РµС‚ РїРёС‚Р°РЅРёРµ, РєРѕРЅС‚СЂРѕР»СЊ, РїРѕР¶Р°СЂ Рё РґС‹Рј.
+    /// </summary>
+    public sealed class
+        DefaultModulePassageTraversalPolicy
+        : IModulePassageTraversalPolicy
+    {
+        public ModulePassageTraversalAssessment Evaluate(
+            ModulePassageTraversalContext context)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(context));
+            }
+
+            ModulePassage passage =
+                context.Passage;
+
+            if (!passage.AllowsDirection(
+                    context.FromModuleId,
+                    context.ToModuleId))
+            {
+                return
+                    ModulePassageTraversalAssessment.Rejected(
+                        context,
+                        ModulePassageTraversalFailureReason
+                            .DirectionNotAllowed);
+            }
+
+            switch (passage.State)
+            {
+                case ModulePassageState.Open:
+                    return
+                        ModulePassageTraversalAssessment.Allowed(
+                            context);
+
+                case ModulePassageState.Closed:
+                    return
+                        ModulePassageTraversalAssessment.Rejected(
+                            context,
+                            ModulePassageTraversalFailureReason
+                                .PassageClosed);
+
+                case ModulePassageState.Locked:
+                    return
+                        ModulePassageTraversalAssessment.Rejected(
+                            context,
+                            ModulePassageTraversalFailureReason
+                                .PassageLocked);
+
+                case ModulePassageState.Blocked:
+                    return
+                        ModulePassageTraversalAssessment.Rejected(
+                            context,
+                            ModulePassageTraversalFailureReason
+                                .PassageBlocked);
+
+                case ModulePassageState.Destroyed:
+                    return
+                        ModulePassageTraversalAssessment.Rejected(
+                            context,
+                            ModulePassageTraversalFailureReason
+                                .PassageDestroyed);
+
+                default:
+                    throw new InvalidOperationException(
+                        $"Unsupported passage state: {passage.State}.");
+            }
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\IModulePassageTraversalPolicy.cs
+==================================================
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РћРїСЂРµРґРµР»СЏРµС‚ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїСЂРѕС…РѕРґР° С‡РµСЂРµР· РїРµСЂРµС…РѕРґ.
+    ///
+    /// Р Р°Р·РЅС‹Рµ РёРіСЂРѕРІС‹Рµ СЂРµР¶РёРјС‹ СЃРјРѕРіСѓС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ
+    /// СЂР°Р·РЅС‹Рµ РёР»Рё СЃРѕСЃС‚Р°РІРЅС‹Рµ РїРѕР»РёС‚РёРєРё.
+    /// </summary>
+    public interface IModulePassageTraversalPolicy
+    {
+        ModulePassageTraversalAssessment Evaluate(
+            ModulePassageTraversalContext context);
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModuleConnectivityGraph.cs
+==================================================
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РќРµРёР·РјРµРЅСЏРµРјС‹Р№ СЃРЅРёРјРѕРє РґРѕСЃС‚СѓРїРЅС‹С… РЅР°РїСЂР°РІР»РµРЅРЅС‹С…
+    /// РїРµСЂРµС…РѕРґРѕРІ РјРµР¶РґСѓ РјРѕРґСѓР»СЏРјРё.
+    /// </summary>
+    public sealed class ModuleConnectivityGraph
+    {
+        private readonly Dictionary<
+            Guid,
+            IReadOnlyList<ModuleTraversalEdge>>
+                _outgoingEdgesByModuleId;
+
+        public IReadOnlyList<Guid> ModuleIds { get; }
+
+        public IReadOnlyList<ModuleTraversalEdge> Edges
+        {
+            get;
+        }
+
+        public int ModuleCount =>
+            ModuleIds.Count;
+
+        public int EdgeCount =>
+            Edges.Count;
+
+        internal ModuleConnectivityGraph(
+            IEnumerable<Guid> moduleIds,
+            IEnumerable<ModuleTraversalEdge> edges)
+        {
+            if (moduleIds == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(moduleIds));
+            }
+
+            if (edges == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(edges));
+            }
+
+            Guid[] orderedModuleIds =
+                moduleIds
+                    .Distinct()
+                    .OrderBy(id => id)
+                    .ToArray();
+
+            ModuleTraversalEdge[] orderedEdges =
+                edges
+                    .OrderBy(edge =>
+                        edge.FromModuleId)
+                    .ThenBy(edge =>
+                        edge.ToModuleId)
+                    .ThenBy(edge =>
+                        edge.PassageId)
+                    .ToArray();
+
+            var moduleIdSet =
+                new HashSet<Guid>(
+                    orderedModuleIds);
+
+            foreach (
+                ModuleTraversalEdge edge
+                in orderedEdges)
+            {
+                if (!moduleIdSet.Contains(
+                        edge.FromModuleId) ||
+                    !moduleIdSet.Contains(
+                        edge.ToModuleId))
+                {
+                    throw new ArgumentException(
+                        "Traversal edge references a module outside the graph.",
+                        nameof(edges));
+                }
+            }
+
+            ModuleIds =
+                new ReadOnlyCollection<Guid>(
+                    orderedModuleIds);
+
+            Edges =
+                new ReadOnlyCollection<
+                    ModuleTraversalEdge>(
+                        orderedEdges);
+
+            _outgoingEdgesByModuleId =
+                orderedModuleIds.ToDictionary(
+                    moduleId => moduleId,
+                    moduleId =>
+                        (IReadOnlyList<
+                            ModuleTraversalEdge>)
+                        new ReadOnlyCollection<
+                            ModuleTraversalEdge>(
+                                orderedEdges
+                                    .Where(edge =>
+                                        edge.FromModuleId ==
+                                        moduleId)
+                                    .ToArray()));
+        }
+
+        public bool ContainsModule(
+            Guid moduleId)
+        {
+            return _outgoingEdgesByModuleId.ContainsKey(
+                moduleId);
+        }
+
+        public bool TryGetOutgoingEdges(
+            Guid moduleId,
+            out IReadOnlyList<ModuleTraversalEdge>
+                edges)
+        {
+            if (!_outgoingEdgesByModuleId.TryGetValue(
+                    moduleId,
+                    out edges))
+            {
+                edges =
+                    Array.Empty<ModuleTraversalEdge>();
+
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool HasTraversal(
+            Guid fromModuleId,
+            Guid toModuleId)
+        {
+            return
+                _outgoingEdgesByModuleId.TryGetValue(
+                    fromModuleId,
+                    out IReadOnlyList<
+                        ModuleTraversalEdge> edges) &&
+                edges.Any(
+                    edge =>
+                        edge.ToModuleId ==
+                        toModuleId);
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModulePassageTraversalAssessment.cs
+==================================================
+using System;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    public sealed class ModulePassageTraversalAssessment
+    {
+        public Guid PassageId { get; }
+
+        public Guid FromModuleId { get; }
+
+        public Guid ToModuleId { get; }
+
+        public ModulePassageTraversalFailureReason
+            FailureReason
+        {
+            get;
+        }
+
+        public bool IsAllowed =>
+            FailureReason ==
+            ModulePassageTraversalFailureReason.None;
+
+        private ModulePassageTraversalAssessment(
+            Guid passageId,
+            Guid fromModuleId,
+            Guid toModuleId,
+            ModulePassageTraversalFailureReason
+                failureReason)
+        {
+            if (passageId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Passage id cannot be empty.",
+                    nameof(passageId));
+            }
+
+            if (fromModuleId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Source module id cannot be empty.",
+                    nameof(fromModuleId));
+            }
+
+            if (toModuleId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Target module id cannot be empty.",
+                    nameof(toModuleId));
+            }
+
+            PassageId = passageId;
+            FromModuleId = fromModuleId;
+            ToModuleId = toModuleId;
+            FailureReason = failureReason;
+        }
+
+        public static
+            ModulePassageTraversalAssessment Allowed(
+                ModulePassageTraversalContext context)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(context));
+            }
+
+            return new ModulePassageTraversalAssessment(
+                passageId: context.Passage.Id,
+                fromModuleId: context.FromModuleId,
+                toModuleId: context.ToModuleId,
+                failureReason:
+                    ModulePassageTraversalFailureReason.None);
+        }
+
+        public static
+            ModulePassageTraversalAssessment Rejected(
+                ModulePassageTraversalContext context,
+                ModulePassageTraversalFailureReason
+                    failureReason)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(context));
+            }
+
+            return Failure(
+                context.Passage.Id,
+                context.FromModuleId,
+                context.ToModuleId,
+                failureReason);
+        }
+
+        public static
+            ModulePassageTraversalAssessment Failure(
+                Guid passageId,
+                Guid fromModuleId,
+                Guid toModuleId,
+                ModulePassageTraversalFailureReason
+                    failureReason)
+        {
+            if (failureReason ==
+                ModulePassageTraversalFailureReason.None)
+            {
+                throw new ArgumentException(
+                    "Rejected traversal must contain a failure reason.",
+                    nameof(failureReason));
+            }
+
+            return new ModulePassageTraversalAssessment(
+                passageId,
+                fromModuleId,
+                toModuleId,
+                failureReason);
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModulePassageTraversalContext.cs
+==================================================
+using System;
+using BastionMarch.Simulation.Modules;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РџРѕР»РЅС‹Р№ РєРѕРЅС‚РµРєСЃС‚ РѕРґРЅРѕР№ РїРѕРїС‹С‚РєРё РїСЂРѕР№С‚Рё
+    /// С‡РµСЂРµР· РєРѕРЅРєСЂРµС‚РЅС‹Р№ РїРµСЂРµС…РѕРґ.
+    ///
+    /// РљРѕРЅС‚РµРєСЃС‚ СЃРѕРґРµСЂР¶РёС‚ СЃР°РјРё РјРѕРґСѓР»Рё, С‡С‚РѕР±С‹ Р±СѓРґСѓС‰РёРµ
+    /// РїРѕР»РёС‚РёРєРё РјРѕРіР»Рё СѓС‡РёС‚С‹РІР°С‚СЊ РёС… РєРѕРЅС‚СЂРѕР»СЊ,
+    /// РїРѕРІСЂРµР¶РґРµРЅРёСЏ Рё РѕРїР°СЃРЅС‹Рµ СЃРѕСЃС‚РѕСЏРЅРёСЏ.
+    /// </summary>
+    public sealed class ModulePassageTraversalContext
+    {
+        public ModulePassage Passage { get; }
+
+        public ModuleInstance FromModule { get; }
+
+        public ModuleInstance ToModule { get; }
+
+        public Guid FromModuleId =>
+            FromModule.Id;
+
+        public Guid ToModuleId =>
+            ToModule.Id;
+
+        public ModulePassageTraversalContext(
+            ModulePassage passage,
+            ModuleInstance fromModule,
+            ModuleInstance toModule)
+        {
+            Passage = passage ??
+                throw new ArgumentNullException(
+                    nameof(passage));
+
+            FromModule = fromModule ??
+                throw new ArgumentNullException(
+                    nameof(fromModule));
+
+            ToModule = toModule ??
+                throw new ArgumentNullException(
+                    nameof(toModule));
+
+            if (fromModule.Id == toModule.Id)
+            {
+                throw new ArgumentException(
+                    "Traversal must connect two different modules.",
+                    nameof(toModule));
+            }
+
+            if (!passage.ConnectsModule(
+                    fromModule.Id) ||
+                !passage.ConnectsModule(
+                    toModule.Id))
+            {
+                throw new ArgumentException(
+                    "Passage does not connect the supplied modules.");
+            }
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModulePassageTraversalFailureReason.cs
+==================================================
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РЎС‚Р°Р±РёР»СЊРЅС‹Рµ РґРѕРјРµРЅРЅС‹Рµ РїСЂРёС‡РёРЅС‹ РЅРµРІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РїСЂРѕС…РѕРґР°.
+    ///
+    /// РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ С„РѕСЂРјСѓР»РёСЂРѕРІРєРё РґРѕР»Р¶РЅС‹ РЅР°С…РѕРґРёС‚СЊСЃСЏ
+    /// РІ Р»РѕРєР°Р»РёР·Р°С†РёРё Presentation-СЃР»РѕСЏ.
+    /// </summary>
+    public enum ModulePassageTraversalFailureReason
+    {
+        None,
+
+        PassageNotFound,
+
+        SourceModuleNotFound,
+
+        TargetModuleNotFound,
+
+        SameModule,
+
+        PassageDoesNotConnectModules,
+
+        DirectionNotAllowed,
+
+        PassageClosed,
+
+        PassageLocked,
+
+        PassageBlocked,
+
+        PassageDestroyed
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModulePassageTraversalMode.cs
+==================================================
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// Р Р°Р·СЂРµС€С‘РЅРЅРѕРµ РЅР°РїСЂР°РІР»РµРЅРёРµ РґРІРёР¶РµРЅРёСЏ С‡РµСЂРµР· РїРµСЂРµС…РѕРґ.
+    ///
+    /// Source Рё Target СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‚ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°Рј,
+    /// СЃРѕС…СЂР°РЅС‘РЅРЅС‹Рј РІ ModulePassage.
+    /// </summary>
+    public enum ModulePassageTraversalMode
+    {
+        Bidirectional,
+
+        SourceToTargetOnly,
+
+        TargetToSourceOnly
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModuleRoute.cs
+==================================================
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// Р”РµС‚РµСЂРјРёРЅРёСЂРѕРІР°РЅРЅС‹Р№ РјР°СЂС€СЂСѓС‚ РјРµР¶РґСѓ РґРІСѓРјСЏ РјРѕРґСѓР»СЏРјРё.
+    ///
+    /// РљР°Р¶РґС‹Р№ С€Р°Рі СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ РѕРґРЅРѕРјСѓ РЅРµРїРѕСЃСЂРµРґСЃС‚РІРµРЅРЅРѕРјСѓ
+    /// РїРµСЂРµС…РѕРґСѓ С‡РµСЂРµР· ModulePassage.
+    /// </summary>
+    public sealed class ModuleRoute
+    {
+        public Guid SourceModuleId { get; }
+
+        public Guid TargetModuleId { get; }
+
+        public IReadOnlyList<ModuleRouteStep> Steps { get; }
+
+        /// <summary>
+        /// РџРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ РїРѕСЃРµС‰Р°РµРјС‹С… РјРѕРґСѓР»РµР№,
+        /// РІРєР»СЋС‡Р°СЏ РЅР°С‡Р°Р»СЊРЅС‹Р№ Рё РєРѕРЅРµС‡РЅС‹Р№.
+        /// </summary>
+        public IReadOnlyList<Guid> ModuleIds { get; }
+
+        public int StepCount =>
+            Steps.Count;
+
+        /// <summary>
+        /// РўРµРєСѓС‰Р°СЏ РѕС†РµРЅРєР° СЃС‚РѕРёРјРѕСЃС‚Рё РѕР±С‹С‡РЅРѕРіРѕ РїРµСЂРµРјРµС‰РµРЅРёСЏ.
+        ///
+        /// РћРґРёРЅ РЅРµРїРѕСЃСЂРµРґСЃС‚РІРµРЅРЅС‹Р№ РїРµСЂРµС…РѕРґ РјРµР¶РґСѓ РѕС‚СЃРµРєР°РјРё
+        /// РІ Р±СѓРґСѓС‰РµРј СЂР°СЃС…РѕРґСѓРµС‚ РѕРґРЅРѕ РґРµР№СЃС‚РІРёРµ.
+        /// </summary>
+        public int RequiredMovementActions =>
+            Steps.Count;
+
+        internal ModuleRoute(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            IEnumerable<ModuleRouteStep> steps)
+        {
+            if (sourceModuleId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Source module id cannot be empty.",
+                    nameof(sourceModuleId));
+            }
+
+            if (targetModuleId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Target module id cannot be empty.",
+                    nameof(targetModuleId));
+            }
+
+            if (steps == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(steps));
+            }
+
+            ModuleRouteStep[] stepArray =
+                steps.ToArray();
+
+            if (sourceModuleId == targetModuleId)
+            {
+                if (stepArray.Length != 0)
+                {
+                    throw new ArgumentException(
+                        "A route to the same module must be empty.",
+                        nameof(steps));
+                }
+            }
+            else if (stepArray.Length == 0)
+            {
+                throw new ArgumentException(
+                    "A route between different modules must contain steps.",
+                    nameof(steps));
+            }
+
+            Guid currentModuleId =
+                sourceModuleId;
+
+            foreach (ModuleRouteStep step in stepArray)
+            {
+                if (step == null)
+                {
+                    throw new ArgumentException(
+                        "Route cannot contain null steps.",
+                        nameof(steps));
+                }
+
+                if (step.FromModuleId !=
+                    currentModuleId)
+                {
+                    throw new ArgumentException(
+                        "Route steps must form a continuous chain.",
+                        nameof(steps));
+                }
+
+                currentModuleId =
+                    step.ToModuleId;
+            }
+
+            if (currentModuleId != targetModuleId)
+            {
+                throw new ArgumentException(
+                    "Route does not end at the requested target module.",
+                    nameof(steps));
+            }
+
+            SourceModuleId = sourceModuleId;
+            TargetModuleId = targetModuleId;
+
+            Steps =
+                new ReadOnlyCollection<ModuleRouteStep>(
+                    stepArray);
+
+            var moduleIds =
+                new List<Guid>(
+                    stepArray.Length + 1)
+                {
+                    sourceModuleId
+                };
+
+            moduleIds.AddRange(
+                stepArray.Select(
+                    step => step.ToModuleId));
+
+            ModuleIds =
+                new ReadOnlyCollection<Guid>(
+                    moduleIds);
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModuleRouteFailureReason.cs
+==================================================
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РџСЂРёС‡РёРЅР°, РїРѕ РєРѕС‚РѕСЂРѕР№ РјР°СЂС€СЂСѓС‚ РЅРµ Р±С‹Р» РїРѕСЃС‚СЂРѕРµРЅ.
+    ///
+    /// РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ С„РѕСЂРјСѓР»РёСЂРѕРІРєРё РґРѕР»Р¶РЅС‹ РЅР°С…РѕРґРёС‚СЊСЃСЏ
+    /// РІ Р»РѕРєР°Р»РёР·Р°С†РёРё Presentation-СЃР»РѕСЏ.
+    /// </summary>
+    public enum ModuleRouteFailureReason
+    {
+        None,
+
+        SourceModuleNotFound,
+
+        TargetModuleNotFound,
+
+        /// <summary>
+        /// РњРµР¶РґСѓ РјРѕРґСѓР»СЏРјРё РІРѕРѕР±С‰Рµ РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚
+        /// РЅРµРїСЂРµСЂС‹РІРЅРѕР№ С†РµРїРѕС‡РєРё С„РёР·РёС‡РµСЃРєРёС… РїРµСЂРµС…РѕРґРѕРІ.
+        /// </summary>
+        NoStructuralConnection,
+
+        /// <summary>
+        /// Р¤РёР·РёС‡РµСЃРєР°СЏ С†РµРїРѕС‡РєР° СЃСѓС‰РµСЃС‚РІСѓРµС‚, РЅРѕ С‚РµРєСѓС‰РёРµ
+        /// СЃРѕСЃС‚РѕСЏРЅРёСЏ РёР»Рё РЅР°РїСЂР°РІР»РµРЅРёСЏ РїРµСЂРµС…РѕРґРѕРІ
+        /// РЅРµ РїРѕР·РІРѕР»СЏСЋС‚ РїСЂРѕР№С‚Рё РїРѕ РЅРµР№.
+        /// </summary>
+        TraversalBlocked
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModuleRouteFinder.cs
+==================================================
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// Р’С‹РїРѕР»РЅСЏРµС‚ РґРµС‚РµСЂРјРёРЅРёСЂРѕРІР°РЅРЅС‹Р№ РїРѕРёСЃРє РєСЂР°С‚С‡Р°Р№С€РµРіРѕ
+    /// РјР°СЂС€СЂСѓС‚Р° РїРѕ РґРѕСЃС‚СѓРїРЅС‹Рј РїРµСЂРµС…РѕРґР°Рј.
+    /// </summary>
+    public static class ModuleRouteFinder
+    {
+        public static ModuleRouteSearchResult Find(
+            BastionGrid grid,
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            IModulePassageTraversalPolicy policy)
+        {
+            if (grid == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(grid));
+            }
+
+            if (policy == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(policy));
+            }
+
+            if (!grid.TryGetModule(
+                    sourceModuleId,
+                    out _))
+            {
+                return ModuleRouteSearchResult.Failure(
+                    ModuleRouteFailureReason
+                        .SourceModuleNotFound);
+            }
+
+            if (!grid.TryGetModule(
+                    targetModuleId,
+                    out _))
+            {
+                return ModuleRouteSearchResult.Failure(
+                    ModuleRouteFailureReason
+                        .TargetModuleNotFound);
+            }
+
+            if (sourceModuleId == targetModuleId)
+            {
+                return ModuleRouteSearchResult.Success(
+                    new ModuleRoute(
+                        sourceModuleId,
+                        targetModuleId,
+                        Array.Empty<ModuleRouteStep>()));
+            }
+
+            ModuleConnectivityGraph graph =
+                grid.BuildTraversalGraph(
+                    policy);
+
+            if (TryFindTraversableRoute(
+                    graph,
+                    sourceModuleId,
+                    targetModuleId,
+                    out ModuleRoute route))
+            {
+                return ModuleRouteSearchResult.Success(
+                    route);
+            }
+
+            if (!HasStructuralConnection(
+                    grid,
+                    sourceModuleId,
+                    targetModuleId))
+            {
+                return ModuleRouteSearchResult.Failure(
+                    ModuleRouteFailureReason
+                        .NoStructuralConnection);
+            }
+
+            IReadOnlyList<
+                ModulePassageTraversalAssessment>
+                    blockers =
+                        FindBlockingFrontier(
+                            grid,
+                            graph,
+                            sourceModuleId,
+                            policy);
+
+            return ModuleRouteSearchResult.Failure(
+                ModuleRouteFailureReason
+                    .TraversalBlocked,
+                blockers);
+        }
+
+        private static bool TryFindTraversableRoute(
+            ModuleConnectivityGraph graph,
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            out ModuleRoute route)
+        {
+            var visited =
+                new HashSet<Guid>
+                {
+                    sourceModuleId
+                };
+
+            var queue =
+                new Queue<Guid>();
+
+            var predecessorByModuleId =
+                new Dictionary<
+                    Guid,
+                    ModuleTraversalEdge>();
+
+            queue.Enqueue(
+                sourceModuleId);
+
+            while (queue.Count > 0)
+            {
+                Guid currentModuleId =
+                    queue.Dequeue();
+
+                graph.TryGetOutgoingEdges(
+                    currentModuleId,
+                    out IReadOnlyList<
+                        ModuleTraversalEdge> outgoing);
+
+                IEnumerable<ModuleTraversalEdge>
+                    orderedOutgoing =
+                        outgoing
+                            .OrderBy(edge =>
+                                edge.ToModuleId)
+                            .ThenBy(edge =>
+                                edge.Boundary.CellA.Deck)
+                            .ThenBy(edge =>
+                                edge.Boundary.CellA.X)
+                            .ThenBy(edge =>
+                                edge.Boundary.CellB.Deck)
+                            .ThenBy(edge =>
+                                edge.Boundary.CellB.X)
+                            .ThenBy(edge =>
+                                edge.PassageId);
+
+                foreach (
+                    ModuleTraversalEdge edge
+                    in orderedOutgoing)
+                {
+                    if (!visited.Add(
+                            edge.ToModuleId))
+                    {
+                        continue;
+                    }
+
+                    predecessorByModuleId.Add(
+                        edge.ToModuleId,
+                        edge);
+
+                    if (edge.ToModuleId ==
+                        targetModuleId)
+                    {
+                        route =
+                            ReconstructRoute(
+                                sourceModuleId,
+                                targetModuleId,
+                                predecessorByModuleId);
+
+                        return true;
+                    }
+
+                    queue.Enqueue(
+                        edge.ToModuleId);
+                }
+            }
+
+            route = null;
+            return false;
+        }
+
+        private static ModuleRoute ReconstructRoute(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            IReadOnlyDictionary<
+                Guid,
+                ModuleTraversalEdge>
+                    predecessorByModuleId)
+        {
+            var reversedEdges =
+                new List<ModuleTraversalEdge>();
+
+            Guid currentModuleId =
+                targetModuleId;
+
+            while (currentModuleId !=
+                   sourceModuleId)
+            {
+                if (!predecessorByModuleId.TryGetValue(
+                        currentModuleId,
+                        out ModuleTraversalEdge edge))
+                {
+                    throw new InvalidOperationException(
+                        "Route predecessor chain is incomplete.");
+                }
+
+                reversedEdges.Add(edge);
+
+                currentModuleId =
+                    edge.FromModuleId;
+            }
+
+            reversedEdges.Reverse();
+
+            IEnumerable<ModuleRouteStep> steps =
+                reversedEdges.Select(
+                    edge =>
+                        new ModuleRouteStep(edge));
+
+            return new ModuleRoute(
+                sourceModuleId,
+                targetModuleId,
+                steps);
+        }
+
+        /// <summary>
+        /// РџСЂРѕРІРµСЂСЏРµС‚ СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёРµ С†РµРїРѕС‡РєРё С„РёР·РёС‡РµСЃРєРёС…
+        /// РїРµСЂРµС…РѕРґРѕРІ Р±РµР· СѓС‡С‘С‚Р° СЃРѕСЃС‚РѕСЏРЅРёСЏ Рё РЅР°РїСЂР°РІР»РµРЅРёСЏ.
+        /// </summary>
+        private static bool HasStructuralConnection(
+            BastionGrid grid,
+            Guid sourceModuleId,
+            Guid targetModuleId)
+        {
+            var visited =
+                new HashSet<Guid>
+                {
+                    sourceModuleId
+                };
+
+            var queue =
+                new Queue<Guid>();
+
+            queue.Enqueue(
+                sourceModuleId);
+
+            while (queue.Count > 0)
+            {
+                Guid currentModuleId =
+                    queue.Dequeue();
+
+                if (!grid.TryGetPassagesForModule(
+                        currentModuleId,
+                        out IReadOnlyList<
+                            ModulePassage> passages))
+                {
+                    continue;
+                }
+
+                IEnumerable<ModulePassage>
+                    orderedPassages =
+                        passages
+                            .OrderBy(passage =>
+                                passage.Boundary.CellA.Deck)
+                            .ThenBy(passage =>
+                                passage.Boundary.CellA.X)
+                            .ThenBy(passage =>
+                                passage.Id);
+
+                foreach (
+                    ModulePassage passage
+                    in orderedPassages)
+                {
+                    Guid otherModuleId =
+                        passage.GetOtherModuleId(
+                            currentModuleId);
+
+                    if (otherModuleId ==
+                        targetModuleId)
+                    {
+                        return true;
+                    }
+
+                    if (visited.Add(
+                            otherModuleId))
+                    {
+                        queue.Enqueue(
+                            otherModuleId);
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static IReadOnlyList<
+            ModulePassageTraversalAssessment>
+                FindBlockingFrontier(
+                    BastionGrid grid,
+                    ModuleConnectivityGraph graph,
+                    Guid sourceModuleId,
+                    IModulePassageTraversalPolicy policy)
+        {
+            HashSet<Guid> reachableModuleIds =
+                CollectReachableModules(
+                    graph,
+                    sourceModuleId);
+
+            var blockerAssessments =
+                new List<
+                    ModulePassageTraversalAssessment>();
+
+            var assessedDirections =
+                new HashSet<
+                    (Guid PassageId, Guid FromModuleId)>();
+
+            foreach (
+                Guid reachableModuleId
+                in reachableModuleIds.OrderBy(id => id))
+            {
+                if (!grid.TryGetPassagesForModule(
+                        reachableModuleId,
+                        out IReadOnlyList<
+                            ModulePassage> passages))
+                {
+                    continue;
+                }
+
+                foreach (
+                    ModulePassage passage
+                    in passages)
+                {
+                    Guid otherModuleId =
+                        passage.GetOtherModuleId(
+                            reachableModuleId);
+
+                    if (reachableModuleIds.Contains(
+                            otherModuleId))
+                    {
+                        continue;
+                    }
+
+                    var key =
+                    (
+                        PassageId: passage.Id,
+                        FromModuleId:
+                            reachableModuleId
+                    );
+
+                    if (!assessedDirections.Add(key))
+                    {
+                        continue;
+                    }
+
+                    ModulePassageTraversalAssessment
+                        assessment =
+                            grid.AssessPassageTraversal(
+                                passage.Id,
+                                reachableModuleId,
+                                otherModuleId,
+                                policy);
+
+                    if (!assessment.IsAllowed)
+                    {
+                        blockerAssessments.Add(
+                            assessment);
+                    }
+                }
+            }
+
+            return blockerAssessments
+                .OrderBy(item =>
+                    item.FailureReason)
+                .ThenBy(item =>
+                    item.FromModuleId)
+                .ThenBy(item =>
+                    item.ToModuleId)
+                .ThenBy(item =>
+                    item.PassageId)
+                .ToArray();
+        }
+
+        private static HashSet<Guid>
+            CollectReachableModules(
+                ModuleConnectivityGraph graph,
+                Guid sourceModuleId)
+        {
+            var visited =
+                new HashSet<Guid>
+                {
+                    sourceModuleId
+                };
+
+            var queue =
+                new Queue<Guid>();
+
+            queue.Enqueue(
+                sourceModuleId);
+
+            while (queue.Count > 0)
+            {
+                Guid currentModuleId =
+                    queue.Dequeue();
+
+                graph.TryGetOutgoingEdges(
+                    currentModuleId,
+                    out IReadOnlyList<
+                        ModuleTraversalEdge> outgoing);
+
+                foreach (
+                    ModuleTraversalEdge edge
+                    in outgoing)
+                {
+                    if (visited.Add(
+                            edge.ToModuleId))
+                    {
+                        queue.Enqueue(
+                            edge.ToModuleId);
+                    }
+                }
+            }
+
+            return visited;
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModuleRouteSearchResult.cs
+==================================================
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    public sealed class ModuleRouteSearchResult
+    {
+        public ModuleRoute Route { get; }
+
+        public ModuleRouteFailureReason FailureReason
+        {
+            get;
+        }
+
+        /// <summary>
+        /// РќРµРїРѕСЃСЂРµРґСЃС‚РІРµРЅРЅС‹Рµ РїСЂРµРїСЏС‚СЃС‚РІРёСЏ РЅР° РіСЂР°РЅРёС†Рµ
+        /// РѕР±Р»Р°СЃС‚Рё, РґРѕСЃС‚СѓРїРЅРѕР№ РёР· РёСЃС…РѕРґРЅРѕРіРѕ РјРѕРґСѓР»СЏ.
+        ///
+        /// Р—Р°РїРѕР»РЅСЏРµС‚СЃСЏ РґР»СЏ TraversalBlocked.
+        /// </summary>
+        public IReadOnlyList<
+            ModulePassageTraversalAssessment>
+                BlockingAssessments
+        {
+            get;
+        }
+
+        public bool IsSuccess =>
+            Route != null &&
+            FailureReason ==
+                ModuleRouteFailureReason.None;
+
+        private ModuleRouteSearchResult(
+            ModuleRoute route,
+            ModuleRouteFailureReason failureReason,
+            IEnumerable<
+                ModulePassageTraversalAssessment>
+                    blockingAssessments)
+        {
+            if (blockingAssessments == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(blockingAssessments));
+            }
+
+            ModulePassageTraversalAssessment[] blockers =
+                blockingAssessments
+                    .Where(item => item != null)
+                    .OrderBy(item =>
+                        item.FailureReason)
+                    .ThenBy(item =>
+                        item.FromModuleId)
+                    .ThenBy(item =>
+                        item.ToModuleId)
+                    .ThenBy(item =>
+                        item.PassageId)
+                    .ToArray();
+
+            Route = route;
+            FailureReason = failureReason;
+
+            BlockingAssessments =
+                new ReadOnlyCollection<
+                    ModulePassageTraversalAssessment>(
+                        blockers);
+        }
+
+        public static ModuleRouteSearchResult Success(
+            ModuleRoute route)
+        {
+            if (route == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(route));
+            }
+
+            return new ModuleRouteSearchResult(
+                route,
+                ModuleRouteFailureReason.None,
+                Array.Empty<
+                    ModulePassageTraversalAssessment>());
+        }
+
+        public static ModuleRouteSearchResult Failure(
+            ModuleRouteFailureReason failureReason)
+        {
+            return Failure(
+                failureReason,
+                Array.Empty<
+                    ModulePassageTraversalAssessment>());
+        }
+
+        public static ModuleRouteSearchResult Failure(
+            ModuleRouteFailureReason failureReason,
+            IEnumerable<
+                ModulePassageTraversalAssessment>
+                    blockingAssessments)
+        {
+            if (failureReason ==
+                ModuleRouteFailureReason.None)
+            {
+                throw new ArgumentException(
+                    "Failed route search must contain a reason.",
+                    nameof(failureReason));
+            }
+
+            return new ModuleRouteSearchResult(
+                route: null,
+                failureReason: failureReason,
+                blockingAssessments:
+                    blockingAssessments);
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModuleRouteStep.cs
+==================================================
+using System;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РћРґРёРЅ РїРµСЂРµС…РѕРґ РјР°СЂС€СЂСѓС‚Р° РјРµР¶РґСѓ РґРІСѓРјСЏ СЃРѕСЃРµРґРЅРёРјРё
+    /// РјРѕРґСѓР»СЏРјРё.
+    /// </summary>
+    public sealed class ModuleRouteStep
+    {
+        public Guid PassageId { get; }
+
+        public Guid FromModuleId { get; }
+
+        public Guid ToModuleId { get; }
+
+        public ModulePassageType PassageType { get; }
+
+        public GridBoundarySegment Boundary { get; }
+
+        internal ModuleRouteStep(
+            ModuleTraversalEdge edge)
+        {
+            if (edge == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(edge));
+            }
+
+            PassageId = edge.PassageId;
+            FromModuleId = edge.FromModuleId;
+            ToModuleId = edge.ToModuleId;
+            PassageType = edge.PassageType;
+            Boundary = edge.Boundary;
+        }
+    }
+}
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Connectivity\ModuleTraversalEdge.cs
+==================================================
+using System;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// РћРґРёРЅ СЂР°Р·СЂРµС€С‘РЅРЅС‹Р№ РЅР°РїСЂР°РІР»РµРЅРЅС‹Р№ РїРµСЂРµС…РѕРґ
+    /// РјРµР¶РґСѓ РґРІСѓРјСЏ РјРѕРґСѓР»СЏРјРё.
+    ///
+    /// Р”РІСѓСЃС‚РѕСЂРѕРЅРЅСЏСЏ РґРІРµСЂСЊ СЃРѕР·РґР°С‘С‚ РґРІР° СЂРµР±СЂР°.
+    /// </summary>
+    public sealed class ModuleTraversalEdge
+    {
+        public Guid PassageId { get; }
+
+        public Guid FromModuleId { get; }
+
+        public Guid ToModuleId { get; }
+
+        public ModulePassageType PassageType { get; }
+
+        public ModulePassageState PassageState { get; }
+
+        public GridBoundarySegment Boundary { get; }
+
+        internal ModuleTraversalEdge(
+            ModulePassage passage,
+            Guid fromModuleId,
+            Guid toModuleId)
+        {
+            if (passage == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(passage));
+            }
+
+            if (!passage.ConnectsModule(
+                    fromModuleId) ||
+                !passage.ConnectsModule(
+                    toModuleId))
+            {
+                throw new ArgumentException(
+                    "Passage does not connect edge modules.");
+            }
+
+            if (fromModuleId == toModuleId)
+            {
+                throw new ArgumentException(
+                    "Traversal edge must connect different modules.",
+                    nameof(toModuleId));
+            }
+
+            PassageId = passage.Id;
+            FromModuleId = fromModuleId;
+            ToModuleId = toModuleId;
+            PassageType = passage.Type;
+            PassageState = passage.State;
+            Boundary = passage.Boundary;
+        }
+    }
+}
+
+
+==================================================
+FILE: D:\Unity\BastionMarch\BastionMarch\Assets\BastionMarch\Scripts\Simulation\Bastions\Bastion.cs
+==================================================
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using BastionMarch.Simulation.Modules;
+using BastionMarch.Simulation.Modules.Features;
+using BastionMarch.Simulation.Power;
+using BastionMarch.Simulation.Crew;
+
+namespace BastionMarch.Simulation.Bastions
+{
+    /// <summary>
+    /// Р“Р»Р°РІРЅР°СЏ РґРѕРјРµРЅРЅР°СЏ СЃСѓС‰РЅРѕСЃС‚СЊ Р±РѕРµРІРѕР№ РјР°С€РёРЅС‹.
+    /// Bastion РІР»Р°РґРµРµС‚ СЃРµС‚РєРѕР№ Рё РїСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ РѕРїРµСЂР°С†РёРё РЅР°Рґ СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹РјРё
+    /// РјРѕРґСѓР»СЏРјРё. Р’РЅРµС€РЅРёР№ РєРѕРґ РЅРµ РґРѕР»Р¶РµРЅ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕ РїРѕРґРґРµСЂР¶РёРІР°С‚СЊ
+    /// СЃРѕРіР»Р°СЃРѕРІР°РЅРЅРѕСЃС‚СЊ СЃРµС‚РєРё Рё С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРє РјР°С€РёРЅС‹.
+    /// </summary>
+    public sealed class Bastion
+    {
+        private readonly BastionGrid _grid;
+
+        public Guid Id { get; }
+
+        public string Name { get; }
+
+        public int PassageCount =>
+            _grid.PassageCount;
+
+        public IReadOnlyCollection<ModulePassage> Passages =>
+            _grid.Passages;
+
+        public int Width => _grid.Width;
+
+        public int DeckCount => _grid.DeckCount;
+
+        public int ModuleCount => _grid.ModuleCount;
+
+        public IReadOnlyCollection<ModuleInstance> Modules =>
+            _grid.Modules;
+
+        private readonly Dictionary<Guid, Brigade> _brigadesById =
+            new();
+
+        private readonly Dictionary<Guid, Guid>
+            _locationModuleIdByBrigadeId = new();
+
+        private readonly HashSet<Guid>
+            _workingBrigadeIds = new();
+
+        public int BrigadeCount =>
+            _brigadesById.Count;
+
+        public IReadOnlyCollection<Brigade> Brigades =>
+            _brigadesById.Values.ToArray();
+
+        public Bastion(
+            string name,
+            int width,
+            int deckCount)
+            : this(
+                Guid.NewGuid(),
+                name,
+                width,
+                deckCount)
+        {
+        }
+
+        public Bastion(
+            Guid id,
+            string name,
+            int width,
+            int deckCount)
+        {
+            if (id == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Bastion id cannot be empty.",
+                    nameof(id));
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException(
+                    "Bastion name cannot be empty.",
+                    nameof(name));
+            }
+
+            Id = id;
+            Name = name;
+            _grid = new BastionGrid(width, deckCount);
+        }
+
+        public ModulePlacementResult TryInstallModule(
+            ModuleDefinition definition,
+            GridPosition origin)
+        {
+            return _grid.TryPlaceModule(
+                definition,
+                origin);
+        }
+
+        public bool TryRemoveModule(
+            Guid moduleId,
+            out ModuleInstance removedModule)
+        {
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance existingModule))
+            {
+                removedModule = null;
+                return false;
+            }
+
+            Guid[] occupyingBrigadeIds =
+                existingModule
+                    .OccupyingBrigadeIds
+                    .ToArray();
+
+            foreach (Guid brigadeId in occupyingBrigadeIds)
+            {
+                ClearBrigadePlacement(
+                    brigadeId,
+                    existingModule);
+            }
+
+            return _grid.TryRemoveModule(
+                moduleId,
+                out removedModule);
+        }
+
+        public bool TryGetModuleAt(
+            GridPosition position,
+            out ModuleInstance module)
+        {
+            return _grid.TryGetModuleAt(
+                position,
+                out module);
+        }
+
+        public bool TryGetModuleAdjacencies(
+            Guid moduleId,
+            out IReadOnlyList<ModuleAdjacency> adjacencies)
+        {
+            return _grid.TryGetModuleAdjacencies(
+                moduleId,
+                out adjacencies);
+        }
+
+        public bool TryGetModuleAdjacency(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            out ModuleAdjacency adjacency)
+        {
+            return _grid.TryGetModuleAdjacency(
+                sourceModuleId,
+                targetModuleId,
+                out adjacency);
+        }
+
+        public bool TryGetModule(
+            Guid moduleId,
+            out ModuleInstance module)
+        {
+            return _grid.TryGetModule(
+                moduleId,
+                out module);
+        }
+
+        public bool IsInsideGrid(GridPosition position)
+        {
+            return _grid.IsInsideGrid(position);
+        }
+
+        public BastionDesignStatistics CalculateDesignStatistics()
+        {
+            int occupiedCellCount = 0;
+
+            long totalMassKg = 0;
+            long totalCost = 0;
+            long totalMaxDurability = 0;
+
+            long totalIdlePowerConsumption = 0;
+            long totalActivePowerConsumption = 0;
+            long totalHeatGeneration = 0;
+
+            int minimumPersonnel = 0;
+            int optimalPersonnel = 0;
+            int maximumUsefulPersonnel = 0;
+
+            long totalHorsePower = 0;
+
+            foreach (ModuleInstance module in Modules)
+            {
+                ModuleDefinition definition =
+                    module.Definition;
+
+                occupiedCellCount +=
+                    definition.Size.CellCount;
+
+                totalMassKg +=
+                    definition.MassKg;
+
+                totalCost +=
+                    definition.Cost;
+
+                totalMaxDurability +=
+                    definition.MaxDurability;
+
+                totalIdlePowerConsumption +=
+                    definition.IdlePowerConsumption;
+
+                totalActivePowerConsumption +=
+                    definition.ActivePowerConsumption;
+
+                totalHeatGeneration +=
+                    definition.HeatGeneration;
+
+                minimumPersonnel +=
+                    definition.CrewRequirement.MinimumPersonnel;
+
+                optimalPersonnel +=
+                    definition.CrewRequirement.OptimalPersonnel;
+
+                maximumUsefulPersonnel +=
+                    definition.CrewRequirement.MaximumUsefulPersonnel;
+
+                IReadOnlyList<PropulsionFeatureDefinition>
+                    propulsionFeatures =
+                        definition.GetFeatures<
+                            PropulsionFeatureDefinition>();
+
+                foreach (
+                    PropulsionFeatureDefinition propulsion
+                    in propulsionFeatures)
+                {
+                    totalHorsePower +=
+                        propulsion.HorsePower;
+                }
+            }
+
+            return new BastionDesignStatistics(
+                moduleCount: ModuleCount,
+                occupiedCellCount: occupiedCellCount,
+                totalMassKg: totalMassKg,
+                totalCost: totalCost,
+                totalMaxDurability: totalMaxDurability,
+                totalIdlePowerConsumption:
+                    totalIdlePowerConsumption,
+                totalActivePowerConsumption:
+                    totalActivePowerConsumption,
+                totalHeatGeneration: totalHeatGeneration,
+                minimumPersonnel: minimumPersonnel,
+                optimalPersonnel: optimalPersonnel,
+                maximumUsefulPersonnel: maximumUsefulPersonnel,
+                totalHorsePower: totalHorsePower);
+        }
+
+        public BastionPowerBalance CalculateDesignPowerBalance()
+        {
+            long totalPowerGeneration = 0;
+            long totalIdlePowerDemand = 0;
+            long totalActivePowerDemand = 0;
+
+            foreach (ModuleInstance module in Modules)
+            {
+                ModuleDefinition definition =
+                    module.Definition;
+
+                totalIdlePowerDemand +=
+                    definition.IdlePowerConsumption;
+
+                totalActivePowerDemand +=
+                    definition.ActivePowerConsumption;
+
+                IReadOnlyList<PowerGenerationFeatureDefinition>
+                    generationFeatures =
+                        definition.GetFeatures<
+                            PowerGenerationFeatureDefinition>();
+
+                foreach (
+                    PowerGenerationFeatureDefinition generation
+                    in generationFeatures)
+                {
+                    totalPowerGeneration +=
+                        generation.MaximumPowerOutput;
+                }
+            }
+
+            return new BastionPowerBalance(
+                totalPowerGeneration:
+                    totalPowerGeneration,
+                totalIdlePowerDemand:
+                    totalIdlePowerDemand,
+                totalActivePowerDemand:
+                    totalActivePowerDemand);
+        }
+
+        public BastionOperationalPowerBalance
+            CalculateOperationalPowerBalance()
+        {
+            long availablePowerGeneration = 0;
+            long currentPowerDemand = 0;
+
+            foreach (ModuleInstance module in Modules)
+            {
+                if (!IsAvailableForPowerOperation(module))
+                {
+                    continue;
+                }
+
+                currentPowerDemand +=
+                    module.CurrentContinuousPowerDemand;
+
+                if (module.PowerMode != ModulePowerMode.Active)
+                {
+                    continue;
+                }
+
+                IReadOnlyList<PowerGenerationFeatureDefinition>
+                    generationFeatures =
+                        module.Definition.GetFeatures<
+                            PowerGenerationFeatureDefinition>();
+
+                foreach (
+                    PowerGenerationFeatureDefinition generation
+                    in generationFeatures)
+                {
+                    availablePowerGeneration +=
+                        generation.MaximumPowerOutput;
+                }
+            }
+
+            return new BastionOperationalPowerBalance(
+                availablePowerGeneration:
+                    availablePowerGeneration,
+                currentPowerDemand:
+                    currentPowerDemand);
+        }
+
+        private static bool IsAvailableForPowerOperation(
+            ModuleInstance module)
+        {
+            return module.TechnicalState !=
+                    ModuleTechnicalState.Destroyed &&
+                module.ControlState ==
+                    ModuleControlState.Friendly;
+        }
+
+        public BastionPowerDistributionResult ResolvePowerDistribution()
+        {
+            var allocations =
+                new List<ModulePowerAllocation>();
+
+            List<ModuleInstance> availableModules =
+                Modules
+                    .Where(IsAvailableForPowerOperation)
+                    .ToList();
+
+            // РќРµРґРѕСЃС‚СѓРїРЅС‹Рµ РјРѕРґСѓР»Рё С„РёР·РёС‡РµСЃРєРё РЅРµ РјРѕРіСѓС‚ РїРѕР»СѓС‡Р°С‚СЊ РїРёС‚Р°РЅРёРµ.
+            foreach (ModuleInstance module in Modules)
+            {
+                if (!IsAvailableForPowerOperation(module))
+                {
+                    module.ApplyPowerAllocation(
+                        ModulePowerMode.Offline);
+                }
+            }
+
+            long grossPowerGeneration = 0;
+            long totalRequestedDemand = 0;
+            long totalGrantedDemand = 0;
+
+            var activeGeneratorIds =
+                new HashSet<Guid>();
+
+            foreach (ModuleInstance module in availableModules)
+            {
+                totalRequestedDemand +=
+                    module.RequestedContinuousPowerDemand;
+
+                if (module.RequestedPowerMode ==
+                    ModulePowerMode.Offline)
+                {
+                    module.ApplyPowerAllocation(
+                        ModulePowerMode.Offline);
+
+                    allocations.Add(
+                        CreatePowerAllocation(module));
+
+                    continue;
+                }
+
+                IReadOnlyList<PowerGenerationFeatureDefinition>
+                    generationFeatures =
+                        module.Definition.GetFeatures<
+                            PowerGenerationFeatureDefinition>();
+
+                bool isActiveGenerator =
+                    module.RequestedPowerMode ==
+                        ModulePowerMode.Active &&
+                    generationFeatures.Count > 0;
+
+                if (!isActiveGenerator)
+                {
+                    continue;
+                }
+
+                module.ApplyPowerAllocation(
+                    ModulePowerMode.Active);
+
+                activeGeneratorIds.Add(module.Id);
+
+                foreach (
+                    PowerGenerationFeatureDefinition generation
+                    in generationFeatures)
+                {
+                    grossPowerGeneration +=
+                        generation.MaximumPowerOutput;
+                }
+
+                totalGrantedDemand +=
+                    module.CurrentContinuousPowerDemand;
+
+                allocations.Add(
+                    CreatePowerAllocation(module));
+            }
+
+            long remainingPower =
+                grossPowerGeneration - totalGrantedDemand;
+
+            IEnumerable<ModuleInstance> consumers =
+                availableModules
+                    .Where(module =>
+                        module.RequestedPowerMode !=
+                            ModulePowerMode.Offline &&
+                        !activeGeneratorIds.Contains(module.Id))
+                    .OrderBy(module => module.PowerPriority)
+                    .ThenBy(module => module.Id);
+
+            foreach (ModuleInstance module in consumers)
+            {
+                ModulePowerMode grantedMode =
+                    ResolveGrantedPowerMode(
+                        module,
+                        remainingPower);
+
+                module.ApplyPowerAllocation(grantedMode);
+
+                int grantedDemand =
+                    module.CurrentContinuousPowerDemand;
+
+                totalGrantedDemand += grantedDemand;
+                remainingPower -= grantedDemand;
+
+                allocations.Add(
+                    CreatePowerAllocation(module));
+            }
+
+            return new BastionPowerDistributionResult(
+                grossPowerGeneration:
+                    grossPowerGeneration,
+                totalRequestedDemand:
+                    totalRequestedDemand,
+                totalGrantedDemand:
+                    totalGrantedDemand,
+                allocations:
+                    allocations);
+        }
+
+        private static ModulePowerMode ResolveGrantedPowerMode(
+            ModuleInstance module,
+            long remainingPower)
+        {
+            int requestedDemand =
+                module.RequestedContinuousPowerDemand;
+
+            // РћСЂСѓРґРёСЏ Рё РґСЂСѓРіРёРµ РјРµС…Р°РЅРёС‡РµСЃРєРёРµ СЃРёСЃС‚РµРјС‹ СЃ РЅСѓР»РµРІС‹Рј
+            // РїРѕС‚СЂРµР±Р»РµРЅРёРµРј РјРѕРіСѓС‚ СЂР°Р±РѕС‚Р°С‚СЊ Р±РµР· СЌР»РµРєС‚СЂРѕСЃРЅР°Р±Р¶РµРЅРёСЏ.
+            if (requestedDemand == 0)
+            {
+                return module.RequestedPowerMode;
+            }
+
+            if (remainingPower >= requestedDemand)
+            {
+                return module.RequestedPowerMode;
+            }
+
+            if (module.RequestedPowerMode ==
+                ModulePowerMode.Active)
+            {
+                int standbyDemand =
+                    module.Definition.IdlePowerConsumption;
+
+                if (standbyDemand == 0 ||
+                    remainingPower >= standbyDemand)
+                {
+                    return ModulePowerMode.Standby;
+                }
+            }
+
+            return ModulePowerMode.Offline;
+        }
+
+        private static ModulePowerAllocation CreatePowerAllocation(
+            ModuleInstance module)
+        {
+            return new ModulePowerAllocation(
+                moduleId: module.Id,
+                requestedMode: module.RequestedPowerMode,
+                effectiveMode: module.EffectivePowerMode,
+                priority: module.PowerPriority,
+                requestedDemand:
+                    module.RequestedContinuousPowerDemand,
+                grantedDemand:
+                    module.CurrentContinuousPowerDemand);
+        }
+
+        public bool TryAddBrigade(Brigade brigade)
+        {
+            if (brigade == null)
+            {
+                throw new ArgumentNullException(nameof(brigade));
+            }
+
+            if (brigade.IsDisbanded)
+            {
+                return false;
+            }
+
+            if (_brigadesById.ContainsKey(brigade.Id))
+            {
+                return false;
+            }
+
+            _brigadesById.Add(
+                brigade.Id,
+                brigade);
+
+            return true;
+        }
+
+        public bool TryGetBrigade(
+            Guid brigadeId,
+            out Brigade brigade)
+        {
+            return _brigadesById.TryGetValue(
+                brigadeId,
+                out brigade);
+        }
+
+        public bool TryRemoveBrigade(
+            Guid brigadeId,
+            out Brigade removedBrigade)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out removedBrigade))
+            {
+                return false;
+            }
+
+            if (_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                if (_grid.TryGetModule(
+                        moduleId,
+                        out ModuleInstance module))
+                {
+                    ClearBrigadePlacement(
+                        brigadeId,
+                        module);
+                }
+                else
+                {
+                    ClearStaleBrigadePlacement(
+                        brigadeId);
+                }
+            }
+
+            _brigadesById.Remove(
+                brigadeId);
+
+            return true;
+        }
+
+        public BrigadeOperationalResult TryDeployBrigadeToModule(
+            Guid brigadeId,
+            Guid moduleId)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out Brigade brigade))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotFound);
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .ModuleNotFound);
+            }
+
+            if (brigade.IsDisbanded)
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeDisbanded);
+            }
+
+            if (_locationModuleIdByBrigadeId.ContainsKey(
+                    brigadeId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeAlreadyDeployed);
+            }
+
+            if (!module.AddOccupyingBrigade(
+                    brigadeId))
+            {
+                throw new InvalidOperationException(
+                    "Module occupancy state is inconsistent.");
+            }
+
+            _locationModuleIdByBrigadeId.Add(
+                brigadeId,
+                moduleId);
+
+            return BrigadeOperationalResult.Success(
+                brigade,
+                module);
+        }
+
+        public BrigadeOperationalResult TryStartBrigadeWork(
+            Guid brigadeId)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out Brigade brigade))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotFound);
+            }
+
+            if (brigade.IsDisbanded)
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeDisbanded);
+            }
+
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotDeployed);
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                ClearStaleBrigadePlacement(
+                    brigadeId);
+
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .ModuleNotFound);
+            }
+
+            if (_workingBrigadeIds.Contains(
+                    brigadeId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeAlreadyWorking);
+            }
+
+            if (!module.StartBrigadeWork(
+                    brigadeId))
+            {
+                throw new InvalidOperationException(
+                    "Module work state is inconsistent.");
+            }
+
+            _workingBrigadeIds.Add(
+                brigadeId);
+
+            return BrigadeOperationalResult.Success(
+                brigade,
+                module);
+        }
+
+        public BrigadeOperationalResult TryStopBrigadeWork(
+            Guid brigadeId)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out Brigade brigade))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotFound);
+            }
+
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotDeployed);
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                ClearStaleBrigadePlacement(
+                    brigadeId);
+
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .ModuleNotFound);
+            }
+
+            if (!_workingBrigadeIds.Contains(
+                    brigadeId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotWorking);
+            }
+
+            module.StopBrigadeWork(
+                brigadeId);
+
+            _workingBrigadeIds.Remove(
+                brigadeId);
+
+            return BrigadeOperationalResult.Success(
+                brigade,
+                module);
+        }
+
+        public BrigadeOperationalResult TryUndeployBrigade(
+            Guid brigadeId)
+        {
+            if (!_brigadesById.TryGetValue(
+                    brigadeId,
+                    out Brigade brigade))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotFound);
+            }
+
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .BrigadeNotDeployed);
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                ClearStaleBrigadePlacement(
+                    brigadeId);
+
+                return BrigadeOperationalResult.Failure(
+                    BrigadeOperationalFailureReason
+                        .ModuleNotFound);
+            }
+
+            ClearBrigadePlacement(
+                brigadeId,
+                module);
+
+            return BrigadeOperationalResult.Success(
+                brigade,
+                module);
+        }
+
+        public bool TryGetBrigadeLocation(
+            Guid brigadeId,
+            out ModuleInstance module)
+        {
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                module = null;
+                return false;
+            }
+
+            return _grid.TryGetModule(
+                moduleId,
+                out module);
+        }
+
+        public bool TryGetBrigadeOperationalState(
+            Guid brigadeId,
+            out BrigadeOperationalState state)
+        {
+            if (!_brigadesById.ContainsKey(
+                    brigadeId))
+            {
+                state = null;
+                return false;
+            }
+
+            Guid? currentModuleId = null;
+
+            if (_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId,
+                    out Guid moduleId))
+            {
+                currentModuleId = moduleId;
+            }
+
+            state = new BrigadeOperationalState(
+                brigadeId,
+                currentModuleId,
+                _workingBrigadeIds.Contains(
+                    brigadeId));
+
+            return true;
+        }
+
+        private void ClearBrigadePlacement(
+            Guid brigadeId,
+            ModuleInstance module)
+        {
+            module.StopBrigadeWork(
+                brigadeId);
+
+            module.RemoveOccupyingBrigade(
+                brigadeId);
+
+            _workingBrigadeIds.Remove(
+                brigadeId);
+
+            _locationModuleIdByBrigadeId.Remove(
+                brigadeId);
+        }
+
+        private void ClearStaleBrigadePlacement(
+            Guid brigadeId)
+        {
+            _workingBrigadeIds.Remove(
+                brigadeId);
+
+            _locationModuleIdByBrigadeId.Remove(
+                brigadeId);
+        }
+
+        public ModuleStaffingAssessment CalculateModuleStaffing(
+            Guid moduleId)
+        {
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                throw new KeyNotFoundException(
+                    $"Module '{moduleId}' was not found.");
+            }
+
+            int occupyingBrigadeCount = 0;
+            int workingBrigadeCount = 0;
+
+            int totalOccupyingPersonnel = 0;
+            int totalWorkingPersonnel = 0;
+
+            long totalExperience = 0;
+            long totalMorale = 0;
+            long totalFatigue = 0;
+
+            foreach (
+                Guid brigadeId
+                in module.OccupyingBrigadeIds)
+            {
+                if (!_brigadesById.TryGetValue(
+                        brigadeId,
+                        out Brigade brigade) ||
+                    brigade.IsDisbanded)
+                {
+                    continue;
+                }
+
+                occupyingBrigadeCount++;
+                totalOccupyingPersonnel +=
+                    brigade.CurrentPersonnel;
+            }
+
+            foreach (
+                Guid brigadeId
+                in module.WorkingBrigadeIds)
+            {
+                if (!_brigadesById.TryGetValue(
+                        brigadeId,
+                        out Brigade brigade) ||
+                    brigade.IsDisbanded)
+                {
+                    continue;
+                }
+
+                workingBrigadeCount++;
+
+                int personnel =
+                    brigade.CurrentPersonnel;
+
+                totalWorkingPersonnel +=
+                    personnel;
+
+                totalExperience +=
+                    (long)brigade.Experience *
+                    personnel;
+
+                totalMorale +=
+                    (long)brigade.Morale *
+                    personnel;
+
+                totalFatigue +=
+                    (long)brigade.Fatigue *
+                    personnel;
+            }
+
+            int averageExperience =
+                totalWorkingPersonnel > 0
+                    ? (int)(
+                        totalExperience /
+                        totalWorkingPersonnel)
+                    : 0;
+
+            int averageMorale =
+                totalWorkingPersonnel > 0
+                    ? (int)(
+                        totalMorale /
+                        totalWorkingPersonnel)
+                    : 0;
+
+            int averageFatigue =
+                totalWorkingPersonnel > 0
+                    ? (int)(
+                        totalFatigue /
+                        totalWorkingPersonnel)
+                    : 0;
+
+            CrewRequirement requirement =
+                module.Definition.CrewRequirement;
+
+            return new ModuleStaffingAssessment(
+                moduleId: module.Id,
+                occupyingBrigadeCount:
+                    occupyingBrigadeCount,
+                workingBrigadeCount:
+                    workingBrigadeCount,
+                totalOccupyingPersonnel:
+                    totalOccupyingPersonnel,
+                totalWorkingPersonnel:
+                    totalWorkingPersonnel,
+                minimumPersonnel:
+                    requirement.MinimumPersonnel,
+                optimalPersonnel:
+                    requirement.OptimalPersonnel,
+                maximumUsefulPersonnel:
+                    requirement.MaximumUsefulPersonnel,
+                averageExperience:
+                    averageExperience,
+                averageMorale:
+                    averageMorale,
+                averageFatigue:
+                    averageFatigue);
+        }
+        public BastionCrewRequirements CalculateCrewRequirements()
+        {
+            var totals =
+                new Dictionary<
+                    WorkType,
+                    (int Minimum, int Optimal, int MaximumUseful)>();
+
+            foreach (ModuleInstance module in Modules)
+            {
+                foreach (
+                    ModuleWorkRequirement requirement
+                    in module.Definition
+                        .CrewRequirement
+                        .WorkRequirements)
+                {
+                    if (!totals.TryGetValue(
+                            requirement.WorkType,
+                            out var current))
+                    {
+                        current = (0, 0, 0);
+                    }
+
+                    totals[requirement.WorkType] =
+                    (
+                        current.Minimum +
+                            requirement.MinimumPersonnel,
+
+                        current.Optimal +
+                            requirement.OptimalPersonnel,
+
+                        current.MaximumUseful +
+                            requirement.MaximumUsefulPersonnel
+                    );
+                }
+            }
+
+            IEnumerable<WorkRequirementSummary> summaries =
+                totals
+                    .OrderBy(pair => pair.Key)
+                    .Select(pair =>
+                        new WorkRequirementSummary(
+                            pair.Key,
+                            pair.Value.Minimum,
+                            pair.Value.Optimal,
+                            pair.Value.MaximumUseful));
+
+            return new BastionCrewRequirements(summaries);
+        }
+
+        public BastionCrewCapacity CalculateCrewCapacity()
+        {
+            int totalBerths = 0;
+            int nominalAccommodationCapacity = 0;
+            int emergencyAccommodationCapacity = 0;
+            int ventilationPersonnelCapacity = 0;
+
+            foreach (ModuleInstance module in Modules)
+            {
+                IReadOnlyList<CrewAccommodationFeatureDefinition>
+                    accommodationFeatures =
+                        module.Definition.GetFeatures<
+                            CrewAccommodationFeatureDefinition>();
+
+                foreach (
+                    CrewAccommodationFeatureDefinition accommodation
+                    in accommodationFeatures)
+                {
+                    totalBerths +=
+                        accommodation.BerthCount;
+
+                    nominalAccommodationCapacity +=
+                        accommodation.NominalPersonnelCapacity;
+
+                    emergencyAccommodationCapacity +=
+                        accommodation.EmergencyPersonnelCapacity;
+                }
+
+                IReadOnlyList<VentilationFeatureDefinition>
+                    ventilationFeatures =
+                        module.Definition.GetFeatures<
+                            VentilationFeatureDefinition>();
+
+                foreach (
+                    VentilationFeatureDefinition ventilation
+                    in ventilationFeatures)
+                {
+                    ventilationPersonnelCapacity +=
+                        ventilation.SupportedPersonnelCapacity;
+                }
+            }
+
+            return new BastionCrewCapacity(
+                totalBerths,
+                nominalAccommodationCapacity,
+                emergencyAccommodationCapacity,
+                ventilationPersonnelCapacity);
+        }
+
+        public BastionCrewRosterSummary CalculateCrewRosterSummary()
+        {
+            IEnumerable<BrigadeTypePersonnelSummary> summaries =
+                Brigades
+                    .Where(brigade => !brigade.IsDisbanded)
+                    .GroupBy(brigade => brigade.Type)
+                    .OrderBy(group => group.Key)
+                    .Select(group =>
+                        new BrigadeTypePersonnelSummary(
+                            brigadeType: group.Key,
+                            brigadeCount: group.Count(),
+                            personnel: group.Sum(
+                                brigade => brigade.CurrentPersonnel)));
+
+            return new BastionCrewRosterSummary(summaries);
+        }
+
+        public ModuleWorkEfficiencyAssessment
+            CalculateModuleWorkEfficiency(
+                Guid moduleId,
+                BrigadeWorkProfileCatalog profileCatalog)
+        {
+            if (profileCatalog == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(profileCatalog));
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                throw new KeyNotFoundException(
+                    $"Module '{moduleId}' was not found.");
+            }
+
+            List<Brigade> workingBrigades =
+                module.WorkingBrigadeIds
+                    .Select(brigadeId =>
+                        _brigadesById.TryGetValue(
+                            brigadeId,
+                            out Brigade brigade)
+                                ? brigade
+                                : null)
+                    .Where(brigade =>
+                        brigade != null &&
+                        !brigade.IsDisbanded)
+                    .ToList();
+
+            int totalOccupyingPersonnel =
+                module.OccupyingBrigadeIds
+                    .Select(brigadeId =>
+                        _brigadesById.TryGetValue(
+                            brigadeId,
+                            out Brigade brigade)
+                                ? brigade
+                                : null)
+                    .Where(brigade =>
+                        brigade != null &&
+                        !brigade.IsDisbanded)
+                    .Sum(brigade =>
+                        brigade.CurrentPersonnel);
+
+            return ModuleWorkEfficiencyCalculator.Calculate(
+                module,
+                workingBrigades,
+                totalOccupyingPersonnel,
+                profileCatalog);
+        }
+
+        public ModuleOperationalAssessment
+            CalculateModuleOperationalAssessment(
+                Guid moduleId,
+                BrigadeWorkProfileCatalog profileCatalog)
+        {
+            if (profileCatalog == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(profileCatalog));
+            }
+
+            if (!_grid.TryGetModule(
+                    moduleId,
+                    out ModuleInstance module))
+            {
+                throw new KeyNotFoundException(
+                    $"Module '{moduleId}' was not found.");
+            }
+
+            ModuleWorkEfficiencyAssessment workEfficiency =
+                CalculateModuleWorkEfficiency(
+                    moduleId,
+                    profileCatalog);
+
+            return ModuleOperationalEfficiencyCalculator.Calculate(
+                module,
+                workEfficiency);
+        }
+
+        public ModulePassagePlacementResult
+            TryInstallPassage(
+                Guid sourceModuleId,
+                Guid targetModuleId,
+                GridBoundarySegment boundary,
+                ModulePassageType type,
+                ModulePassageTraversalMode traversalMode)
+        {
+            return _grid.TryAddPassage(
+                sourceModuleId,
+                targetModuleId,
+                boundary,
+                type,
+                traversalMode);
+        }
+
+        public bool TryGetPassage(
+            Guid passageId,
+            out ModulePassage passage)
+        {
+            return _grid.TryGetPassage(
+                passageId,
+                out passage);
+        }
+
+        public bool TryGetPassageAtBoundary(
+            GridBoundarySegment boundary,
+            out ModulePassage passage)
+        {
+            return _grid.TryGetPassageAtBoundary(
+                boundary,
+                out passage);
+        }
+
+        public bool TryGetPassagesForModule(
+            Guid moduleId,
+            out IReadOnlyList<ModulePassage> passages)
+        {
+            return _grid.TryGetPassagesForModule(
+                moduleId,
+                out passages);
+        }
+
+        public bool TryRemovePassage(
+            Guid passageId,
+            out ModulePassage removedPassage)
+        {
+            return _grid.TryRemovePassage(
+                passageId,
+                out removedPassage);
+        }
+
+        public ModulePassageTraversalAssessment
+            AssessPassageTraversal(
+                Guid passageId,
+                Guid fromModuleId,
+                Guid toModuleId)
+        {
+            return _grid.AssessPassageTraversal(
+                passageId,
+                fromModuleId,
+                toModuleId);
+        }
+
+        public ModulePassageTraversalAssessment
+            AssessPassageTraversal(
+                Guid passageId,
+                Guid fromModuleId,
+                Guid toModuleId,
+                IModulePassageTraversalPolicy policy)
+        {
+            return _grid.AssessPassageTraversal(
+                passageId,
+                fromModuleId,
+                toModuleId,
+                policy);
+        }
+
+        public ModuleConnectivityGraph
+            BuildTraversalGraph()
+        {
+            return _grid.BuildTraversalGraph();
+        }
+
+        public ModuleConnectivityGraph
+            BuildTraversalGraph(
+                IModulePassageTraversalPolicy policy)
+        {
+            return _grid.BuildTraversalGraph(
+                policy);
+        }
+
+        public ModuleRouteSearchResult FindModuleRoute(
+            Guid sourceModuleId,
+            Guid targetModuleId)
+        {
+            return _grid.FindModuleRoute(
+                sourceModuleId,
+                targetModuleId);
+        }
+
+        public ModuleRouteSearchResult FindModuleRoute(
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            IModulePassageTraversalPolicy policy)
+        {
+            return _grid.FindModuleRoute(
+                sourceModuleId,
+                targetModuleId,
+                policy);
+        }
+    }
+}

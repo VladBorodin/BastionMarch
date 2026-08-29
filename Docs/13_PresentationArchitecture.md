@@ -169,3 +169,21 @@ BrigadeView:
 
 Неразвёрнутые бригады остаются в PresentationState,
 но не получают объект BrigadeView на боковом разрезе.
+
+### RouteView
+
+RouteView отображает успешный ModuleRoute как ломаную:
+
+Module center
+→ passage boundary
+→ next module center
+→ ...
+
+RouteView не выполняет поиск пути и не изменяет Simulation.
+
+Неуспешный маршрут не рисует линию.
+BlockingAssessments сохраняются отдельно для будущего
+отображения причин невозможности перемещения.
+
+PrototypeRouteController используется только тестовой
+Presentation-сценой для визуальной проверки маршрутизации.

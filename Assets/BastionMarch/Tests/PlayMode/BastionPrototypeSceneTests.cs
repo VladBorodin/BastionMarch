@@ -10,7 +10,6 @@ using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Crew;
-using BastionMarch.Presentation.Bastions.State;
 
 namespace BastionMarch.Presentation.PlayModeTests
 {
@@ -510,6 +509,87 @@ namespace BastionMarch.Presentation.PlayModeTests
                 Is.False);
 
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PrototypeRouteControllerShowsReachableRoute()
+        {
+            PrototypeRouteController routeController =
+                Object.FindAnyObjectByType<
+                    PrototypeRouteController>();
+
+            RouteView routeView =
+                Object.FindAnyObjectByType<
+                    RouteView>();
+
+            BastionPresenter presenter =
+                Object.FindAnyObjectByType<
+                    BastionPresenter>();
+
+            Assert.That(
+                routeController,
+                Is.Not.Null);
+
+            Assert.That(
+                routeView,
+                Is.Not.Null);
+
+            Assert.That(
+                presenter,
+                Is.Not.Null);
+
+            // Даём Start() контроллера выполнить
+            // построение технического маршрута.
+            yield return null;
+
+            Assert.That(
+                routeController.CurrentBrigadeId.HasValue,
+                Is.True);
+
+            Assert.That(
+                routeController.CurrentRoute,
+                Is.Not.Null);
+
+            Assert.That(
+                routeController.CurrentRoute.IsSuccess,
+                Is.True);
+
+            Assert.That(
+                routeController.CurrentRoute.StepCount,
+                Is.GreaterThan(0));
+
+            Assert.That(
+                routeView.State,
+                Is.SameAs(
+                    routeController.CurrentRoute));
+
+            Assert.That(
+                routeView.IsSuccessfulRoute,
+                Is.True);
+
+            Assert.That(
+                routeView.RenderedPointCount,
+                Is.EqualTo(
+                    routeController.CurrentRoute.StepCount *
+                    2 +
+                    1));
+
+            bool brigadeFound =
+                presenter.CurrentState.TryGetBrigade(
+                    routeController
+                        .CurrentBrigadeId.Value,
+                    out BrigadePresentationState
+                        brigadeState);
+
+            Assert.That(
+                brigadeFound,
+                Is.True);
+
+            Assert.That(
+                brigadeState.CurrentModuleId,
+                Is.EqualTo(
+                    routeController.CurrentRoute
+                        .SourceModuleId));
         }
     }
 }

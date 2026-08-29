@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Crew;
@@ -358,9 +359,14 @@ namespace BastionMarch.Presentation.Prototype
                     fatigue: 15),
                 startWorking: false);
 
+            ModuleInstance routeDemoModule =
+                FindPrototypeRouteSourceModule(
+                    bastion,
+                    modules[4]);
+
             AddPrototypeBrigade(
                 bastion,
-                modules[4],
+                routeDemoModule,
                 new Brigade(
                     number: 4,
                     type: BrigadeType.Signal,
@@ -370,6 +376,57 @@ namespace BastionMarch.Presentation.Prototype
                     morale: 75,
                     fatigue: 25),
                 startWorking: false);
+        }
+
+        private static ModuleInstance
+            FindPrototypeRouteSourceModule(
+                Bastion bastion,
+                ModuleInstance fallbackModule)
+        {
+            if (bastion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(bastion));
+            }
+
+            if (fallbackModule == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(fallbackModule));
+            }
+
+            ModulePassage openPassage =
+                bastion.Passages
+                    .Where(passage =>
+                        passage.State ==
+                        ModulePassageState.Open)
+                    .OrderBy(passage =>
+                        passage.Boundary.CellA.Deck)
+                    .ThenBy(passage =>
+                        passage.Boundary.CellA.X)
+                    .ThenBy(passage =>
+                        passage.Boundary.CellB.Deck)
+                    .ThenBy(passage =>
+                        passage.Boundary.CellB.X)
+                    .ThenBy(passage =>
+                        passage.Id)
+                    .FirstOrDefault();
+
+            if (openPassage == null)
+            {
+                return fallbackModule;
+            }
+
+            if (!bastion.TryGetModule(
+                    openPassage.SourceModuleId,
+                    out ModuleInstance sourceModule))
+            {
+                throw new InvalidOperationException(
+                    "Prototype open passage references " +
+                    "a missing source module.");
+            }
+
+            return sourceModule;
         }
 
         private static void AddPrototypeBrigade(
