@@ -10,6 +10,8 @@ namespace BastionMarch.Simulation.Turns
 
         PlanningAlreadyConfirmed,
 
-        ActionResolutionNotActive
+        ActionResolutionNotActive,
+
+        TurnEndNotReached
     }
 }

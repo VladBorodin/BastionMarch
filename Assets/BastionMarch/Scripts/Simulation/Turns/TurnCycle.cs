@@ -8,12 +8,9 @@ namespace BastionMarch.Simulation.Turns
     /// <summary>
     /// Чистое Simulation-ядро временного цикла игры.
     ///
-    /// Хранит номер хода, крупную стадию
-    /// и конфигурацию Action Phase.
-    ///
-    /// Конкретные переходы между стадиями,
-    /// планы и приказы добавляются
-    /// последующими подэтапами.
+    /// Хранит номер хода, крупную стадию,
+    /// конфигурацию Action Phase и immutable snapshot
+    /// участников текущего хода.
     /// </summary>
     public sealed class TurnCycle
     {
@@ -35,27 +32,12 @@ namespace BastionMarch.Simulation.Turns
             private set;
         }
 
-        /// <summary>
-        /// Количество Action Phase
-        /// в одном ходе.
-        ///
-        /// Стандарт первой версии — две,
-        /// но временная модель не зависит
-        /// от конкретного числа фаз.
-        /// </summary>
         public int ActionPhaseCount
         {
             get;
             private set;
         }
 
-        /// <summary>
-        /// Номер текущей Action Phase,
-        /// начиная с 1.
-        ///
-        /// Null означает, что цикл сейчас
-        /// не находится внутри Action Resolution.
-        /// </summary>
         public int? CurrentActionPhase
         {
             get;
@@ -65,20 +47,15 @@ namespace BastionMarch.Simulation.Turns
         public bool HasActiveActionPhase =>
             CurrentActionPhase.HasValue;
 
-        /// <summary>
-        /// Planning текущего хода уже подтверждён.
-        ///
-        /// После подтверждения TurnCycle покидает
-        /// стадию Planning, поэтому отдельное
-        /// дублирующее поле состояния не требуется.
-        /// </summary>
         public bool IsPlanningConfirmed =>
             Stage != TurnStage.Planning;
 
-        public IReadOnlyList<TurnBrigadeParticipant>
-            ActiveBrigades
+        public IReadOnlyList<
+            TurnBrigadeParticipant>
+                ActiveBrigades
         {
             get;
+            private set;
         }
 
         public int ActiveBrigadeCount =>
@@ -110,14 +87,7 @@ namespace BastionMarch.Simulation.Turns
         {
         }
 
-        /// <summary>
-        /// Создаёт цикл с известного номера хода
-        /// и заданным числом Action Phase.
-        ///
-        /// Новый цикл всегда начинается
-        /// со стадии Planning.
-        /// </summary>
-       public TurnCycle(
+        public TurnCycle(
             int turnNumber,
             int actionPhaseCount,
             IEnumerable<TurnBrigadeParticipant>
@@ -141,47 +111,11 @@ namespace BastionMarch.Simulation.Turns
                     "Action phase count must be positive.");
             }
 
-            if (activeBrigades == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(activeBrigades));
-            }
-
-            TurnBrigadeParticipant[] brigadeArray =
-                activeBrigades.ToArray();
-
-            if (brigadeArray.Any(
-                    brigade =>
-                        brigade == null))
-            {
-                throw new ArgumentException(
-                    "Active brigade collection " +
-                    "cannot contain null.",
-                    nameof(activeBrigades));
-            }
-
-            bool containsDuplicateIds =
-                brigadeArray
-                    .GroupBy(brigade =>
-                        brigade.BrigadeId)
-                    .Any(group =>
-                        group.Count() > 1);
-
-            if (containsDuplicateIds)
-            {
-                throw new ArgumentException(
-                    "Active brigade collection " +
-                    "contains duplicate brigade ids.",
-                    nameof(activeBrigades));
-            }
-
-            TurnBrigadeParticipant[] orderedBrigades =
-                brigadeArray
-                    .OrderBy(brigade =>
-                        brigade.BrigadeNumber)
-                    .ThenBy(brigade =>
-                        brigade.BrigadeId)
-                    .ToArray();
+            IReadOnlyList<
+                TurnBrigadeParticipant>
+                    participantSnapshot =
+                        CreateParticipantSnapshot(
+                            activeBrigades);
 
             TurnNumber =
                 turnNumber;
@@ -196,18 +130,12 @@ namespace BastionMarch.Simulation.Turns
                 null;
 
             ActiveBrigades =
-                new ReadOnlyCollection<
-                    TurnBrigadeParticipant>(
-                        orderedBrigades);
+                participantSnapshot;
         }
 
         /// <summary>
         /// Подтверждает Planning текущего хода
         /// и начинает первую Action Phase.
-        ///
-        /// На этапе 12.4 никакой TurnPlan
-        /// ещё не существует: операция меняет
-        /// только временное состояние цикла.
         /// </summary>
         public TurnTransitionResult
             TryConfirmPlanning()
@@ -258,9 +186,8 @@ namespace BastionMarch.Simulation.Turns
         /// Если текущая фаза не последняя,
         /// активирует следующую.
         ///
-        /// Если текущая фаза последняя,
-        /// завершает Action Resolution
-        /// и переводит цикл в TurnEnd.
+        /// Последняя Action Phase переводит
+        /// цикл в TurnEnd.
         /// </summary>
         public TurnTransitionResult
             TryAdvanceActionPhase()
@@ -313,6 +240,132 @@ namespace BastionMarch.Simulation.Turns
                     previousActionPhase,
                 currentActionPhase:
                     CurrentActionPhase);
+        }
+
+        /// <summary>
+        /// Завершает границу TurnEnd и начинает
+        /// Planning следующего хода.
+        ///
+        /// Snapshot участников передаётся извне,
+        /// поэтому TurnCycle не зависит от Bastion.
+        /// </summary>
+        public TurnTransitionResult
+            TryBeginNextTurn(
+                IEnumerable<
+                    TurnBrigadeParticipant>
+                        activeBrigades)
+        {
+            IReadOnlyList<
+                TurnBrigadeParticipant>
+                    nextParticipants =
+                        CreateParticipantSnapshot(
+                            activeBrigades);
+
+            if (Stage !=
+                TurnStage.TurnEnd)
+            {
+                return TurnTransitionResult.Failure(
+                    turnNumber:
+                        TurnNumber,
+                    stage:
+                        Stage,
+                    currentActionPhase:
+                        CurrentActionPhase,
+                    failureReason:
+                        TurnTransitionFailureReason
+                            .TurnEndNotReached);
+            }
+
+            int previousTurnNumber =
+                TurnNumber;
+
+            TurnStage previousStage =
+                Stage;
+
+            int? previousActionPhase =
+                CurrentActionPhase;
+
+            TurnNumber =
+                checked(
+                    TurnNumber + 1);
+
+            Stage =
+                TurnStage.Planning;
+
+            CurrentActionPhase =
+                null;
+
+            ActiveBrigades =
+                nextParticipants;
+
+            return TurnTransitionResult.Success(
+                previousTurnNumber:
+                    previousTurnNumber,
+                currentTurnNumber:
+                    TurnNumber,
+                previousStage:
+                    previousStage,
+                currentStage:
+                    Stage,
+                previousActionPhase:
+                    previousActionPhase,
+                currentActionPhase:
+                    CurrentActionPhase);
+        }
+
+        private static IReadOnlyList<
+            TurnBrigadeParticipant>
+                CreateParticipantSnapshot(
+                    IEnumerable<
+                        TurnBrigadeParticipant>
+                            activeBrigades)
+        {
+            if (activeBrigades == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(activeBrigades));
+            }
+
+            TurnBrigadeParticipant[] brigadeArray =
+                activeBrigades.ToArray();
+
+            if (brigadeArray.Any(
+                    brigade =>
+                        brigade == null))
+            {
+                throw new ArgumentException(
+                    "Active brigade collection " +
+                    "cannot contain null.",
+                    nameof(activeBrigades));
+            }
+
+            bool containsDuplicateIds =
+                brigadeArray
+                    .GroupBy(brigade =>
+                        brigade.BrigadeId)
+                    .Any(group =>
+                        group.Count() > 1);
+
+            if (containsDuplicateIds)
+            {
+                throw new ArgumentException(
+                    "Active brigade collection " +
+                    "contains duplicate brigade ids.",
+                    nameof(activeBrigades));
+            }
+
+            TurnBrigadeParticipant[]
+                orderedBrigades =
+                    brigadeArray
+                        .OrderBy(brigade =>
+                            brigade.BrigadeNumber)
+                        .ThenBy(brigade =>
+                            brigade.BrigadeId)
+                        .ToArray();
+
+            return new ReadOnlyCollection<
+                TurnBrigadeParticipant>(
+                    orderedBrigades);
         }
     }
 }

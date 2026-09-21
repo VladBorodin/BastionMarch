@@ -6,9 +6,7 @@ namespace BastionMarch.Simulation.Turns
     /// Неизменяемый результат перехода
     /// временного состояния TurnCycle.
     ///
-    /// Хранит состояние до и после попытки,
-    /// поэтому пригоден для тестов,
-    /// диагностики и будущего журнала хода.
+    /// Хранит состояние до и после попытки.
     /// </summary>
     public sealed class TurnTransitionResult
     {
@@ -22,10 +20,22 @@ namespace BastionMarch.Simulation.Turns
             get;
         }
 
-        public int TurnNumber
+        public int PreviousTurnNumber
         {
             get;
         }
+
+        public int CurrentTurnNumber
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Совместимый shorthand для текущего
+        /// номера хода после операции.
+        /// </summary>
+        public int TurnNumber =>
+            CurrentTurnNumber;
 
         public TurnStage PreviousStage
         {
@@ -48,7 +58,8 @@ namespace BastionMarch.Simulation.Turns
         }
 
         private TurnTransitionResult(
-            int turnNumber,
+            int previousTurnNumber,
+            int currentTurnNumber,
             TurnStage previousStage,
             TurnStage currentStage,
             int? previousActionPhase,
@@ -56,15 +67,25 @@ namespace BastionMarch.Simulation.Turns
             TurnTransitionFailureReason
                 failureReason)
         {
-            if (turnNumber <
+            if (previousTurnNumber <
                 TurnCycle.FirstTurnNumber)
             {
                 throw new ArgumentOutOfRangeException(
-                    nameof(turnNumber));
+                    nameof(previousTurnNumber));
             }
 
-            TurnNumber =
-                turnNumber;
+            if (currentTurnNumber <
+                TurnCycle.FirstTurnNumber)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(currentTurnNumber));
+            }
+
+            PreviousTurnNumber =
+                previousTurnNumber;
+
+            CurrentTurnNumber =
+                currentTurnNumber;
 
             PreviousStage =
                 previousStage;
@@ -82,6 +103,9 @@ namespace BastionMarch.Simulation.Turns
                 failureReason;
         }
 
+        /// <summary>
+        /// Успешный переход внутри одного хода.
+        /// </summary>
         public static TurnTransitionResult Success(
             int turnNumber,
             TurnStage previousStage,
@@ -89,8 +113,36 @@ namespace BastionMarch.Simulation.Turns
             int? previousActionPhase,
             int? currentActionPhase)
         {
+            return Success(
+                previousTurnNumber:
+                    turnNumber,
+                currentTurnNumber:
+                    turnNumber,
+                previousStage:
+                    previousStage,
+                currentStage:
+                    currentStage,
+                previousActionPhase:
+                    previousActionPhase,
+                currentActionPhase:
+                    currentActionPhase);
+        }
+
+        /// <summary>
+        /// Успешный переход, который может
+        /// изменить номер хода.
+        /// </summary>
+        public static TurnTransitionResult Success(
+            int previousTurnNumber,
+            int currentTurnNumber,
+            TurnStage previousStage,
+            TurnStage currentStage,
+            int? previousActionPhase,
+            int? currentActionPhase)
+        {
             return new TurnTransitionResult(
-                turnNumber,
+                previousTurnNumber,
+                currentTurnNumber,
                 previousStage,
                 currentStage,
                 previousActionPhase,
@@ -115,12 +167,20 @@ namespace BastionMarch.Simulation.Turns
             }
 
             return new TurnTransitionResult(
-                turnNumber,
-                stage,
-                stage,
-                currentActionPhase,
-                currentActionPhase,
-                failureReason);
+                previousTurnNumber:
+                    turnNumber,
+                currentTurnNumber:
+                    turnNumber,
+                previousStage:
+                    stage,
+                currentStage:
+                    stage,
+                previousActionPhase:
+                    currentActionPhase,
+                currentActionPhase:
+                    currentActionPhase,
+                failureReason:
+                    failureReason);
         }
     }
 }

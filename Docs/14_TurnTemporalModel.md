@@ -206,3 +206,102 @@ PlanningAlreadyConfirmed.
 
 На этапе 12.4 план приказов ещё не существует.
 Подтверждение изменяет только временное состояние.
+
+## Реализация 12.5
+
+TurnCycle поддерживает:
+
+TryAdvanceActionPhase()
+
+Операция доступна только при:
+
+Stage = ActionResolution
+
+Если текущая Action Phase не является последней:
+
+CurrentActionPhase += 1
+
+Stage остаётся ActionResolution.
+
+Если завершается последняя Action Phase:
+
+- Stage становится TurnEnd;
+- CurrentActionPhase становится null.
+
+Работает любое положительное ActionPhaseCount.
+
+При ActionPhaseCount = 1:
+
+Planning
+→ Action Phase 1
+→ TurnEnd
+
+Попытка вызвать TryAdvanceActionPhase:
+
+- во время Planning;
+- после перехода в TurnEnd
+
+возвращает:
+
+ActionResolutionNotActive
+
+и не изменяет TurnCycle.
+
+Завершение последней Action Phase не увеличивает
+TurnNumber автоматически.
+
+Начало следующего хода является отдельной операцией.
+
+## Реализация 12.6
+
+TurnCycle поддерживает:
+
+TryBeginNextTurn(activeBrigades)
+
+Операция допустима только при:
+
+Stage = TurnEnd.
+
+Успешный переход:
+
+- увеличивает TurnNumber на 1;
+- переводит Stage в Planning;
+- устанавливает CurrentActionPhase = null;
+- делает Planning снова неподтверждённым;
+- заменяет snapshot активных бригад;
+- сохраняет ActionPhaseCount.
+
+TurnCycle не читает Bastion самостоятельно.
+
+Snapshot следующего хода формируется внешним слоем,
+например:
+
+TurnBrigadeParticipantFactory.CaptureActive(bastion)
+
+и передаётся в TryBeginNextTurn.
+
+Новый snapshot:
+
+- копируется;
+- сортируется по BrigadeNumber, затем BrigadeId;
+- не допускает duplicate BrigadeId;
+- допускает пустой список.
+
+Если TurnEnd ещё не достигнут, возвращается:
+
+TurnEndNotReached.
+
+Неудачная попытка не меняет:
+
+- TurnNumber;
+- Stage;
+- CurrentActionPhase;
+- ActiveBrigades.
+
+TurnTransitionResult различает:
+
+- PreviousTurnNumber;
+- CurrentTurnNumber.
+
+Свойство TurnNumber является shorthand текущего
+номера после операции.
