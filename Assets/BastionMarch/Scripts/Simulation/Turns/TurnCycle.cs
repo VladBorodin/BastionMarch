@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace BastionMarch.Simulation.Turns
 {
@@ -62,6 +65,15 @@ namespace BastionMarch.Simulation.Turns
         public bool HasActiveActionPhase =>
             CurrentActionPhase.HasValue;
 
+        public IReadOnlyList<TurnBrigadeParticipant>
+            ActiveBrigades
+        {
+            get;
+        }
+
+        public int ActiveBrigadeCount =>
+            ActiveBrigades.Count;
+
         public TurnCycle()
             : this(
                 FirstTurnNumber,
@@ -77,6 +89,17 @@ namespace BastionMarch.Simulation.Turns
         {
         }
 
+        public TurnCycle(
+            int turnNumber,
+            int actionPhaseCount)
+            : this(
+                turnNumber,
+                actionPhaseCount,
+                Array.Empty<
+                    TurnBrigadeParticipant>())
+        {
+        }
+
         /// <summary>
         /// Создаёт цикл с известного номера хода
         /// и заданным числом Action Phase.
@@ -84,9 +107,11 @@ namespace BastionMarch.Simulation.Turns
         /// Новый цикл всегда начинается
         /// со стадии Planning.
         /// </summary>
-        public TurnCycle(
+       public TurnCycle(
             int turnNumber,
-            int actionPhaseCount)
+            int actionPhaseCount,
+            IEnumerable<TurnBrigadeParticipant>
+                activeBrigades)
         {
             if (turnNumber <
                 FirstTurnNumber)
@@ -106,6 +131,48 @@ namespace BastionMarch.Simulation.Turns
                     "Action phase count must be positive.");
             }
 
+            if (activeBrigades == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(activeBrigades));
+            }
+
+            TurnBrigadeParticipant[] brigadeArray =
+                activeBrigades.ToArray();
+
+            if (brigadeArray.Any(
+                    brigade =>
+                        brigade == null))
+            {
+                throw new ArgumentException(
+                    "Active brigade collection " +
+                    "cannot contain null.",
+                    nameof(activeBrigades));
+            }
+
+            bool containsDuplicateIds =
+                brigadeArray
+                    .GroupBy(brigade =>
+                        brigade.BrigadeId)
+                    .Any(group =>
+                        group.Count() > 1);
+
+            if (containsDuplicateIds)
+            {
+                throw new ArgumentException(
+                    "Active brigade collection " +
+                    "contains duplicate brigade ids.",
+                    nameof(activeBrigades));
+            }
+
+            TurnBrigadeParticipant[] orderedBrigades =
+                brigadeArray
+                    .OrderBy(brigade =>
+                        brigade.BrigadeNumber)
+                    .ThenBy(brigade =>
+                        brigade.BrigadeId)
+                    .ToArray();
+
             TurnNumber =
                 turnNumber;
 
@@ -117,6 +184,11 @@ namespace BastionMarch.Simulation.Turns
 
             CurrentActionPhase =
                 null;
+
+            ActiveBrigades =
+                new ReadOnlyCollection<
+                    TurnBrigadeParticipant>(
+                        orderedBrigades);
         }
     }
 }
