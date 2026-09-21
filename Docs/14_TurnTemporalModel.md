@@ -57,3 +57,36 @@ Action Phase, его визуальное прохождение может бы
 
 Луч, полностью разрешаемый в одной фазе,
 не требует persistent projectile entity.
+
+## Реализация 12.1
+
+Добавлены:
+
+- TurnStage;
+- TurnCycle;
+- TurnNumber.
+
+TurnStage содержит:
+
+- Planning;
+- ActionResolution;
+- TurnEnd.
+
+Новый TurnCycle начинается:
+
+- с TurnNumber = 1;
+- со стадии Planning.
+
+Допускается создание TurnCycle с известного
+положительного номера хода.
+
+На этапе 12.1 TurnCycle ещё не содержит:
+
+- ActionPhaseCount;
+- CurrentActionPhase;
+- активные бригады;
+- переходы между стадиями;
+- планы;
+- приказы.
+
+TurnCycle не принадлежит Bastion и не изменяет его.
