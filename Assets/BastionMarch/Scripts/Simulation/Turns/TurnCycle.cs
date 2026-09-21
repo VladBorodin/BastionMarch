@@ -65,6 +65,16 @@ namespace BastionMarch.Simulation.Turns
         public bool HasActiveActionPhase =>
             CurrentActionPhase.HasValue;
 
+        /// <summary>
+        /// Planning текущего хода уже подтверждён.
+        ///
+        /// После подтверждения TurnCycle покидает
+        /// стадию Planning, поэтому отдельное
+        /// дублирующее поле состояния не требуется.
+        /// </summary>
+        public bool IsPlanningConfirmed =>
+            Stage != TurnStage.Planning;
+
         public IReadOnlyList<TurnBrigadeParticipant>
             ActiveBrigades
         {
@@ -189,6 +199,57 @@ namespace BastionMarch.Simulation.Turns
                 new ReadOnlyCollection<
                     TurnBrigadeParticipant>(
                         orderedBrigades);
+        }
+
+        /// <summary>
+        /// Подтверждает Planning текущего хода
+        /// и начинает первую Action Phase.
+        ///
+        /// На этапе 12.4 никакой TurnPlan
+        /// ещё не существует: операция меняет
+        /// только временное состояние цикла.
+        /// </summary>
+        public TurnTransitionResult
+            TryConfirmPlanning()
+        {
+            if (Stage !=
+                TurnStage.Planning)
+            {
+                return TurnTransitionResult.Failure(
+                    turnNumber:
+                        TurnNumber,
+                    stage:
+                        Stage,
+                    currentActionPhase:
+                        CurrentActionPhase,
+                    failureReason:
+                        TurnTransitionFailureReason
+                            .PlanningAlreadyConfirmed);
+            }
+
+            TurnStage previousStage =
+                Stage;
+
+            int? previousActionPhase =
+                CurrentActionPhase;
+
+            Stage =
+                TurnStage.ActionResolution;
+
+            CurrentActionPhase =
+                1;
+
+            return TurnTransitionResult.Success(
+                turnNumber:
+                    TurnNumber,
+                previousStage:
+                    previousStage,
+                currentStage:
+                    Stage,
+                previousActionPhase:
+                    previousActionPhase,
+                currentActionPhase:
+                    CurrentActionPhase);
         }
     }
 }

@@ -163,3 +163,46 @@ TurnCycle копирует переданную коллекцию участн�
 проверяться непосредственно перед исполнением Order.
 
 Для следующего хода создаётся новый snapshot.
+
+## Реализация 12.4
+
+TurnCycle поддерживает подтверждение Planning через:
+
+TryConfirmPlanning()
+
+До подтверждения:
+
+- Stage = Planning;
+- CurrentActionPhase = null;
+- IsPlanningConfirmed = false.
+
+После успешного подтверждения:
+
+- Stage = ActionResolution;
+- CurrentActionPhase = 1;
+- IsPlanningConfirmed = true.
+
+Planning подтверждается только один раз за ход.
+
+Повторная попытка не изменяет TurnCycle и возвращает:
+
+PlanningAlreadyConfirmed.
+
+Для изменения временного состояния используется
+неизменяемый TurnTransitionResult.
+
+Он содержит:
+
+- TurnNumber;
+- PreviousStage;
+- CurrentStage;
+- PreviousActionPhase;
+- CurrentActionPhase;
+- FailureReason;
+- IsSuccess.
+
+Пустой список активных бригад не запрещает
+подтверждение Planning.
+
+На этапе 12.4 план приказов ещё не существует.
+Подтверждение изменяет только временное состояние.

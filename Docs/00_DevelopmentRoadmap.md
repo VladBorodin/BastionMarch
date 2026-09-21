@@ -1914,7 +1914,7 @@ persistent projectile не обязателен.
 - [x] 12.1. TurnStage и TurnNumber.
 - [x] 12.2. ActionPhaseCount и CurrentActionPhase.
 - [x] 12.3. Детерминированный snapshot активных бригад.
-- [ ] 12.4. Подтверждение Planning.
+- [x] 12.4. Подтверждение Planning.
 - [ ] 12.5. Переход Action Phase.
 - [ ] 12.6. Завершение хода и начало следующего.
 - [ ] 12.7. Детерминированный пустой ход и TDD.
