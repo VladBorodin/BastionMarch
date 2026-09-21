@@ -90,3 +90,37 @@ TurnStage содержит:
 - приказы.
 
 TurnCycle не принадлежит Bastion и не изменяет его.
+
+## Реализация 12.2
+
+TurnCycle хранит:
+
+- ActionPhaseCount;
+- CurrentActionPhase.
+
+Стандартное число фаз:
+
+2.
+
+Минимально допустимое число:
+
+1.
+
+Временное ядро не устанавливает верхний предел
+количества Action Phase.
+
+CurrentActionPhase использует nullable int.
+
+Значение null означает, что TurnCycle находится
+вне Action Phase.
+
+Во время Planning:
+
+- Stage = Planning;
+- CurrentActionPhase = null;
+- HasActiveActionPhase = false.
+
+Нумерация Action Phase начинается с 1.
+
+На этапе 12.2 переход в Action Resolution
+ещё не реализован.

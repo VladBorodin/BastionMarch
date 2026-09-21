@@ -1912,7 +1912,7 @@ persistent projectile не обязателен.
 #### Прогресс этапа 12
 
 - [x] 12.1. TurnStage и TurnNumber.
-- [ ] 12.2. ActionPhaseCount и CurrentActionPhase.
+- [x] 12.2. ActionPhaseCount и CurrentActionPhase.
 - [ ] 12.3. Детерминированный snapshot активных бригад.
 - [ ] 12.4. Подтверждение Planning.
 - [ ] 12.5. Переход Action Phase.
