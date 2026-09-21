@@ -8,6 +8,8 @@ namespace BastionMarch.Simulation.Turns
     {
         None,
 
-        PlanningAlreadyConfirmed
+        PlanningAlreadyConfirmed,
+
+        ActionResolutionNotActive
     }
 }

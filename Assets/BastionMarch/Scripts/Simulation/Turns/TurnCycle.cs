@@ -251,5 +251,68 @@ namespace BastionMarch.Simulation.Turns
                 currentActionPhase:
                     CurrentActionPhase);
         }
+
+        /// <summary>
+        /// Завершает текущую Action Phase.
+        ///
+        /// Если текущая фаза не последняя,
+        /// активирует следующую.
+        ///
+        /// Если текущая фаза последняя,
+        /// завершает Action Resolution
+        /// и переводит цикл в TurnEnd.
+        /// </summary>
+        public TurnTransitionResult
+            TryAdvanceActionPhase()
+        {
+            if (Stage !=
+                    TurnStage.ActionResolution ||
+                !CurrentActionPhase.HasValue)
+            {
+                return TurnTransitionResult.Failure(
+                    turnNumber:
+                        TurnNumber,
+                    stage:
+                        Stage,
+                    currentActionPhase:
+                        CurrentActionPhase,
+                    failureReason:
+                        TurnTransitionFailureReason
+                            .ActionResolutionNotActive);
+            }
+
+            TurnStage previousStage =
+                Stage;
+
+            int? previousActionPhase =
+                CurrentActionPhase;
+
+            if (CurrentActionPhase.Value <
+                ActionPhaseCount)
+            {
+                CurrentActionPhase =
+                    CurrentActionPhase.Value + 1;
+            }
+            else
+            {
+                Stage =
+                    TurnStage.TurnEnd;
+
+                CurrentActionPhase =
+                    null;
+            }
+
+            return TurnTransitionResult.Success(
+                turnNumber:
+                    TurnNumber,
+                previousStage:
+                    previousStage,
+                currentStage:
+                    Stage,
+                previousActionPhase:
+                    previousActionPhase,
+                currentActionPhase:
+                    CurrentActionPhase);
+        }
     }
 }

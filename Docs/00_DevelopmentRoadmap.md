@@ -1915,7 +1915,7 @@ persistent projectile не обязателен.
 - [x] 12.2. ActionPhaseCount и CurrentActionPhase.
 - [x] 12.3. Детерминированный snapshot активных бригад.
 - [x] 12.4. Подтверждение Planning.
-- [ ] 12.5. Переход Action Phase.
+- [x] 12.5. Переход Action Phase.
 - [ ] 12.6. Завершение хода и начало следующего.
 - [ ] 12.7. Детерминированный пустой ход и TDD.
 
