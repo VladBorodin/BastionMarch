@@ -543,3 +543,39 @@ Stage 13 завершён, когда:
 7. валидный draft превращается в immutable ConfirmedTurnPlan;
 8. coordinator подтверждает TurnCycle только после успешной validation;
 9. все новые контракты остаются pure C# без UnityEngine.
+
+---
+
+## 18. Реализация 13.1
+
+Добавлен фундамент:
+
+`TurnPlanDraft`
+
+Он содержит:
+
+- TurnNumber;
+- ActionPhaseCount;
+- immutable/read-only participant snapshot.
+
+TurnPlanDraft:
+
+- относится только к одному ходу;
+- не содержит ссылку на TurnCycle;
+- не содержит ссылку на Bastion;
+- не зависит от Unity;
+- копирует переданную коллекцию участников;
+- запрещает duplicate BrigadeId;
+- сортирует участников по BrigadeNumber, затем BrigadeId.
+
+На этапе 13.1 TurnPlanDraft ещё не содержит:
+
+- Orders;
+- PhaseReservations;
+- Activity;
+- planning validation;
+- ConfirmedTurnPlan.
+
+Порядок BrigadeNumber → BrigadeId является только
+детерминированным техническим порядком и не задаёт
+игровую инициативу.
