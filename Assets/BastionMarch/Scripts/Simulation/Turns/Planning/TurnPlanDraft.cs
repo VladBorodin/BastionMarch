@@ -17,6 +17,14 @@ namespace BastionMarch.Simulation.Turns.Planning
     /// </summary>
     public sealed class TurnPlanDraft
     {
+
+        private readonly List<PhaseReservation>
+            _phaseReservations;
+
+        private readonly ReadOnlyCollection<
+            PhaseReservation>
+                _phaseReservationsView;
+
         public int TurnNumber
         {
             get;
@@ -36,6 +44,13 @@ namespace BastionMarch.Simulation.Turns.Planning
 
         public int ParticipantCount =>
             Participants.Count;
+
+        public IReadOnlyList<PhaseReservation>
+            PhaseReservations =>
+                _phaseReservationsView;
+
+        public int ReservationCount =>
+            _phaseReservations.Count;
 
         public TurnPlanDraft(
             int turnNumber,
@@ -113,6 +128,129 @@ namespace BastionMarch.Simulation.Turns.Planning
                 new ReadOnlyCollection<
                     TurnBrigadeParticipant>(
                         orderedParticipants);
+
+            _phaseReservations =
+                new List<PhaseReservation>();
+
+            _phaseReservationsView =
+                _phaseReservations.AsReadOnly();
+        }
+
+        public PhaseReservationResult
+            TryAddReservation(
+                PhaseReservation reservation)
+        {
+            if (reservation == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(reservation));
+            }
+
+            if (reservation.ActionPhase >
+                ActionPhaseCount)
+            {
+                return PhaseReservationResult.Failure(
+                    PhaseReservationFailureReason
+                        .ActionPhaseOutOfRange);
+            }
+
+            bool brigadeIsParticipant =
+                Participants.Any(
+                    participant =>
+                        participant.BrigadeId ==
+                        reservation.BrigadeId);
+
+            if (!brigadeIsParticipant)
+            {
+                return PhaseReservationResult.Failure(
+                    PhaseReservationFailureReason
+                        .BrigadeNotParticipant);
+            }
+
+            PhaseReservation existingReservation =
+                _phaseReservations
+                    .FirstOrDefault(
+                        existing =>
+                            existing.BrigadeId ==
+                                reservation.BrigadeId &&
+                            existing.ActionPhase ==
+                                reservation.ActionPhase);
+
+            if (existingReservation != null)
+            {
+                if (existingReservation.OrderId ==
+                    reservation.OrderId)
+                {
+                    return PhaseReservationResult.Failure(
+                        PhaseReservationFailureReason
+                            .ReservationAlreadyExists);
+                }
+
+                return PhaseReservationResult.Failure(
+                    PhaseReservationFailureReason
+                        .BrigadePhaseAlreadyReserved);
+            }
+
+            _phaseReservations.Add(
+                reservation);
+
+            SortReservations();
+
+            return PhaseReservationResult.Success(
+                reservation);
+        }
+
+        private void SortReservations()
+        {
+            _phaseReservations.Sort(
+                CompareReservations);
+        }
+
+        private int CompareReservations(
+            PhaseReservation left,
+            PhaseReservation right)
+        {
+            int phaseComparison =
+                left.ActionPhase.CompareTo(
+                    right.ActionPhase);
+
+            if (phaseComparison != 0)
+            {
+                return phaseComparison;
+            }
+
+            TurnBrigadeParticipant leftParticipant =
+                Participants.First(
+                    participant =>
+                        participant.BrigadeId ==
+                        left.BrigadeId);
+
+            TurnBrigadeParticipant rightParticipant =
+                Participants.First(
+                    participant =>
+                        participant.BrigadeId ==
+                        right.BrigadeId);
+
+            int numberComparison =
+                leftParticipant.BrigadeNumber.CompareTo(
+                    rightParticipant.BrigadeNumber);
+
+            if (numberComparison != 0)
+            {
+                return numberComparison;
+            }
+
+            int brigadeComparison =
+                left.BrigadeId.CompareTo(
+                    right.BrigadeId);
+
+            if (brigadeComparison != 0)
+            {
+                return brigadeComparison;
+            }
+
+            return left.OrderId.CompareTo(
+                right.OrderId);
         }
     }
 }
