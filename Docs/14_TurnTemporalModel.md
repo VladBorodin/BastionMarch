@@ -1,351 +1,392 @@
 # TDD-14. Временная модель хода
 
-## 1. Ход
+## 1. Назначение
 
-Ход состоит из:
+Документ фиксирует временное ядро BastionMarch после завершения Stage 12.
 
-1. Planning;
-2. последовательности Action Phase;
-3. Turn End.
+Временная модель отвечает только за:
+
+- номер хода;
+- крупную стадию хода;
+- количество Action Phase;
+- текущую Action Phase;
+- неизменяемый snapshot участников текущего хода;
+- детерминированные переходы между стадиями.
+
+Она не исполняет Orders, Activities и боевые эффекты.
+
+---
+
+## 2. Структура хода
+
+Один ход состоит из:
+
+```text
+Planning
+→ Action Resolution
+    → Action Phase 1
+    → Action Phase 2
+    → ...
+    → Action Phase N
+→ Turn End
+```
 
 Planning и Turn End не являются Action Phase.
 
-Стандартное число Action Phase в первой версии — 2.
-Архитектура не должна предполагать, что их всегда ровно две.
+Стандартное число Action Phase первой версии:
 
-## 2. Planning
+```text
+2
+```
 
-Simulation не ограничивает Planning реальным временем.
+Архитектура допускает любое положительное `ActionPhaseCount`.
 
-Ограничение времени является правилом режима игры,
-сложности или Presentation/Application слоя.
+Action Phase является минимальным дискретным моментом игрового времени.
 
-После подтверждения план текущего хода изменять нельзя.
+---
 
-## 3. Action Phase
+## 3. Planning
 
-Action Phase является минимальным дискретным
-моментом игрового времени.
+Во время Planning игрок или AI формирует намерения текущего хода.
 
-Обычное небольшое действие занимает одну фазу.
-Крупное действие может занимать несколько фаз
-и продолжаться через границу хода.
+Базовая Simulation не ограничивает Planning реальным временем.
 
-## 4. Orders и Activities
+Ограничение времени может принадлежать:
 
-Order — конечное или многоэтапное действие,
-занимающее Action Phase.
+- режиму игры;
+- сложности;
+- Application/Presentation слою.
 
-Activity — постоянная деятельность бригады,
-выполняемая в свободные от Order фазы.
+После подтверждения Planning временной цикл переходит к первой Action Phase.
 
-Если в текущей фазе бригада выполняет Order,
-её обычная Activity в эту фазу не получает tick.
+Начиная со Stage 13 само наличие и валидность плана контролируются отдельным planning-слоем. `TurnCycle` не владеет TurnPlan.
 
-## 5. Длительные воздействия
+---
 
-Если воздействие полностью разрешается внутри одной
-Action Phase, его визуальное прохождение может быть
-только Presentation-анимацией.
-
-Если объект или воздействие переживает границу фаз
-и может изменить последующие решения игрока,
-оно должно существовать в Simulation.
-
-Пример:
-долго летящий артиллерийский снаряд.
-
-Луч, полностью разрешаемый в одной фазе,
-не требует persistent projectile entity.
-
-## Реализация 12.1
-
-Добавлены:
-
-- TurnStage;
-- TurnCycle;
-- TurnNumber.
-
-TurnStage содержит:
-
-- Planning;
-- ActionResolution;
-- TurnEnd.
-
-Новый TurnCycle начинается:
-
-- с TurnNumber = 1;
-- со стадии Planning.
-
-Допускается создание TurnCycle с известного
-положительного номера хода.
-
-На этапе 12.1 TurnCycle ещё не содержит:
-
-- ActionPhaseCount;
-- CurrentActionPhase;
-- активные бригады;
-- переходы между стадиями;
-- планы;
-- приказы.
-
-TurnCycle не принадлежит Bastion и не изменяет его.
-
-## Реализация 12.2
-
-TurnCycle хранит:
-
-- ActionPhaseCount;
-- CurrentActionPhase.
-
-Стандартное число фаз:
-
-2.
-
-Минимально допустимое число:
-
-1.
-
-Временное ядро не устанавливает верхний предел
-количества Action Phase.
-
-CurrentActionPhase использует nullable int.
-
-Значение null означает, что TurnCycle находится
-вне Action Phase.
-
-Во время Planning:
-
-- Stage = Planning;
-- CurrentActionPhase = null;
-- HasActiveActionPhase = false.
+## 4. Action Phase
 
 Нумерация Action Phase начинается с 1.
 
-На этапе 12.2 переход в Action Resolution
-ещё не реализован.
+Когда `Stage == ActionResolution`:
 
-## Реализация 12.3
+```text
+CurrentActionPhase ∈ [1..ActionPhaseCount]
+```
 
-Для текущего хода создаётся неизменяемый snapshot
-активных бригад.
+Во всех остальных стадиях:
 
-Активной считается бригада, которая на момент
-создания snapshot:
+```text
+CurrentActionPhase = null
+```
+
+Малое действие может занимать одну Action Phase.
+
+Крупное действие может занимать несколько Action Phase и переживать границу хода.
+
+---
+
+## 5. Участники текущего хода
+
+Для текущего хода создаётся snapshot активных бригад.
+
+Активной считается бригада, которая на момент создания snapshot:
 
 - зарегистрирована в Bastion;
 - не расформирована;
 - оперативно размещена.
 
-Состояние IsWorking не влияет на участие в ходе.
+`IsWorking` не влияет на участие в ходу.
 
-TurnBrigadeParticipant содержит только:
+`TurnBrigadeParticipant` содержит только стабильную идентичность:
 
-- BrigadeId;
-- BrigadeNumber.
+- `BrigadeId`;
+- `BrigadeNumber`.
 
-Изменяемые данные Brigade намеренно не копируются
-в участника хода.
+Изменяемые данные не копируются в participant snapshot.
 
-Детерминированный порядок:
+Snapshot сортируется:
 
-1. BrigadeNumber;
-2. BrigadeId.
+1. `BrigadeNumber`;
+2. `BrigadeId`.
 
-TurnCycle копирует переданную коллекцию участников
-и не хранит ссылку на Bastion.
+Snapshot не меняется в течение текущего хода.
 
-Изменение, удаление или расформирование Brigade после
-создания snapshot не меняет список участников уже
-начатого хода.
+Актуальное состояние Brigade проверяется позднее непосредственно перед исполнением Order.
 
-Актуальное состояние Brigade должно повторно
-проверяться непосредственно перед исполнением Order.
+Для нового хода формируется новый snapshot.
 
-Для следующего хода создаётся новый snapshot.
+---
 
-## Реализация 12.4
+## 6. Детерминированный порядок не является инициативой
 
-TurnCycle поддерживает подтверждение Planning через:
+Сортировка:
 
-TryConfirmPlanning()
+```text
+BrigadeNumber
+→ BrigadeId
+```
 
-До подтверждения:
+нужна для:
 
-- Stage = Planning;
-- CurrentActionPhase = null;
-- IsPlanningConfirmed = false.
+- воспроизводимости;
+- тестов;
+- стабильного Presentation;
+- replay;
+- diagnostics.
 
-После успешного подтверждения:
+Она НЕ означает:
 
-- Stage = ActionResolution;
-- CurrentActionPhase = 1;
-- IsPlanningConfirmed = true.
+- игровую инициативу;
+- более раннее действие меньшего BrigadeNumber;
+- преимущество BrigadeId;
+- право первой мутации мира.
 
-Planning подтверждается только один раз за ход.
+Если порядок действий должен влиять на результат, он должен быть отдельным явным игровым правилом.
 
-Повторная попытка не изменяет TurnCycle и возвращает:
+Будущий resolver Action Phase строится вокруг:
 
-PlanningAlreadyConfirmed.
+```text
+Assess
+→ Resolve conflicts
+→ Commit
+```
 
-Для изменения временного состояния используется
-неизменяемый TurnTransitionResult.
+а не вокруг случайного порядка `foreach`.
+
+---
+
+## 7. TurnCycle
+
+`TurnCycle` является чистым временным ядром.
+
+Он не хранит:
+
+- `Bastion`;
+- `TurnPlanDraft`;
+- `ConfirmedTurnPlan`;
+- Orders;
+- Activities;
+- боевую логику.
+
+Публичное состояние включает:
+
+- `TurnNumber`;
+- `Stage`;
+- `ActionPhaseCount`;
+- `CurrentActionPhase`;
+- `HasActiveActionPhase`;
+- `IsPlanningConfirmed`;
+- `ActiveBrigades`;
+- `ActiveBrigadeCount`.
+
+Поддерживаются переходы:
+
+- `TryConfirmPlanning()`;
+- `TryAdvanceActionPhase()`;
+- `TryBeginNextTurn(activeBrigades)`.
+
+Ожидаемые ошибки переходов возвращаются через `TurnTransitionResult`.
+
+---
+
+## 8. TurnTransitionResult
+
+`TurnTransitionResult` различает состояние до и после операции.
 
 Он содержит:
 
-- TurnNumber;
-- PreviousStage;
-- CurrentStage;
-- PreviousActionPhase;
-- CurrentActionPhase;
-- FailureReason;
-- IsSuccess.
+- `PreviousTurnNumber`;
+- `CurrentTurnNumber`;
+- `TurnNumber` как shorthand текущего номера;
+- `PreviousStage`;
+- `CurrentStage`;
+- `PreviousActionPhase`;
+- `CurrentActionPhase`;
+- `FailureReason`;
+- `IsSuccess`.
 
-Пустой список активных бригад не запрещает
-подтверждение Planning.
+Failure result не должен мутировать TurnCycle.
 
-На этапе 12.4 план приказов ещё не существует.
-Подтверждение изменяет только временное состояние.
+---
 
-## Реализация 12.5
+## 9. Жизненный цикл
 
-TurnCycle поддерживает:
+### 9.1. Новый цикл
 
-TryAdvanceActionPhase()
+Новый `TurnCycle` начинается:
 
-Операция доступна только при:
+```text
+TurnNumber = 1
+Stage = Planning
+CurrentActionPhase = null
+```
 
-Stage = ActionResolution
+Допускается создание с известного положительного номера хода.
 
-Если текущая Action Phase не является последней:
+### 9.2. Confirm Planning
 
-CurrentActionPhase += 1
+Успешный:
 
-Stage остаётся ActionResolution.
-
-Если завершается последняя Action Phase:
-
-- Stage становится TurnEnd;
-- CurrentActionPhase становится null.
-
-Работает любое положительное ActionPhaseCount.
-
-При ActionPhaseCount = 1:
-
+```text
 Planning
-→ Action Phase 1
+→ ActionResolution
+CurrentActionPhase = 1
+```
+
+Повторное подтверждение возвращает:
+
+```text
+PlanningAlreadyConfirmed
+```
+
+### 9.3. Advance Action Phase
+
+Если текущая фаза не последняя:
+
+```text
+Phase N
+→ Phase N+1
+```
+
+Если фаза последняя:
+
+```text
+ActionResolution / Phase N
 → TurnEnd
+CurrentActionPhase = null
+```
 
-Попытка вызвать TryAdvanceActionPhase:
+Попытка advance вне ActionResolution возвращает:
 
-- во время Planning;
-- после перехода в TurnEnd
-
-возвращает:
-
+```text
 ActionResolutionNotActive
+```
 
-и не изменяет TurnCycle.
+### 9.4. Begin Next Turn
 
-Завершение последней Action Phase не увеличивает
-TurnNumber автоматически.
-
-Начало следующего хода является отдельной операцией.
-
-## Реализация 12.6
-
-TurnCycle поддерживает:
-
-TryBeginNextTurn(activeBrigades)
-
-Операция допустима только при:
-
-Stage = TurnEnd.
+Операция разрешена только из `TurnEnd`.
 
 Успешный переход:
 
-- увеличивает TurnNumber на 1;
-- переводит Stage в Planning;
-- устанавливает CurrentActionPhase = null;
-- делает Planning снова неподтверждённым;
-- заменяет snapshot активных бригад;
-- сохраняет ActionPhaseCount.
+- увеличивает `TurnNumber`;
+- переводит Stage в `Planning`;
+- оставляет `CurrentActionPhase = null`;
+- сохраняет `ActionPhaseCount`;
+- заменяет participant snapshot.
 
-TurnCycle не читает Bastion самостоятельно.
+Snapshot следующего хода передаётся извне.
 
-Snapshot следующего хода формируется внешним слоем,
-например:
+`TurnCycle` не читает Bastion самостоятельно.
 
-TurnBrigadeParticipantFactory.CaptureActive(bastion)
+---
 
-и передаётся в TryBeginNextTurn.
+## 10. Orders и Activities — граница Stage 12
 
-Новый snapshot:
+Order и Activity не являются частью временного ядра.
 
-- копируется;
-- сортируется по BrigadeNumber, затем BrigadeId;
-- не допускает duplicate BrigadeId;
-- допускает пустой список.
+Order — конечное или многоэтапное намеренное действие.
 
-Если TurnEnd ещё не достигнут, возвращается:
+Activity — постоянная деятельность бригады, выполняемая в свободные от blocking Order фазы.
 
-TurnEndNotReached.
+Базовое правило будущего resolver:
 
-Неудачная попытка не меняет:
+```text
+есть blocking Order
+→ Order tick
+→ Activity не получает tick
 
-- TurnNumber;
-- Stage;
-- CurrentActionPhase;
-- ActiveBrigades.
+blocking Order отсутствует
+→ Activity tick
+```
 
-TurnTransitionResult различает:
+Подробная модель планирования описана в `15_TurnPlanning.md`.
 
-- PreviousTurnNumber;
-- CurrentTurnNumber.
+Разрешение Action Phase описано в `16_OrderResolution.md`.
 
-Свойство TurnNumber является shorthand текущего
-номера после операции.
+---
 
-## Реализация 12.7
+## 11. Длительные воздействия
 
-Временная модель хода проверена интеграционными тестами.
+Если воздействие полностью разрешается внутри одной Action Phase, его визуальное прохождение может оставаться Presentation-анимацией.
 
-Подтвержден полный жизненный цикл:
+Если объект или воздействие:
 
+- переживает границу Action Phase;
+- может быть обнаружено;
+- способно изменить последующие решения игрока;
+
+оно должно существовать в Simulation.
+
+Пример:
+
+```text
+артиллерийский снаряд выпущен
+→ остаётся несколько фаз до попадания
+→ игрок получает возможность отреагировать
+→ снаряд достигает цели
+```
+
+Persistent world processes вводятся после появления реального игрового применения.
+
+---
+
+## 12. Инварианты Stage 12
+
+После Stage 12 публичный API должен сохранять только следующие комбинации:
+
+```text
 Planning
-→ Action Phase 1
-→ ...
-→ Action Phase N
-→ TurnEnd
-→ Planning следующего хода.
+CurrentActionPhase = null
+```
 
-Пустой ход является допустимым.
+или:
 
-ActionPhaseCount может отличаться от стандартного
-значения 2.
+```text
+ActionResolution
+CurrentActionPhase ∈ [1..ActionPhaseCount]
+```
 
-Несколько последовательных ходов сохраняют:
+или:
 
-- корректный TurnNumber;
-- ActionPhaseCount;
-- согласованность Stage;
-- согласованность CurrentActionPhase.
+```text
+TurnEnd
+CurrentActionPhase = null
+```
 
-Snapshot активных бригад остаётся неизменным
-в течение текущего хода.
+Пустой ход допустим.
 
-Изменения Bastion учитываются при формировании
-snapshot следующего хода.
+`ActionPhaseCount >= 1`.
 
-При одинаковых исходных данных TurnCycle создаёт
-одинаковую последовательность наблюдаемых состояний.
+Несколько последовательных пустых ходов детерминированы.
 
-Stage 12 не содержит:
+Одинаковое исходное состояние создаёт одинаковую последовательность наблюдаемых состояний.
 
-- Orders;
-- Activities;
-- боевой логики;
-- StatusEffect;
-- Unity-зависимостей.
+---
 
-Эти системы начинаются со Stage 13.
+## 13. Завершение Stage 12
+
+Stage 12 завершён.
+
+Подтверждено:
+
+- полный жизненный цикл хода;
+- произвольное положительное число Action Phase;
+- неизменяемый participant snapshot;
+- свежий snapshot следующего хода;
+- typed transition results;
+- отсутствие Unity-зависимостей;
+- отсутствие зависимости TurnCycle от Bastion;
+- воспроизводимость пустых ходов.
+
+Текущая регрессионная точка:
+
+```text
+214 EditMode tests passed
+```
+
+Следующий этап:
+
+```text
+Stage 13.1
+TurnPlanDraft foundation
+```
