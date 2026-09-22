@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using BastionMarch.Simulation.Turns.Orders;
 
 namespace BastionMarch.Simulation.Turns.Planning
 {
@@ -25,6 +26,13 @@ namespace BastionMarch.Simulation.Turns.Planning
             PhaseReservation>
                 _phaseReservationsView;
 
+        private readonly List<ITurnOrder>
+            _orders;
+
+        private readonly ReadOnlyCollection<
+            ITurnOrder>
+                _ordersView;
+
         public int TurnNumber
         {
             get;
@@ -44,6 +52,13 @@ namespace BastionMarch.Simulation.Turns.Planning
 
         public int ParticipantCount =>
             Participants.Count;
+
+        public IReadOnlyList<ITurnOrder>
+            Orders =>
+                _ordersView;
+
+        public int OrderCount =>
+            _orders.Count;
 
         public IReadOnlyList<PhaseReservation>
             PhaseReservations =>
@@ -134,6 +149,12 @@ namespace BastionMarch.Simulation.Turns.Planning
 
             _phaseReservationsView =
                 _phaseReservations.AsReadOnly();
+
+            _orders =
+                new List<ITurnOrder>();
+
+            _ordersView =
+                _orders.AsReadOnly();
         }
 
         public PhaseReservationResult
@@ -251,6 +272,55 @@ namespace BastionMarch.Simulation.Turns.Planning
 
             return left.OrderId.CompareTo(
                 right.OrderId);
+        }
+
+        public TurnPlanOrderResult TryAddOrder(
+            ITurnOrder order)
+        {
+            if (order == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(order));
+            }
+
+            if (order.OrderId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Order id cannot be empty.",
+                    nameof(order));
+            }
+
+            if (order.RequiredPhases < 1)
+            {
+                throw new ArgumentException(
+                    "Order required phases " +
+                    "must be positive.",
+                    nameof(order));
+            }
+
+            bool duplicateOrderId =
+                _orders.Any(
+                    existing =>
+                        existing.OrderId ==
+                        order.OrderId);
+
+            if (duplicateOrderId)
+            {
+                return TurnPlanOrderResult.Failure(
+                    TurnPlanOrderFailureReason
+                        .DuplicateOrderId);
+            }
+
+            _orders.Add(
+                order);
+
+            _orders.Sort(
+                (left, right) =>
+                    left.OrderId.CompareTo(
+                        right.OrderId));
+
+            return TurnPlanOrderResult.Success(
+                order);
         }
     }
 }

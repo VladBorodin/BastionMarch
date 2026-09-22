@@ -705,7 +705,7 @@ Simulation умеет:
 
 - [x] 13.1. TurnPlanDraft foundation.
 - [x] 13.2. PhaseReservation.
-- [ ] 13.3. Immutable Order contract.
+- [x] 13.3. Immutable Order contract.
 - [ ] 13.4. Order assignment и scope.
 - [ ] 13.5. Brigade Activity contract.
 - [ ] 13.6. Multi-phase planning и carry-over commitments.
