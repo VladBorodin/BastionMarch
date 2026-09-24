@@ -39,14 +39,17 @@ Brigade 2
 Первая подтверждённая модель:
 
 ```text
-1. Capture phase context
-2. Build intents
-3. Assess intents
-4. Resolve conflicts
-5. Commit
-6. Activity fallback / system continuation
-7. Persistent world processes
-8. PhaseResolutionResult
+1. Capture phase-start context.
+2. Determine scheduled Order ticks.
+3. Determine Activity fallback intents for Brigades
+   without blocking Order reservations.
+4. Assess all intents against the same phase-start context.
+5. Resolve explicit conflicts.
+6. Commit allowed mutations.
+7. Advance persistent world processes.
+8. Build immutable PhaseResolutionResult.
+9. Advance TurnCycle only after successful
+   phase resolution pipeline.
 ```
 
 Конкретная реализация может объединять технические шаги, но не должна терять семантическую границу assessment и mutation.
@@ -139,7 +142,24 @@ Conflicts разрешаются явным правилом.
 
 ## 9. OrderExecutionState
 
-Immutable Order отделён от execution state.
+Один `OrderId` соответствует одному execution process.
+
+Order отдаётся один раз. Последующие Action Phase изменяют
+`OrderExecutionState`, а не создают новые Orders.
+
+Один уникальный Order в одной Action Phase получает не более
+одного execution tick независимо от числа PhaseReservation
+этого Order в данной фазе.
+
+Execution process может переживать TurnEnd.
+
+После завершения Order созданные им длительные объекты
+и последствия могут продолжать существовать как persistent
+world processes.
+
+Например, артиллерийский Order может завершиться фактическим
+выстрелом, после чего созданный снаряд продолжает полёт
+независимо от завершённого OrderExecutionState.
 
 `OrderExecutionState` отвечает за фактический progress:
 
