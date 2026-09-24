@@ -621,3 +621,39 @@ layer следующего хода передаёт продолжающийс�
 Отдельный CarryOverCommitment runtime-тип на Stage 13
 не вводится, потому что его точный состав зависит от
 execution semantics Stage 14.
+
+## Реализация 13.8
+
+Добавлен `ConfirmedTurnPlan`.
+
+Он является immutable snapshot состояния `TurnPlanDraft`
+на момент freeze.
+
+Копируются:
+
+- participant collection;
+- Orders collection;
+- PhaseReservations collection.
+
+Сам `TurnPlanDraft` внутри confirmed plan не хранится.
+
+Последующее редактирование draft не изменяет
+`ConfirmedTurnPlan`.
+
+Элементы коллекций не клонируются глубоко, поскольку:
+
+- `TurnBrigadeParticipant` immutable;
+- `PhaseReservation` immutable;
+- `ITurnOrder` является immutable contract.
+
+`ConfirmedTurnPlan.CreateSnapshot()` является
+низкоуровневой операцией freeze и не выполняет validation.
+
+Полный безопасный workflow:
+
+validate
+→ freeze
+→ confirm TurnCycle
+
+будет реализован в Stage 13.9 через
+`TurnPlanningCoordinator`.

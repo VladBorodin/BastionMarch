@@ -709,8 +709,8 @@ Simulation умеет:
 - [x] 13.4. Order assignment и scope.
 - [x] 13.5. Brigade Activity contract.
 - [x] 13.6. Multi-phase planning и carry-over commitments.
-- [ ] 13.7. Planning assessment.
-- [ ] 13.8. ConfirmedTurnPlan.
+- [x] 13.7. Planning assessment.
+- [x] 13.8. ConfirmedTurnPlan.
 - [ ] 13.9. TurnPlanningCoordinator.
 
 ---
