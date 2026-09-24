@@ -711,7 +711,7 @@ Simulation умеет:
 - [x] 13.6. Multi-phase planning и carry-over commitments.
 - [x] 13.7. Planning assessment.
 - [x] 13.8. ConfirmedTurnPlan.
-- [ ] 13.9. TurnPlanningCoordinator.
+- [x] 13.9. TurnPlanningCoordinator.
 
 ---
 
@@ -2000,7 +2000,7 @@ persistent projectile не обязателен.
 - [x] 10. Оперативное размещение бригад.
 - [x] 11. Связность отсеков.
 - [x] 12. Временная модель хода.
-- [ ] 13. Orders, Activities и планирование.
+- [x] 13. Orders, Activities и планирование.
 - [ ] 14. Разрешение Action Phase.
 - [ ] 15. Первые игровые приказы и Activity.
 

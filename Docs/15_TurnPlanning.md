@@ -657,3 +657,34 @@ validate
 
 будет реализован в Stage 13.9 через
 `TurnPlanningCoordinator`.
+
+## Реализация 13.9
+
+Добавлен `TurnPlanningCoordinator`.
+
+Он реализует единый workflow:
+
+validate TurnPlanDraft
+→ freeze ConfirmedTurnPlan
+→ TurnCycle.TryConfirmPlanning()
+
+Если validation неуспешен:
+
+- TurnCycle не изменяется;
+- ConfirmedTurnPlan не публикуется;
+- TransitionResult отсутствует.
+
+Если переход TurnCycle неуспешен:
+
+- ConfirmedTurnPlan не публикуется;
+- доступен TurnTransitionResult с причиной отказа.
+
+При успехе результат содержит:
+
+- валидный TurnPlanAssessment;
+- immutable ConfirmedTurnPlan;
+- успешный TurnTransitionResult.
+
+TurnCycle не становится владельцем плана.
+
+Stage 13 не выполняет Orders и не мутирует Bastion.
