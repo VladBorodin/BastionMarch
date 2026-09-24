@@ -579,3 +579,45 @@ TurnPlanDraft:
 Порядок BrigadeNumber → BrigadeId является только
 детерминированным техническим порядком и не задаёт
 игровую инициативу.
+
+## Реализация 13.6
+
+Многофазный Order уже представим существующей моделью
+без отдельного planning-progress state.
+
+`RequiredPhases` означает общее количество execution ticks,
+необходимых Order для завершения.
+
+Количество `PhaseReservation` не равно RequiredPhases.
+
+Для Bastion-scoped Order несколько бригад могут иметь
+reservations одного Order в одной Action Phase.
+Это представляет один scheduled Order tick с несколькими
+занятыми Brigade resources.
+
+Order может иметь:
+
+RequiredPhases > ActionPhaseCount
+
+и поэтому продолжаться между ходами.
+
+Один immutable Order может участвовать в TurnPlanDraft
+нескольких последовательных ходов с тем же OrderId.
+
+TurnPlanDraft не хранит:
+
+- CompletedPhases;
+- RemainingPhases;
+- runtime status;
+- ссылку на предыдущий TurnPlanDraft.
+
+Фактический progress и определение оставшихся phase ticks
+принадлежат OrderExecutionState этапа 14.
+
+Carry-over с точки зрения Planning означает, что execution
+layer следующего хода передаёт продолжающийся immutable Order
+и необходимые reservations текущего хода.
+
+Отдельный CarryOverCommitment runtime-тип на Stage 13
+не вводится, потому что его точный состав зависит от
+execution semantics Stage 14.
