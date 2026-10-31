@@ -297,10 +297,36 @@ Stage 15 завершён, когда:
 7. свободная следующая фаза вызывает Activity tick;
 8. интеграционный сценарий Move → Activity → TurnEnd детерминирован и покрыт EditMode-тестами.
 
-Stage 15.1
+###Stage 15.1
 
-- [ ] 15.1. Atomic Brigade Move.
-- [ ] 15.2. MoveBrigadeOrder.
+- [x] 15.1. Atomic Brigade Move.
+- [x] 15.2. MoveBrigadeOrder.
 - [ ] 15.3. Move execution assessment / integration.
 - [ ] 15.4. ModuleWorkActivity.
 - [ ] 15.5. Move → Activity → TurnEnd integration.
+
+### Реализация Stage 15.2
+
+Добавлен immutable `MoveBrigadeOrder : BrigadeTurnOrder`.
+
+Поля:
+
+- OrderId;
+- BrigadeId;
+- SourceModuleId;
+- TargetModuleId;
+- PassageId;
+- RequiredPhases = 1.
+
+Order не хранит ссылки на Bastion, ModuleInstance
+или ModulePassage.
+
+Создание Order проверяет только корректность identity.
+
+Существование и доступность перехода, текущее расположение
+бригады и возможность перемещения проверяются
+при исполнении через Bastion.AssessBrigadeMove().
+
+MoveBrigadeOrder не выполняет world mutation.
+
+Подключение к TurnPhaseResolver относится к Stage 15.3.
