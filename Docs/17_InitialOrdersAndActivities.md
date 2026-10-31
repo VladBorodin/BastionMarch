@@ -296,3 +296,11 @@ Stage 15 завершён, когда:
 6. ModuleWorkActivity использует существующее work state без нового duplicate registry;
 7. свободная следующая фаза вызывает Activity tick;
 8. интеграционный сценарий Move → Activity → TurnEnd детерминирован и покрыт EditMode-тестами.
+
+Stage 15.1
+
+- [ ] 15.1. Atomic Brigade Move.
+- [ ] 15.2. MoveBrigadeOrder.
+- [ ] 15.3. Move execution assessment / integration.
+- [ ] 15.4. ModuleWorkActivity.
+- [ ] 15.5. Move → Activity → TurnEnd integration.

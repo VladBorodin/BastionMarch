@@ -794,6 +794,186 @@ namespace BastionMarch.Simulation.Bastions
                 module);
         }
 
+        
+        public BrigadeMoveAssessment AssessBrigadeMove(
+            Guid brigadeId,
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            Guid passageId)
+        {
+            if (brigadeId == Guid.Empty ||
+                sourceModuleId == Guid.Empty ||
+                targetModuleId == Guid.Empty ||
+                passageId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Move identities cannot be empty.");
+            }
+
+            BrigadeMoveAssessment Reject(
+                BrigadeMoveFailureReason reason,
+                ModulePassageTraversalFailureReason traversalReason =
+                    ModulePassageTraversalFailureReason.None)
+            {
+                return BrigadeMoveAssessment.Rejected(
+                    brigadeId,
+                    sourceModuleId,
+                    targetModuleId,
+                    passageId,
+                    reason,
+                    traversalReason);
+            }
+
+            if (!_brigadesById.TryGetValue(brigadeId, out Brigade brigade))
+            {
+                return Reject(BrigadeMoveFailureReason.BrigadeNotFound);
+            }
+
+            if (brigade.IsDisbanded)
+            {
+                return Reject(BrigadeMoveFailureReason.BrigadeDisbanded);
+            }
+
+            if (!_locationModuleIdByBrigadeId.TryGetValue(
+                    brigadeId, out Guid actualModuleId))
+            {
+                return Reject(BrigadeMoveFailureReason.BrigadeNotDeployed);
+            }
+
+            if (actualModuleId != sourceModuleId)
+            {
+                return Reject(BrigadeMoveFailureReason.SourceMismatch);
+            }
+
+            if (!_grid.TryGetModule(sourceModuleId, out ModuleInstance source))
+            {
+                return Reject(BrigadeMoveFailureReason.SourceModuleNotFound);
+            }
+
+            if (!_grid.TryGetModule(targetModuleId, out ModuleInstance target))
+            {
+                return Reject(BrigadeMoveFailureReason.TargetModuleNotFound);
+            }
+
+            if (sourceModuleId == targetModuleId)
+            {
+                return Reject(BrigadeMoveFailureReason.SameModule);
+            }
+
+            if (!_grid.TryGetModuleAdjacency(sourceModuleId, targetModuleId, out _))
+            {
+                return Reject(BrigadeMoveFailureReason.ModulesNotAdjacent);
+            }
+
+            if (!source.OccupyingBrigadeIds.Contains(brigadeId))
+            {
+                return Reject(BrigadeMoveFailureReason.SourceOccupancyMissing);
+            }
+
+            bool registeredWorking = _workingBrigadeIds.Contains(brigadeId);
+            bool sourceWorking = source.WorkingBrigadeIds.Contains(brigadeId);
+
+            if (registeredWorking != sourceWorking)
+            {
+                return Reject(BrigadeMoveFailureReason.WorkingStateInconsistent);
+            }
+
+            if (target.OccupyingBrigadeIds.Contains(brigadeId) ||
+                target.WorkingBrigadeIds.Contains(brigadeId))
+            {
+                return Reject(BrigadeMoveFailureReason.TargetAlreadyOccupied);
+            }
+
+            if (!_grid.TryGetPassage(passageId, out _))
+            {
+                return Reject(BrigadeMoveFailureReason.PassageNotFound);
+            }
+
+            ModulePassageTraversalAssessment traversal =
+                _grid.AssessPassageTraversal(
+                    passageId,
+                    sourceModuleId,
+                    targetModuleId);
+
+            if (!traversal.IsAllowed)
+            {
+                return Reject(
+                    BrigadeMoveFailureReason.PassageTraversalRejected,
+                    traversal.FailureReason);
+            }
+
+            return BrigadeMoveAssessment.Allowed(
+                brigadeId,
+                sourceModuleId,
+                targetModuleId,
+                passageId);
+        }
+
+        /// <summary>
+        /// Перемещает бригаду через проверенный соседний Passage.
+        ///
+        /// Успешное перемещение прекращает текущую работу,
+        /// переносит occupancy и обновляет location.
+        ///
+        /// Работа в целевом модуле не запускается автоматически.
+        /// </summary>
+        public BrigadeMoveResult TryMoveBrigade(
+            Guid brigadeId,
+            Guid sourceModuleId,
+            Guid targetModuleId,
+            Guid passageId)
+        {
+            BrigadeMoveAssessment assessment = AssessBrigadeMove(
+                brigadeId,
+                sourceModuleId,
+                targetModuleId,
+                passageId);
+
+            if (!assessment.IsAllowed)
+            {
+                return new BrigadeMoveResult(assessment);
+            }
+
+            // Все игровые preconditions проверены.
+            ModuleInstance source = _grid.TryGetModule(
+                sourceModuleId, out ModuleInstance sourceModule)
+                    ? sourceModule
+                    : throw new InvalidOperationException(
+                        "Source module disappeared during move.");
+
+            ModuleInstance target = _grid.TryGetModule(
+                targetModuleId, out ModuleInstance targetModule)
+                    ? targetModule
+                    : throw new InvalidOperationException(
+                        "Target module disappeared during move.");
+
+            // Сначала резервируем присутствие в целевом отсеке.
+            // Исходное размещение пока не изменяется.
+            if (!target.AddOccupyingBrigade(brigadeId))
+            {
+                throw new InvalidOperationException(
+                    "Target occupancy state is inconsistent.");
+            }
+
+            // Если удаление из source неожиданно не удалось,
+            // восстанавливаем единственное внесённое изменение.
+            if (!source.RemoveOccupyingBrigade(brigadeId))
+            {
+                target.RemoveOccupyingBrigade(brigadeId);
+
+                throw new InvalidOperationException(
+                    "Source occupancy state changed during move.");
+            }
+
+            // RemoveOccupyingBrigade уже прекращает работу в source.
+            _workingBrigadeIds.Remove(brigadeId);
+
+            // Ключ гарантированно существует после assessment.
+            _locationModuleIdByBrigadeId[brigadeId] = targetModuleId;
+
+            return new BrigadeMoveResult(assessment);
+        }
+
         public bool TryGetBrigadeLocation(
             Guid brigadeId,
             out ModuleInstance module)
