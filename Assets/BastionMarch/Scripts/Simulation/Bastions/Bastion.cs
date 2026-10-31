@@ -934,29 +934,104 @@ namespace BastionMarch.Simulation.Bastions
                 return new BrigadeMoveResult(assessment);
             }
 
-            // Все игровые preconditions проверены.
-            ModuleInstance source = _grid.TryGetModule(
-                sourceModuleId, out ModuleInstance sourceModule)
-                    ? sourceModule
-                    : throw new InvalidOperationException(
-                        "Source module disappeared during move.");
+            ApplyAssessedBrigadeMove(assessment);
+            return new BrigadeMoveResult(assessment);
+        }
+        
+        /// <summary>
+        /// Выполняет несколько перемещений, предварительно
+        /// перепроверив весь пакет относительно одного состояния Bastion.
+        ///
+        /// Для M1 перемещения разных бригад независимы:
+        /// вместимость проходов и отсеков пока не ограничивается.
+        ///
+        /// Невалидный пакет не изменяет Bastion.
+        /// </summary>
+        public IReadOnlyList<BrigadeMoveResult> CommitAssessedBrigadeMoves(
+            IEnumerable<BrigadeMoveAssessment> assessments)
+        {
+            if (assessments == null)
+            {
+                throw new ArgumentNullException(nameof(assessments));
+            }
 
-            ModuleInstance target = _grid.TryGetModule(
-                targetModuleId, out ModuleInstance targetModule)
-                    ? targetModule
-                    : throw new InvalidOperationException(
-                        "Target module disappeared during move.");
+            BrigadeMoveAssessment[] requested = assessments.ToArray();
 
-            // Сначала резервируем присутствие в целевом отсеке.
-            // Исходное размещение пока не изменяется.
+            if (requested.Any(item => item == null))
+            {
+                throw new ArgumentException(
+                    "Move assessments cannot contain null.",
+                    nameof(assessments));
+            }
+
+            if (requested.Any(item => !item.IsAllowed))
+            {
+                throw new ArgumentException(
+                    "Only allowed moves can be committed.",
+                    nameof(assessments));
+            }
+
+            if (requested.Select(item => item.BrigadeId)
+                    .Distinct().Count() != requested.Length)
+            {
+                throw new ArgumentException(
+                    "A brigade cannot move more than once in one batch.",
+                    nameof(assessments));
+            }
+
+            // Проверяем ВСЕ переходы до первого изменения мира.
+            BrigadeMoveAssessment[] validated = requested
+                .Select(item => AssessBrigadeMove(
+                    item.BrigadeId,
+                    item.SourceModuleId,
+                    item.TargetModuleId,
+                    item.PassageId))
+                .ToArray();
+
+            if (validated.Any(item => !item.IsAllowed))
+            {
+                throw new InvalidOperationException(
+                    "Move preconditions changed after assessment.");
+            }
+
+            var results = new List<BrigadeMoveResult>(validated.Length);
+
+            // Упорядочивание служит только детерминизму.
+            // В M1 разные бригады не конкурируют за вместимость.
+            foreach (BrigadeMoveAssessment assessment in
+                    validated.OrderBy(item => item.BrigadeId))
+            {
+                ApplyAssessedBrigadeMove(assessment);
+                results.Add(new BrigadeMoveResult(assessment));
+            }
+
+            return results.AsReadOnly();
+        }
+
+        private void ApplyAssessedBrigadeMove(BrigadeMoveAssessment assessment)
+        {
+            if (!_grid.TryGetModule(
+                    assessment.SourceModuleId, out ModuleInstance source))
+            {
+                throw new InvalidOperationException(
+                    "Source module disappeared during move.");
+            }
+
+            if (!_grid.TryGetModule(
+                    assessment.TargetModuleId, out ModuleInstance target))
+            {
+                throw new InvalidOperationException(
+                    "Target module disappeared during move.");
+            }
+
+            Guid brigadeId = assessment.BrigadeId;
+
             if (!target.AddOccupyingBrigade(brigadeId))
             {
                 throw new InvalidOperationException(
                     "Target occupancy state is inconsistent.");
             }
 
-            // Если удаление из source неожиданно не удалось,
-            // восстанавливаем единственное внесённое изменение.
             if (!source.RemoveOccupyingBrigade(brigadeId))
             {
                 target.RemoveOccupyingBrigade(brigadeId);
@@ -965,13 +1040,9 @@ namespace BastionMarch.Simulation.Bastions
                     "Source occupancy state changed during move.");
             }
 
-            // RemoveOccupyingBrigade уже прекращает работу в source.
             _workingBrigadeIds.Remove(brigadeId);
-
-            // Ключ гарантированно существует после assessment.
-            _locationModuleIdByBrigadeId[brigadeId] = targetModuleId;
-
-            return new BrigadeMoveResult(assessment);
+            _locationModuleIdByBrigadeId[brigadeId] =
+                assessment.TargetModuleId;
         }
 
         public bool TryGetBrigadeLocation(

@@ -330,3 +330,24 @@ Order не хранит ссылки на Bastion, ModuleInstance
 MoveBrigadeOrder не выполняет world mutation.
 
 Подключение к TurnPhaseResolver относится к Stage 15.3.
+
+### Stage 15.3b.1 — Brigade movement batch
+
+Добавлен Bastion.CommitAssessedBrigadeMoves.
+
+Пакет принимает только allowed BrigadeMoveAssessment,
+не допускает повторного перемещения одной бригады
+и повторно проверяет все переходы до первой mutation.
+
+При невалидном пакете Bastion не изменяется.
+
+В M1 несколько бригад могут занимать один отсек,
+поэтому перемещения разных бригад пока не конфликтуют
+по вместимости.
+
+Одиночное и пакетное перемещение используют
+общую доменную реализацию.
+
+Подключение пакетного перемещения к TurnPhaseResolver,
+обработка Failed execution outcomes и журналирование
+относятся к Stage 15.3b.2.
