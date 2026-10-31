@@ -302,7 +302,7 @@ Stage 15 завершён, когда:
 - [x] 15.1. Atomic Brigade Move.
 - [x] 15.2. MoveBrigadeOrder.
 - [x] 15.3. Move execution assessment / integration.
-- [ ] 15.4. ModuleWorkActivity.
+- [x] 15.4. ModuleWorkActivity.
 - [ ] 15.5. Move → Activity → TurnEnd integration.
 
 ### Реализация Stage 15.2
@@ -382,3 +382,27 @@ Blocking reservation подавляет Activity в занятой фазе
 Гарантии относятся к текущим доменным операциям M1
 и однопоточному исполнению Simulation. Универсального
 rollback для любых world mutations пока нет.
+
+### Stage 15.4 — ModuleWorkActivity
+
+Добавлены ModuleWorkActivity и ModuleWorkActivityResolver.
+
+ModuleWorkActivity — immutable представление текущей работы
+бригады в конкретном модуле.
+
+ModuleWorkActivityResolver читает состояние Bastion через
+TryGetBrigadeOperationalState и TryGetBrigadeLocation.
+
+Activity существует только для живой, размещённой
+и фактически работающей бригады.
+
+Источником истины остаются Bastion._workingBrigadeIds
+и ModuleInstance.WorkingBrigadeIds.
+
+Новый Activity registry не создаётся.
+
+После перемещения прежняя работа прекращается.
+Работа в целевом отсеке автоматически не начинается.
+
+Фактическое исполнение Activity tick и интеграционный
+сценарий Move → Activity → TurnEnd относятся к Stage 15.5.
