@@ -313,3 +313,36 @@ Activity tick и не изменяет Bastion.
 
 Реальное исполнение ModuleWorkActivity
 остаётся задачей Stage 15.
+
+## Реализация 14.7. Persistent world extension point
+
+Добавлены:
+
+- PersistentWorldPhaseContext;
+- PersistentWorldPhaseResult;
+- IPersistentWorldPhaseProcessor;
+- NoOpPersistentWorldPhaseProcessor.
+
+Persistent world processor не зависит от OrderId,
+OrderExecutionState и TurnPlanDraft.
+
+Процессы игрового мира могут продолжать существовать
+после завершения породившего их Order.
+
+Processor получает временную identity Action Phase
+и возвращает immutable минимальный отчёт
+об обработанных ProcessId.
+
+На этапе 14.7 не реализованы:
+
+- storage и lifecycle конкретных процессов;
+- реальные снаряды, ракеты, пожары и другие угрозы;
+- автоматическое продвижение TurnCycle;
+- повторная защита от обработки одной фазы;
+- world transaction / rollback.
+
+Подключение processor к общему pipeline
+и контроль продвижения времени относятся к 14.8.
+
+Конкретные persistent processes появятся
+на соответствующих игровых этапах.

@@ -834,7 +834,7 @@ Intent не должен сам мутировать мир во время read
 - [x] 14.4. Conflict resolution.
 - [x] 14.5. Commit.
 - [x] 14.6. Activity fallback.
-- [ ] 14.7. Persistent world extension point.
+- [x] 14.7. Persistent world extension point.
 - [ ] 14.8. PhaseResolutionResult и журнал.
 
 ---
