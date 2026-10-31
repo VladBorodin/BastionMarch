@@ -828,12 +828,12 @@ Intent не должен сам мутировать мир во время read
 
 ### Прогресс этапа 14
 
-- [ ] 14.1. OrderExecutionState и execution outcomes.
-- [ ] 14.2. Phase intents.
-- [ ] 14.3. Assess.
-- [ ] 14.4. Conflict resolution.
-- [ ] 14.5. Commit.
-- [ ] 14.6. Activity fallback.
+- [x] 14.1. OrderExecutionState и execution outcomes.
+- [x] 14.2. Phase intents.
+- [x] 14.3. Assess.
+- [x] 14.4. Conflict resolution.
+- [x] 14.5. Commit.
+- [x] 14.6. Activity fallback.
 - [ ] 14.7. Persistent world extension point.
 - [ ] 14.8. PhaseResolutionResult и журнал.
 

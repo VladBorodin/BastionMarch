@@ -284,3 +284,32 @@ Stage 14 завершён, когда:
 7. незавершённый progress может перейти в следующий ход;
 8. свободная Brigade phase приводит к Activity tick;
 9. формируется детерминированный PhaseResolutionResult.
+
+## Реализация 14.6. Activity fallback
+
+Добавлены:
+
+- BrigadeActivityPhaseIntent;
+- BrigadeActivityPhaseIntentFactory.
+
+Factory определяет свободные Action Phase участников
+по ConfirmedTurnPlan.PhaseReservations.
+
+Для каждой свободной Brigade её текущая Activity
+запрашивается через внешний read-only resolver.
+
+Если Activity отсутствует, специальный intent
+не создаётся. Brigade остаётся в standby semantics.
+
+Бригада с blocking reservation не получает
+Activity intent в занятой фазе, даже если
+Order позднее получит failed assessment.
+
+Activity определяется заново в начале каждой
+Action Phase, до mutation игрового мира.
+
+Фабрика не владеет Activity state, не выполняет
+Activity tick и не изменяет Bastion.
+
+Реальное исполнение ModuleWorkActivity
+остаётся задачей Stage 15.
