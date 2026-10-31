@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using BastionMarch.Simulation.Turns;
 using BastionMarch.Simulation.Turns.Activities;
+using BastionMarch.Simulation.Turns.Orders;
 using BastionMarch.Simulation.Turns.Planning;
 
 namespace BastionMarch.Simulation.Turns.Resolution
@@ -68,9 +69,16 @@ namespace BastionMarch.Simulation.Turns.Resolution
 
             // Build Order intents before any mutations.
             IReadOnlyList<OrderPhaseIntent> orderIntents =
-                OrderPhaseIntentFactory.CreateForPhase(
-                    _plan,
-                    phase);
+                OrderPhaseIntentFactory.CreateForPhase(_plan, phase);
+                foreach (OrderPhaseIntent intent in orderIntents)
+                {
+                    if (intent.Order is MoveBrigadeOrder)
+                    {
+                        throw new NotSupportedException(
+                            "MoveBrigadeOrder requires domain execution. " +
+                            "It cannot use progress-only resolution.");
+                    }
+                }
 
             // Activity selection also happens before mutation.
             IReadOnlyList<BrigadeActivityPhaseIntent>
