@@ -297,13 +297,14 @@ Stage 15 завершён, когда:
 7. свободная следующая фаза вызывает Activity tick;
 8. интеграционный сценарий Move → Activity → TurnEnd детерминирован и покрыт EditMode-тестами.
 
-### Stage 15.1
+### Прогресс этапа 15
 
-- [x] 15.1. Atomic Brigade Move.
+- [x] 15.1. BrigadeMoveAssessment и атомарный move.
 - [x] 15.2. MoveBrigadeOrder.
-- [x] 15.3. Move execution assessment / integration.
+- [x] 15.3. Activity transition после move.
 - [x] 15.4. ModuleWorkActivity.
-- [ ] 15.5. Move → Activity → TurnEnd integration.
+- [x] 15.5. Activity tick в свободной фазе.
+- [ ] 15.6. Интеграционный ход Move → default Activity → TurnEnd.
 
 ### Реализация Stage 15.2
 
@@ -429,3 +430,23 @@ Tick не создаёт дополнительный mutable Activity registry,
 
 Политика выбора новой default Activity после перемещения
 остаётся отдельным решением Stage 15.5.
+
+### Stage 15.5.2 — Default ModuleWork eligibility
+
+Добавлена read-only политика ModuleWorkDefaultPolicy.
+
+Она использует существующие BrigadeWorkProfileCatalog,
+WorkType и CrewRequirement.
+
+Для M1 default ModuleWork предлагается только idle
+бригаде, если модуль содержит ровно один подходящий
+вид профильной работы с affinity 100%.
+
+При отсутствии профильной работы или неоднозначном
+выборе автоматическое назначение не выполняется.
+
+Assessment не запускает работу и не меняет Bastion.
+
+Следующий шаг — подключение default Activity к свободной
+Action Phase с повторной проверкой условий и согласованной
+публикацией результатов.
