@@ -185,5 +185,16 @@ namespace BastionMarch.Simulation.Turns.Resolution
                     "cannot be changed.");
             }
         }
+        
+        internal OrderExecutionState CreateCopy()
+        {
+            return new OrderExecutionState(
+                OrderId,
+                RequiredPhases)
+            {
+                CompletedPhases = this.CompletedPhases,
+                Status = this.Status
+            };
+        }
     }
 }

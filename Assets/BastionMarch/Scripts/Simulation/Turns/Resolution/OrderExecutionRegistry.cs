@@ -14,9 +14,7 @@ namespace BastionMarch.Simulation.Turns.Resolution
     /// </summary>
     public sealed class OrderExecutionRegistry
     {
-        private readonly Dictionary<
-            Guid,
-            OrderExecutionState>
+        private Dictionary<Guid, OrderExecutionState>
                 _statesByOrderId;
 
         public int Count =>
@@ -66,6 +64,38 @@ namespace BastionMarch.Simulation.Turns.Resolution
             _statesByOrderId.Add(
                 state.OrderId,
                 state);
+        }
+        
+        internal OrderExecutionRegistry CreateCopy()
+        {
+            var copy = new OrderExecutionRegistry();
+
+            foreach (KeyValuePair<Guid, OrderExecutionState> pair
+                    in _statesByOrderId)
+            {
+                copy._statesByOrderId.Add(
+                    pair.Key,
+                    pair.Value.CreateCopy());
+            }
+
+            return copy;
+        }
+
+        internal void ReplaceFrom(OrderExecutionRegistry prepared)
+        {
+            if (prepared == null)
+            {
+                throw new ArgumentNullException(nameof(prepared));
+            }
+
+            if (ReferenceEquals(this, prepared))
+            {
+                throw new ArgumentException(
+                    "Cannot replace registry with itself.",
+                    nameof(prepared));
+            }
+
+            _statesByOrderId = prepared._statesByOrderId;
         }
     }
 }

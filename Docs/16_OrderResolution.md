@@ -365,3 +365,32 @@ OrderExecutionState и не владеет TurnCycle.
 
 Единый TurnPhaseResolver, защита от повторной обработки
 и управление изменениями мира относятся к 14.8.2.
+
+## Реализация 14.8.2. TurnPhaseResolver
+
+Добавлен TurnPhaseResolver для базового execution pipeline.
+
+Последовательность:
+
+1. Проверка TurnCycle и ConfirmedTurnPlan.
+2. Построение Order intents и Activity intents.
+3. Read-only execution assessment.
+4. Conflict resolution.
+5. Подготовка execution progress на копии registry.
+6. Формирование и проверка PhaseResolutionResult.
+7. Продвижение TurnCycle.
+8. Публикация подготовленного execution registry.
+
+Resolver не выполняет конкретные world actions.
+
+Для persistent processes пока используется
+NoOpPersistentWorldPhaseProcessor.
+
+Однократность обработки обеспечивается проверкой
+ожидаемой Action Phase и продвижением TurnCycle.
+
+Runtime progress Orders может переживать TurnEnd.
+
+Произвольная транзакционная world mutation,
+Activity execution и конкретные игровые Orders
+подключаются на соответствующих следующих этапах.
