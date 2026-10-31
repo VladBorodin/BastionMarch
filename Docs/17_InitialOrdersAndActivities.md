@@ -297,11 +297,11 @@ Stage 15 завершён, когда:
 7. свободная следующая фаза вызывает Activity tick;
 8. интеграционный сценарий Move → Activity → TurnEnd детерминирован и покрыт EditMode-тестами.
 
-###Stage 15.1
+### Stage 15.1
 
 - [x] 15.1. Atomic Brigade Move.
 - [x] 15.2. MoveBrigadeOrder.
-- [ ] 15.3. Move execution assessment / integration.
+- [x] 15.3. Move execution assessment / integration.
 - [ ] 15.4. ModuleWorkActivity.
 - [ ] 15.5. Move → Activity → TurnEnd integration.
 
@@ -351,3 +351,34 @@ MoveBrigadeOrder не выполняет world mutation.
 Подключение пакетного перемещения к TurnPhaseResolver,
 обработка Failed execution outcomes и журналирование
 относятся к Stage 15.3b.2.
+
+### Stage 15.3b.2 — Move execution integration
+
+MoveBrigadeOrder подключён к TurnPhaseResolver.
+
+Перед world mutation выполняются:
+
+- universal execution assessment;
+- BrigadeMoveAssessment;
+- conflict resolution;
+- подготовка execution outcomes на копии registry;
+- формирование immutable PhaseResolutionResult.
+
+Разрешённые Move Orders передаются в
+Bastion.CommitAssessedBrigadeMoves.
+
+Успешное перемещение получает Completed.
+Доменный отказ получает Failed без progress tick.
+
+Отказы записываются в журнал с BrigadeMoveFailureReason
+и ModulePassageTraversalFailureReason.
+
+Blocking reservation подавляет Activity в занятой фазе
+даже при Failed Move.
+
+После успешной пакетной операции продвигается TurnCycle
+и публикуется подготовленный OrderExecutionRegistry.
+
+Гарантии относятся к текущим доменным операциям M1
+и однопоточному исполнению Simulation. Универсального
+rollback для любых world mutations пока нет.

@@ -17,6 +17,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
 
         ExecutionAlreadyCompleted,
 
-        ExecutionAlreadyFailed
+        ExecutionAlreadyFailed,
+
+        MoveDomainRejected
     }
 }

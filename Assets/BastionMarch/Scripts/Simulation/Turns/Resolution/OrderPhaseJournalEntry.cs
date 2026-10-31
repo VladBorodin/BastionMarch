@@ -1,5 +1,5 @@
-
 using System;
+using BastionMarch.Simulation.Bastions;
 
 namespace BastionMarch.Simulation.Turns.Resolution
 {
@@ -11,6 +11,16 @@ namespace BastionMarch.Simulation.Turns.Resolution
     /// </summary>
     public sealed class OrderPhaseJournalEntry
     {
+        public BrigadeMoveFailureReason? MoveFailureReason 
+        { 
+            get; 
+        }
+
+        public ModulePassageTraversalFailureReason? MoveTraversalFailureReason
+        {
+            get;
+        }
+
         public Guid OrderId { get; }
 
         public OrderPhaseResolutionDecision Decision { get; }
@@ -45,10 +55,21 @@ namespace BastionMarch.Simulation.Turns.Resolution
                     nameof(commit));
             }
 
-            if (!resolution.IsApproved && commit != null)
+            if (!resolution.IsApproved && commit != null &&
+                (resolution.Assessment.FailureReason !=
+                    OrderPhaseAssessmentFailureReason.MoveDomainRejected ||
+                commit.Outcome.Kind != OrderExecutionOutcomeKind.Failed))
             {
                 throw new ArgumentException(
-                    "Rejected order cannot have a commit result.",
+                    "Rejected order may only record a supported failure outcome.",
+                    nameof(commit));
+            }
+
+            if (resolution.IsApproved && commit != null &&
+                commit.Outcome.Kind == OrderExecutionOutcomeKind.Failed)
+            {
+                throw new ArgumentException(
+                    "Approved order cannot record failed execution.",
                     nameof(commit));
             }
 
@@ -62,10 +83,10 @@ namespace BastionMarch.Simulation.Turns.Resolution
 
             OrderId = resolution.OrderId;
             Decision = resolution.Decision;
-            AssessmentFailureReason =
-                resolution.Assessment.FailureReason;
-
-            WasCommitted = commit != null;
+            AssessmentFailureReason = resolution.Assessment.FailureReason;
+            MoveFailureReason = resolution.Assessment.MoveAssessment?.FailureReason;
+            MoveTraversalFailureReason = resolution.Assessment.MoveAssessment?.TraversalFailureReason;
+            WasCommitted = resolution.IsApproved && commit != null;
 
             if (commit != null)
             {

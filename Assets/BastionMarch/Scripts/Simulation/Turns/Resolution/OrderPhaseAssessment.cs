@@ -1,4 +1,5 @@
 using System;
+using BastionMarch.Simulation.Bastions;
 
 namespace BastionMarch.Simulation.Turns.Resolution
 {
@@ -23,10 +24,13 @@ namespace BastionMarch.Simulation.Turns.Resolution
             get;
         }
 
-        public OrderPhaseAssessmentFailureReason
-            FailureReason
+        public OrderPhaseAssessmentFailureReason FailureReason
         {
             get;
+        }
+
+        public BrigadeMoveAssessment MoveAssessment { 
+            get; 
         }
 
         public bool IsAllowed =>
@@ -37,9 +41,10 @@ namespace BastionMarch.Simulation.Turns.Resolution
             Guid orderId,
             int actionPhase,
             bool requiresExecutionStart,
-            OrderPhaseAssessmentFailureReason
-                failureReason)
+            OrderPhaseAssessmentFailureReason failureReason,
+            BrigadeMoveAssessment moveAssessment = null)
         {
+            MoveAssessment = moveAssessment;
             if (orderId == Guid.Empty)
             {
                 throw new ArgumentException(
@@ -98,6 +103,31 @@ namespace BastionMarch.Simulation.Turns.Resolution
                 actionPhase,
                 requiresExecutionStart: false,
                 failureReason);
+        }
+
+        public static OrderPhaseAssessment RejectedMove(
+            Guid orderId,
+            int actionPhase,
+            BrigadeMoveAssessment moveAssessment)
+        {
+            if (moveAssessment == null)
+            {
+                throw new ArgumentNullException(nameof(moveAssessment));
+            }
+
+            if (moveAssessment.IsAllowed)
+            {
+                throw new ArgumentException(
+                    "Rejected move requires a failed domain assessment.",
+                    nameof(moveAssessment));
+            }
+
+            return new OrderPhaseAssessment(
+                orderId,
+                actionPhase,
+                requiresExecutionStart: false,
+                OrderPhaseAssessmentFailureReason.MoveDomainRejected,
+                moveAssessment);
         }
     }
 }

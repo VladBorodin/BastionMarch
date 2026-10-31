@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Turns;
 using BastionMarch.Simulation.Turns.Activities;
 using BastionMarch.Simulation.Turns.Orders;
@@ -18,6 +19,7 @@ namespace BastionMarch.Simulation.Turns.Resolution
     /// </summary>
     public sealed class TurnPhaseResolver
     {
+        private readonly Bastion _bastion;
         private readonly TurnCycle _cycle;
         private readonly ConfirmedTurnPlan _plan;
         private readonly OrderExecutionRegistry _registry;
@@ -31,20 +33,18 @@ namespace BastionMarch.Simulation.Turns.Resolution
             TurnCycle cycle,
             ConfirmedTurnPlan plan,
             OrderExecutionRegistry registry,
-            Func<Guid, IBrigadeActivity> activityResolver)
+            Func<Guid, IBrigadeActivity> activityResolver,
+            Bastion bastion = null)
         {
-            _cycle = cycle ??
-                throw new ArgumentNullException(nameof(cycle));
+            _cycle = cycle ?? throw new ArgumentNullException(nameof(cycle));
 
-            _plan = plan ??
-                throw new ArgumentNullException(nameof(plan));
+            _plan = plan ?? throw new ArgumentNullException(nameof(plan));
 
-            _registry = registry ??
-                throw new ArgumentNullException(nameof(registry));
+            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
 
-            _activityResolver = activityResolver ??
-                throw new ArgumentNullException(
-                    nameof(activityResolver));
+            _activityResolver = activityResolver ?? throw new ArgumentNullException(nameof(activityResolver));
+            
+            _bastion = bastion;
 
             ValidateCycleAndPlan();
         }
@@ -68,17 +68,15 @@ namespace BastionMarch.Simulation.Turns.Resolution
                 _cycle.ActionPhaseCount);
 
             // Build Order intents before any mutations.
-            IReadOnlyList<OrderPhaseIntent> orderIntents =
-                OrderPhaseIntentFactory.CreateForPhase(_plan, phase);
-                foreach (OrderPhaseIntent intent in orderIntents)
+            IReadOnlyList<OrderPhaseIntent> orderIntents = OrderPhaseIntentFactory.CreateForPhase(_plan, phase);
+            foreach (OrderPhaseIntent intent in orderIntents)
+            {
+                if (intent.Order is MoveBrigadeOrder && _bastion == null)
                 {
-                    if (intent.Order is MoveBrigadeOrder)
-                    {
-                        throw new NotSupportedException(
-                            "MoveBrigadeOrder requires domain execution. " +
-                            "It cannot use progress-only resolution.");
-                    }
+                    throw new NotSupportedException(
+                        "MoveBrigadeOrder requires a Bastion execution context.");
                 }
+            }
 
             // Activity selection also happens before mutation.
             IReadOnlyList<BrigadeActivityPhaseIntent>
@@ -93,16 +91,32 @@ namespace BastionMarch.Simulation.Turns.Resolution
             var assessed =
                 new List<AssessedOrderPhaseIntent>();
 
+            var allowedMoves = new Dictionary<Guid, BrigadeMoveAssessment>();
             foreach (OrderPhaseIntent intent in orderIntents)
             {
                 _registry.TryGet(
                     intent.OrderId,
                     out OrderExecutionState state);
 
-                OrderPhaseAssessment assessment =
-                    OrderPhaseExecutionAssessor.Assess(
-                        intent,
-                        state);
+                OrderPhaseAssessment assessment = OrderPhaseExecutionAssessor.Assess(intent, state);
+
+                if (assessment.IsAllowed && intent.Order is MoveBrigadeOrder)
+                {
+                    BrigadeMoveAssessment moveAssessment =
+                        MoveBrigadeOrderAssessor.Assess(intent, _bastion);
+
+                    if (moveAssessment.IsAllowed)
+                    {
+                        allowedMoves.Add(intent.OrderId, moveAssessment);
+                    }
+                    else
+                    {
+                        assessment = OrderPhaseAssessment.RejectedMove(
+                            intent.OrderId,
+                            intent.ActionPhase,
+                            moveAssessment);
+                    }
+                }
 
                 assessed.Add(
                     new AssessedOrderPhaseIntent(
@@ -120,19 +134,29 @@ namespace BastionMarch.Simulation.Turns.Resolution
                 _registry.CreateCopy();
 
             var commits = new List<OrderPhaseCommitResult>();
+            var movesToCommit = new List<BrigadeMoveAssessment>();
 
-            foreach (ResolvedOrderPhaseIntent resolution
-                     in resolutions)
+            foreach (ResolvedOrderPhaseIntent resolution in resolutions)
             {
                 if (!resolution.IsApproved)
                 {
+                    if (resolution.Assessment.FailureReason ==
+                        OrderPhaseAssessmentFailureReason.MoveDomainRejected)
+                    {
+                        commits.Add(OrderPhaseCommitter.RecordMoveFailure(
+                            resolution, preparedRegistry));
+                    }
+
                     continue;
                 }
 
-                commits.Add(
-                    OrderPhaseCommitter.Commit(
-                        resolution,
-                        preparedRegistry));
+                commits.Add(OrderPhaseCommitter.Commit(
+                    resolution, preparedRegistry));
+
+                if (resolution.Intent.Order is MoveBrigadeOrder)
+                {
+                    movesToCommit.Add(allowedMoves[resolution.OrderId]);
+                }
             }
 
             // Stage 14 currently has no actual persistent
@@ -175,8 +199,12 @@ namespace BastionMarch.Simulation.Turns.Resolution
                     "Action phase changed during preparation.");
             }
 
-            TurnTransitionResult actualTransition =
-                _cycle.TryAdvanceActionPhase();
+            if (movesToCommit.Count > 0)
+            {
+                _bastion.CommitAssessedBrigadeMoves(movesToCommit);
+            }
+
+            TurnTransitionResult actualTransition = _cycle.TryAdvanceActionPhase();
 
             if (!actualTransition.IsSuccess)
             {

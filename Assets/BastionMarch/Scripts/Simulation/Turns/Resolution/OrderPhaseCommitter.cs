@@ -123,5 +123,67 @@ namespace BastionMarch.Simulation.Turns.Resolution
                 startedExecution: false,
                 outcome);
         }
+
+        public static OrderPhaseCommitResult RecordMoveFailure(
+            ResolvedOrderPhaseIntent resolution,
+            OrderExecutionRegistry registry)
+        {
+            if (resolution == null)
+            {
+                throw new ArgumentNullException(nameof(resolution));
+            }
+
+            if (registry == null)
+            {
+                throw new ArgumentNullException(nameof(registry));
+            }
+
+            if (resolution.IsApproved ||
+                resolution.Assessment.FailureReason !=
+                    OrderPhaseAssessmentFailureReason.MoveDomainRejected ||
+                resolution.Assessment.MoveAssessment == null)
+            {
+                throw new ArgumentException(
+                    "Expected a rejected Move order.",
+                    nameof(resolution));
+            }
+
+            OrderPhaseIntent intent = resolution.Intent;
+
+            bool startedExecution = !registry.TryGet(
+                intent.OrderId, out OrderExecutionState state);
+
+            if (startedExecution)
+            {
+                state = OrderExecutionState.Start(intent.Order);
+            }
+            else
+            {
+                if (state.RequiredPhases != intent.Order.RequiredPhases)
+                {
+                    throw new InvalidOperationException(
+                        "Execution duration mismatch.");
+                }
+
+                if (!state.IsActive)
+                {
+                    throw new InvalidOperationException(
+                        "Terminal execution cannot fail again.");
+                }
+            }
+
+            OrderExecutionOutcome outcome = state.Fail();
+
+            if (startedExecution)
+            {
+                registry.Add(state);
+            }
+
+            return new OrderPhaseCommitResult(
+                intent.OrderId,
+                intent.ActionPhase,
+                startedExecution,
+                outcome);
+        }
     }
 }
