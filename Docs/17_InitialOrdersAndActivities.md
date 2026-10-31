@@ -406,3 +406,26 @@ Activity существует только для живой, размещённ
 
 Фактическое исполнение Activity tick и интеграционный
 сценарий Move → Activity → TurnEnd относятся к Stage 15.5.
+
+### Stage 15.5.1 — ModuleWorkActivity tick
+
+ModuleWorkActivityTickProcessor подтверждает продолжение
+фактической работы бригады в свободной Action Phase.
+
+Рабочий tick фиксирует BrigadeId, ModuleId, ActionPhase
+и WorkingPersonnel.
+
+PhaseResolutionResult различает SelectedActivityCount
+и ModuleWorkTickCount.
+
+Tick не создаёт дополнительный mutable Activity registry,
+не запускает работу автоматически и пока не начисляет
+ресурсы, ремонт или опыт.
+
+После Move прежняя работа прекращается.
+
+Если Activity не выбрана, следующая свободная фаза
+оставляет Brigade в standby.
+
+Политика выбора новой default Activity после перемещения
+остаётся отдельным решением Stage 15.5.

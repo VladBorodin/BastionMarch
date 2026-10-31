@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using BastionMarch.Simulation.Turns;
+using BastionMarch.Simulation.Turns.Activities;
 
 namespace BastionMarch.Simulation.Turns.Resolution
 {
@@ -16,6 +17,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
     /// </summary>
     public sealed class PhaseResolutionResult
     {
+        public IReadOnlyList<ModuleWorkActivityTick> ModuleWorkTicks { get; }
+        public int ModuleWorkTickCount => ModuleWorkTicks.Count;
         public int TurnNumber { get; }
 
         public int ActionPhase { get; }
@@ -54,7 +57,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
             IReadOnlyList<OrderPhaseJournalEntry> orderEntries,
             IReadOnlyList<Guid> activityIds,
             IReadOnlyList<Guid> processIds,
-            TurnTransitionResult transition)
+            TurnTransitionResult transition,
+            IReadOnlyList<ModuleWorkActivityTick> moduleWorkTicks)
         {
             TurnNumber = context.TurnNumber;
             ActionPhase = context.ActionPhase;
@@ -62,6 +66,7 @@ namespace BastionMarch.Simulation.Turns.Resolution
             SelectedActivityBrigadeIds = activityIds;
             ProcessedWorldProcessIds = processIds;
             Transition = transition;
+            ModuleWorkTicks = moduleWorkTicks;
         }
 
         public static PhaseResolutionResult Create(
@@ -70,7 +75,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
             IEnumerable<OrderPhaseCommitResult> commits,
             IEnumerable<BrigadeActivityPhaseIntent> activities,
             PersistentWorldPhaseResult persistentResult,
-            TurnTransitionResult transition)
+            TurnTransitionResult transition,
+            IEnumerable<ModuleWorkActivityTick> moduleWorkTicks = null)
         {
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
@@ -178,6 +184,39 @@ namespace BastionMarch.Simulation.Turns.Resolution
                     "Duplicate activity selection.");
             }
 
+            ModuleWorkActivityTick[] ticks = moduleWorkTicks?.ToArray() ?? Array.Empty<ModuleWorkActivityTick>();
+
+            if (ticks.Any(tick => tick == null))
+            {
+                throw new ArgumentException("Module work ticks cannot contain null.");
+            }
+
+            if (ticks.Any(tick => tick.ActionPhase != context.ActionPhase))
+            {
+                throw new ArgumentException("Module work tick phase mismatch.");
+            }
+
+            if (ticks.Select(tick => tick.BrigadeId).Distinct().Count() != ticks.Length)
+            {
+                throw new ArgumentException("Duplicate module work tick.");
+            }
+
+            Dictionary<Guid, ModuleWorkActivity> selectedWork =
+                activityArray
+                    .Where(intent => intent.Activity is ModuleWorkActivity)
+                    .ToDictionary(
+                        intent => intent.BrigadeId,
+                        intent => (ModuleWorkActivity)intent.Activity);
+
+            if (ticks.Length != selectedWork.Count ||
+                ticks.Any(tick =>
+                    !selectedWork.TryGetValue(tick.BrigadeId, out ModuleWorkActivity work) ||
+                    work.ModuleId != tick.ModuleId))
+            {
+                throw new ArgumentException(
+                    "Module work ticks must match selected activities.");
+            }
+
             HashSet<Guid> reservedBrigadeIds =
                 resolutionArray
                     .SelectMany(item =>
@@ -193,13 +232,13 @@ namespace BastionMarch.Simulation.Turns.Resolution
 
             return new PhaseResolutionResult(
                 context,
-                new ReadOnlyCollection<OrderPhaseJournalEntry>(
-                    entries),
-                new ReadOnlyCollection<Guid>(
-                    activityIds.OrderBy(id => id).ToArray()),
-                new ReadOnlyCollection<Guid>(
-                    persistentResult.ProcessedProcessIds.ToArray()),
-                transition);
+                new ReadOnlyCollection<OrderPhaseJournalEntry>(entries),
+                new ReadOnlyCollection<Guid>(activityIds.OrderBy(id => id).ToArray()),
+                new ReadOnlyCollection<Guid>(persistentResult.ProcessedProcessIds.ToArray()),
+                transition,
+                new ReadOnlyCollection<ModuleWorkActivityTick>(
+                    ticks.OrderBy(tick => tick.BrigadeId).ToArray()));
+                
         }
 
         private static void ValidateTransition(

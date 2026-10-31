@@ -49,8 +49,7 @@ namespace BastionMarch.Simulation.Turns.Resolution
             ValidateCycleAndPlan();
         }
 
-        public PhaseResolutionResult ResolvePhase(
-            int expectedActionPhase)
+        public PhaseResolutionResult ResolvePhase(int expectedActionPhase)
         {
             ValidateCycleAndPlan();
 
@@ -86,6 +85,24 @@ namespace BastionMarch.Simulation.Turns.Resolution
                             _plan,
                             phase,
                             _activityResolver);
+
+            var moduleWorkTicks = new List<ModuleWorkActivityTick>();
+
+            foreach (BrigadeActivityPhaseIntent intent in activityIntents)
+            {
+                if (!(intent.Activity is ModuleWorkActivity))
+                {
+                    continue;
+                }
+
+                if (_bastion == null)
+                {
+                    throw new NotSupportedException(
+                        "ModuleWorkActivity requires a Bastion context.");
+                }
+
+                moduleWorkTicks.Add(ModuleWorkActivityTickProcessor.Prepare(intent, _bastion));
+            }
 
             // All assessments use the original registry.
             var assessed =
@@ -188,7 +205,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
                     commits,
                     activityIntents,
                     persistentResult,
-                    expectedTransition);
+                    expectedTransition,
+                    moduleWorkTicks);
 
             // Recheck after all preparation callbacks.
             ValidateCycleAndPlan();
