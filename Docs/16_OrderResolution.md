@@ -346,3 +346,22 @@ Processor получает временную identity Action Phase
 
 Конкретные persistent processes появятся
 на соответствующих игровых этапах.
+
+## Реализация 14.8.1. Immutable phase journal
+
+Добавлены OrderPhaseJournalEntry и PhaseResolutionResult.
+
+Журнал хранит immutable результаты Order commits,
+диагностику отклонённых Orders, идентификаторы выбранных
+Activities и обработанных persistent processes.
+
+Выбор Activity не считается фактическим исполнением.
+
+PhaseResolutionResult не хранит mutable
+OrderExecutionState и не владеет TurnCycle.
+
+Записи упорядочены детерминированно, но порядок
+не определяет игровую инициативу.
+
+Единый TurnPhaseResolver, защита от повторной обработки
+и управление изменениями мира относятся к 14.8.2.
