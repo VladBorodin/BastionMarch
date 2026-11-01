@@ -937,50 +937,82 @@ namespace BastionMarch.Simulation.Bastions
             ApplyAssessedBrigadeMove(assessment);
             return new BrigadeMoveResult(assessment);
         }
-        
-        /// <summary>
-        /// Выполняет несколько перемещений, предварительно
-        /// перепроверив весь пакет относительно одного состояния Bastion.
-        ///
-        /// Для M1 перемещения разных бригад независимы:
-        /// вместимость проходов и отсеков пока не ограничивается.
-        ///
-        /// Невалидный пакет не изменяет Bastion.
-        /// </summary>
+           
         public IReadOnlyList<BrigadeMoveResult> CommitAssessedBrigadeMoves(
             IEnumerable<BrigadeMoveAssessment> assessments)
+        {
+            return CommitBrigadePhaseActions(
+                assessments,
+                Array.Empty<BrigadeWorkStartRequest>());
+        }
+
+        /// <summary>
+        /// Проверяет весь пакет перемещений и начал работы
+        /// относительно общего исходного состояния Bastion.
+        ///
+        /// В M1 разные бригады не конкурируют за физическую
+        /// вместимость рабочего места.
+        /// </summary>
+        public IReadOnlyList<BrigadeMoveResult> CommitBrigadePhaseActions(
+            IEnumerable<BrigadeMoveAssessment> assessments,
+            IEnumerable<BrigadeWorkStartRequest> workStarts)
         {
             if (assessments == null)
             {
                 throw new ArgumentNullException(nameof(assessments));
             }
 
-            BrigadeMoveAssessment[] requested = assessments.ToArray();
+            if (workStarts == null)
+            {
+                throw new ArgumentNullException(nameof(workStarts));
+            }
 
-            if (requested.Any(item => item == null))
+            BrigadeMoveAssessment[] requestedMoves = assessments.ToArray();
+            BrigadeWorkStartRequest[] requestedStarts = workStarts.ToArray();
+
+            if (requestedMoves.Any(item => item == null) ||
+                requestedMoves.Any(item => !item.IsAllowed))
             {
                 throw new ArgumentException(
-                    "Move assessments cannot contain null.",
+                    "Move assessments must be non-null and allowed.",
                     nameof(assessments));
             }
 
-            if (requested.Any(item => !item.IsAllowed))
+            if (requestedStarts.Any(item => item == null))
             {
                 throw new ArgumentException(
-                    "Only allowed moves can be committed.",
+                    "Work start requests cannot contain null.",
+                    nameof(workStarts));
+            }
+
+            if (requestedMoves.Select(item => item.BrigadeId)
+                    .Distinct().Count() != requestedMoves.Length)
+            {
+                throw new ArgumentException(
+                    "Duplicate brigade movement.",
                     nameof(assessments));
             }
 
-            if (requested.Select(item => item.BrigadeId)
-                    .Distinct().Count() != requested.Length)
+            if (requestedStarts.Select(item => item.BrigadeId)
+                    .Distinct().Count() != requestedStarts.Length)
             {
                 throw new ArgumentException(
-                    "A brigade cannot move more than once in one batch.",
-                    nameof(assessments));
+                    "Duplicate brigade work start.",
+                    nameof(workStarts));
             }
 
-            // Проверяем ВСЕ переходы до первого изменения мира.
-            BrigadeMoveAssessment[] validated = requested
+            HashSet<Guid> movingBrigades =
+                requestedMoves.Select(item => item.BrigadeId).ToHashSet();
+
+            if (requestedStarts.Any(item => movingBrigades.Contains(item.BrigadeId)))
+            {
+                throw new ArgumentException(
+                    "A brigade cannot move and start work in the same phase.",
+                    nameof(workStarts));
+            }
+
+            // Полная повторная проверка всех перемещений.
+            BrigadeMoveAssessment[] validatedMoves = requestedMoves
                 .Select(item => AssessBrigadeMove(
                     item.BrigadeId,
                     item.SourceModuleId,
@@ -988,21 +1020,62 @@ namespace BastionMarch.Simulation.Bastions
                     item.PassageId))
                 .ToArray();
 
-            if (validated.Any(item => !item.IsAllowed))
+            if (validatedMoves.Any(item => !item.IsAllowed))
             {
                 throw new InvalidOperationException(
                     "Move preconditions changed after assessment.");
             }
 
-            var results = new List<BrigadeMoveResult>(validated.Length);
+            // Полная проверка всех рабочих назначений до mutation.
+            foreach (BrigadeWorkStartRequest request in requestedStarts)
+            {
+                if (!_brigadesById.TryGetValue(
+                        request.BrigadeId, out Brigade brigade) ||
+                    brigade.IsDisbanded)
+                {
+                    throw new InvalidOperationException(
+                        "Work-start brigade is unavailable.");
+                }
 
-            // Упорядочивание служит только детерминизму.
-            // В M1 разные бригады не конкурируют за вместимость.
+                if (!_locationModuleIdByBrigadeId.TryGetValue(
+                        request.BrigadeId, out Guid actualModuleId) ||
+                    actualModuleId != request.ModuleId)
+                {
+                    throw new InvalidOperationException(
+                        "Work-start brigade is not in the expected module.");
+                }
+
+                if (!_grid.TryGetModule(
+                        request.ModuleId, out ModuleInstance module) ||
+                    !module.OccupyingBrigadeIds.Contains(request.BrigadeId) ||
+                    _workingBrigadeIds.Contains(request.BrigadeId) ||
+                    module.WorkingBrigadeIds.Contains(request.BrigadeId))
+                {
+                    throw new InvalidOperationException(
+                        "Work-start occupancy or working state is invalid.");
+                }
+            }
+
+            var results = new List<BrigadeMoveResult>(validatedMoves.Length);
+
             foreach (BrigadeMoveAssessment assessment in
-                    validated.OrderBy(item => item.BrigadeId))
+                    validatedMoves.OrderBy(item => item.BrigadeId))
             {
                 ApplyAssessedBrigadeMove(assessment);
                 results.Add(new BrigadeMoveResult(assessment));
+            }
+
+            foreach (BrigadeWorkStartRequest request in
+                    requestedStarts.OrderBy(item => item.BrigadeId))
+            {
+                BrigadeOperationalResult result =
+                    TryStartBrigadeWork(request.BrigadeId);
+
+                if (!result.IsSuccess)
+                {
+                    throw new InvalidOperationException(
+                        "Prepared work start could not be committed.");
+                }
             }
 
             return results.AsReadOnly();

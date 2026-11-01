@@ -304,7 +304,7 @@ Stage 15 завершён, когда:
 - [x] 15.3. Activity transition после move.
 - [x] 15.4. ModuleWorkActivity.
 - [x] 15.5. Activity tick в свободной фазе.
-- [ ] 15.6. Интеграционный ход Move → default Activity → TurnEnd.
+- [x] 15.6. Интеграционный ход Move → default Activity → TurnEnd.
 
 ### Реализация Stage 15.2
 
@@ -450,3 +450,33 @@ Assessment не запускает работу и не меняет Bastion.
 Следующий шаг — подключение default Activity к свободной
 Action Phase с повторной проверкой условий и согласованной
 публикацией результатов.
+
+### Stage 15.5.3 — Default ModuleWork execution
+
+TurnPhaseResolver поддерживает опциональную default work policy
+через BrigadeWorkProfileCatalog.
+
+Если у свободной бригады уже есть Activity, она имеет
+приоритет. Иначе default policy может выбрать
+единственную профильную ModuleWorkActivity.
+
+Выбор default Activity осуществляется после проверки
+blocking reservations и не создаёт самостоятельный Order.
+
+Начало работы и ModuleWorkActivity tick подготавливаются
+для текущей Action Phase.
+
+Bastion.CommitBrigadePhaseActions проверяет весь пакет
+перемещений и начал работы до первой mutation.
+
+После успешного commit:
+- рабочее состояние хранится только в Bastion;
+- ModuleWorkActivityTick фиксируется в PhaseResolutionResult;
+- TurnCycle продвигается на следующую фазу.
+
+MoveBrigadeOrder сам не запускает работу.
+Default work возможна только в свободной фазе.
+
+MaximumUsefulPersonnel не является жёсткой вместимостью
+для M1. Распределение ограниченных рабочих мест
+потребует отдельного правила конфликтов.

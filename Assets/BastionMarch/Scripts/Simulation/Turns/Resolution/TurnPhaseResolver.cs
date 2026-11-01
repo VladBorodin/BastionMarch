@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using BastionMarch.Simulation.Bastions;
+using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Turns;
 using BastionMarch.Simulation.Turns.Activities;
 using BastionMarch.Simulation.Turns.Orders;
@@ -22,6 +23,7 @@ namespace BastionMarch.Simulation.Turns.Resolution
         private readonly Bastion _bastion;
         private readonly TurnCycle _cycle;
         private readonly ConfirmedTurnPlan _plan;
+        private readonly BrigadeWorkProfileCatalog _defaultWorkProfiles;
         private readonly OrderExecutionRegistry _registry;
         private readonly Func<Guid, IBrigadeActivity>
             _activityResolver;
@@ -34,7 +36,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
             ConfirmedTurnPlan plan,
             OrderExecutionRegistry registry,
             Func<Guid, IBrigadeActivity> activityResolver,
-            Bastion bastion = null)
+            Bastion bastion = null,
+            BrigadeWorkProfileCatalog defaultWorkProfiles = null)
         {
             _cycle = cycle ?? throw new ArgumentNullException(nameof(cycle));
 
@@ -45,6 +48,15 @@ namespace BastionMarch.Simulation.Turns.Resolution
             _activityResolver = activityResolver ?? throw new ArgumentNullException(nameof(activityResolver));
             
             _bastion = bastion;
+
+            if (defaultWorkProfiles != null && _bastion == null)
+            {
+                throw new ArgumentException(
+                    "Default work requires a Bastion context.",
+                    nameof(defaultWorkProfiles));
+            }
+
+            _defaultWorkProfiles = defaultWorkProfiles;
 
             ValidateCycleAndPlan();
         }
@@ -61,10 +73,7 @@ namespace BastionMarch.Simulation.Turns.Resolution
 
             int phase = expectedActionPhase;
 
-            var context = new PersistentWorldPhaseContext(
-                _cycle.TurnNumber,
-                phase,
-                _cycle.ActionPhaseCount);
+            var context = new PersistentWorldPhaseContext(_cycle.TurnNumber, phase, _cycle.ActionPhaseCount);
 
             // Build Order intents before any mutations.
             IReadOnlyList<OrderPhaseIntent> orderIntents = OrderPhaseIntentFactory.CreateForPhase(_plan, phase);
@@ -72,25 +81,41 @@ namespace BastionMarch.Simulation.Turns.Resolution
             {
                 if (intent.Order is MoveBrigadeOrder && _bastion == null)
                 {
-                    throw new NotSupportedException(
-                        "MoveBrigadeOrder requires a Bastion execution context.");
+                    throw new NotSupportedException("MoveBrigadeOrder requires a Bastion execution context.");
                 }
             }
+            
+            var defaultWorkSelections = new Dictionary<Guid, ModuleWorkDefaultAssessment>();
 
-            // Activity selection also happens before mutation.
-            IReadOnlyList<BrigadeActivityPhaseIntent>
-                activityIntents =
-                    BrigadeActivityPhaseIntentFactory
-                        .CreateForPhase(
-                            _plan,
-                            phase,
-                            _activityResolver);
+            IReadOnlyList<BrigadeActivityPhaseIntent> activityIntents =
+                BrigadeActivityPhaseIntentFactory.CreateForPhase(_plan, phase, brigadeId =>
+                    {
+                        IBrigadeActivity activity = _activityResolver(brigadeId);
 
+                        if (activity != null || _defaultWorkProfiles == null)
+                        {
+                            return activity;
+                        }
+
+                        ModuleWorkDefaultAssessment assessment = ModuleWorkDefaultPolicy.Assess(_bastion, brigadeId, _defaultWorkProfiles);
+
+                        if (!assessment.IsAllowed)
+                        {
+                            return null;
+                        }
+
+                        defaultWorkSelections.Add(brigadeId, assessment);
+
+                        return new ModuleWorkActivity(brigadeId, assessment.ModuleId);
+                    });
+
+            
             var moduleWorkTicks = new List<ModuleWorkActivityTick>();
+            var workStarts = new List<BrigadeWorkStartRequest>();
 
             foreach (BrigadeActivityPhaseIntent intent in activityIntents)
             {
-                if (!(intent.Activity is ModuleWorkActivity))
+                if (!(intent.Activity is ModuleWorkActivity activity))
                 {
                     continue;
                 }
@@ -101,26 +126,60 @@ namespace BastionMarch.Simulation.Turns.Resolution
                         "ModuleWorkActivity requires a Bastion context.");
                 }
 
-                moduleWorkTicks.Add(ModuleWorkActivityTickProcessor.Prepare(intent, _bastion));
+                if (defaultWorkSelections.TryGetValue(
+                        intent.BrigadeId, out ModuleWorkDefaultAssessment selectedDefault))
+                {
+                    ModuleWorkDefaultAssessment current =
+                        ModuleWorkDefaultPolicy.Assess(
+                            _bastion,
+                            intent.BrigadeId,
+                            _defaultWorkProfiles);
+
+                    if (!current.IsAllowed ||
+                        current.ModuleId != selectedDefault.ModuleId ||
+                        current.WorkType != selectedDefault.WorkType ||
+                        activity.ModuleId != current.ModuleId)
+                    {
+                        throw new InvalidOperationException(
+                            "Default work eligibility changed during preparation.");
+                    }
+
+                    if (!_bastion.TryGetBrigade(
+                            intent.BrigadeId, out Brigade brigade) ||
+                        brigade.IsDisbanded)
+                    {
+                        throw new InvalidOperationException(
+                            "Default work brigade is unavailable.");
+                    }
+
+                    workStarts.Add(new BrigadeWorkStartRequest(
+                        intent.BrigadeId, activity.ModuleId));
+
+                    moduleWorkTicks.Add(new ModuleWorkActivityTick(
+                        intent.BrigadeId,
+                        activity.ModuleId,
+                        intent.ActionPhase,
+                        brigade.CurrentPersonnel));
+                }
+                else
+                {
+                    moduleWorkTicks.Add(
+                        ModuleWorkActivityTickProcessor.Prepare(intent, _bastion));
+                }
             }
 
-            // All assessments use the original registry.
-            var assessed =
-                new List<AssessedOrderPhaseIntent>();
+            var assessed = new List<AssessedOrderPhaseIntent>();
 
             var allowedMoves = new Dictionary<Guid, BrigadeMoveAssessment>();
             foreach (OrderPhaseIntent intent in orderIntents)
             {
-                _registry.TryGet(
-                    intent.OrderId,
-                    out OrderExecutionState state);
+                _registry.TryGet(intent.OrderId, out OrderExecutionState state);
 
                 OrderPhaseAssessment assessment = OrderPhaseExecutionAssessor.Assess(intent, state);
 
                 if (assessment.IsAllowed && intent.Order is MoveBrigadeOrder)
                 {
-                    BrigadeMoveAssessment moveAssessment =
-                        MoveBrigadeOrderAssessor.Assess(intent, _bastion);
+                    BrigadeMoveAssessment moveAssessment = MoveBrigadeOrderAssessor.Assess(intent, _bastion);
 
                     if (moveAssessment.IsAllowed)
                     {
@@ -128,27 +187,17 @@ namespace BastionMarch.Simulation.Turns.Resolution
                     }
                     else
                     {
-                        assessment = OrderPhaseAssessment.RejectedMove(
-                            intent.OrderId,
-                            intent.ActionPhase,
-                            moveAssessment);
+                        assessment = OrderPhaseAssessment.RejectedMove(intent.OrderId, intent.ActionPhase, moveAssessment);
                     }
                 }
 
-                assessed.Add(
-                    new AssessedOrderPhaseIntent(
-                        intent,
-                        assessment));
+                assessed.Add(new AssessedOrderPhaseIntent(intent, assessment));
             }
 
-            IReadOnlyList<ResolvedOrderPhaseIntent>
-                resolutions =
-                    OrderPhaseConflictResolver.Resolve(
-                        assessed);
+            IReadOnlyList<ResolvedOrderPhaseIntent> resolutions = OrderPhaseConflictResolver.Resolve(assessed);
 
             // All execution mutations are staged on a copy.
-            OrderExecutionRegistry preparedRegistry =
-                _registry.CreateCopy();
+            OrderExecutionRegistry preparedRegistry = _registry.CreateCopy();
 
             var commits = new List<OrderPhaseCommitResult>();
             var movesToCommit = new List<BrigadeMoveAssessment>();
@@ -217,9 +266,29 @@ namespace BastionMarch.Simulation.Turns.Resolution
                     "Action phase changed during preparation.");
             }
 
-            if (movesToCommit.Count > 0)
+            
+            foreach (ModuleWorkDefaultAssessment selectedDefault in
+                    defaultWorkSelections.Values)
             {
-                _bastion.CommitAssessedBrigadeMoves(movesToCommit);
+                ModuleWorkDefaultAssessment current =
+                    ModuleWorkDefaultPolicy.Assess(
+                        _bastion,
+                        selectedDefault.BrigadeId,
+                        _defaultWorkProfiles);
+
+                if (!current.IsAllowed ||
+                    current.ModuleId != selectedDefault.ModuleId ||
+                    current.WorkType != selectedDefault.WorkType)
+                {
+                    throw new InvalidOperationException(
+                        "Default work eligibility changed before commit.");
+                }
+            }
+
+            if (movesToCommit.Count > 0 || workStarts.Count > 0)
+            {
+                _bastion.CommitBrigadePhaseActions(
+                    movesToCommit, workStarts);
             }
 
             TurnTransitionResult actualTransition = _cycle.TryAdvanceActionPhase();
