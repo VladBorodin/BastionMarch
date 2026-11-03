@@ -274,6 +274,58 @@ namespace BastionMarch.Simulation.Turns.Planning
                 right.OrderId);
         }
 
+        public bool TryAddOrderWithReservation(ITurnOrder order, PhaseReservation reservation)
+        {
+            if (order == null)
+                throw new ArgumentNullException(nameof(order));
+
+            if (reservation == null)
+                throw new ArgumentNullException(nameof(reservation));
+
+            if (order.OrderId != reservation.OrderId)
+            {
+                throw new ArgumentException(
+                    "Reservation must reference its order.",
+                    nameof(reservation));
+            }
+
+            if (order.OrderId == Guid.Empty || order.RequiredPhases < 1)
+            {
+                throw new ArgumentException(
+                    "Invalid order identity or duration.",
+                    nameof(order));
+            }
+
+            if (order is IBrigadeScopedOrder brigadeOrder &&
+                brigadeOrder.BrigadeId != reservation.BrigadeId)
+            {
+                return false;
+            }
+
+            if (reservation.ActionPhase > ActionPhaseCount ||
+                !Participants.Any(p =>
+                    p.BrigadeId == reservation.BrigadeId) ||
+                _orders.Any(o =>
+                    o.OrderId == order.OrderId) ||
+                _phaseReservations.Any(r =>
+                    r.BrigadeId == reservation.BrigadeId &&
+                    r.ActionPhase == reservation.ActionPhase))
+            {
+                return false;
+            }
+
+            // Все ожидаемые причины отказа проверены.
+            // Оба изменения происходят в одном синхронном вызове.
+            _orders.Add(order);
+            _orders.Sort((left, right) =>
+                left.OrderId.CompareTo(right.OrderId));
+
+            _phaseReservations.Add(reservation);
+            SortReservations();
+
+            return true;
+        }
+
         public TurnPlanOrderResult TryAddOrder(
             ITurnOrder order)
         {

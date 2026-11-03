@@ -6,6 +6,8 @@ using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Turns.Activities;
 using BastionMarch.Simulation.Turns.Planning;
 using BastionMarch.Simulation.Turns.Resolution;
+using BastionMarch.Simulation.Turns.Orders;
+using BastionMarch.Simulation.Modules;
 
 namespace BastionMarch.Simulation.Turns
 {
@@ -55,6 +57,127 @@ namespace BastionMarch.Simulation.Turns
             ExecutionRegistry = new OrderExecutionRegistry();
 
             Draft = CreateDraft();
+        }
+
+        public MovePlanningResult TryPlanMove(
+            Guid brigadeId,
+            Guid targetModuleId,
+            int actionPhase)
+        {
+            MovePlanningResult Reject(MovePlanningFailureReason reason)
+            {
+                return MovePlanningResult.Rejected(reason);
+            }
+
+            if (Cycle.Stage != TurnStage.Planning)
+                return Reject(MovePlanningFailureReason.PlanningNotActive);
+
+            if (actionPhase < 1 ||
+                actionPhase > Cycle.ActionPhaseCount)
+            {
+                return Reject(
+                    MovePlanningFailureReason.ActionPhaseOutOfRange);
+            }
+
+            if (!Cycle.ActiveBrigades.Any(p =>
+                    p.BrigadeId == brigadeId))
+            {
+                return Reject(
+                    MovePlanningFailureReason.BrigadeNotParticipant);
+            }
+
+            if (!Bastion.TryGetBrigade(
+                    brigadeId, out Brigade brigade) ||
+                brigade.IsDisbanded)
+            {
+                return Reject(
+                    MovePlanningFailureReason.BrigadeUnavailable);
+            }
+
+            if (Draft.Orders.OfType<MoveBrigadeOrder>()
+                .Any(order => order.BrigadeId == brigadeId))
+            {
+                return Reject(
+                    MovePlanningFailureReason.BrigadeMoveAlreadyPlanned);
+            }
+
+            if (Draft.PhaseReservations.Any(r =>
+                    r.BrigadeId == brigadeId &&
+                    r.ActionPhase == actionPhase))
+            {
+                return Reject(
+                    MovePlanningFailureReason.BrigadePhaseReserved);
+            }
+
+            if (!Bastion.TryGetBrigadeLocation(
+                    brigadeId, out ModuleInstance source))
+            {
+                return Reject(
+                    MovePlanningFailureReason.BrigadeNotDeployed);
+            }
+
+            if (source.Id == targetModuleId)
+                return Reject(MovePlanningFailureReason.SameModule);
+
+            if (targetModuleId == Guid.Empty ||
+                !Bastion.TryGetModule(targetModuleId, out _))
+            {
+                return Reject(
+                    MovePlanningFailureReason.TargetModuleNotFound);
+            }
+
+            // Один MoveBrigadeOrder = один прямой переход.
+            // Многошаговый маршрут здесь не разворачиваем.
+            ModulePassage selectedPassage = null;
+
+            foreach (ModulePassage passage in
+                    Bastion.Passages.OrderBy(p => p.Id))
+            {
+                if (!passage.ConnectsModule(source.Id) ||
+                    !passage.ConnectsModule(targetModuleId))
+                {
+                    continue;
+                }
+
+                BrigadeMoveAssessment assessment =
+                    Bastion.AssessBrigadeMove(
+                        brigadeId,
+                        source.Id,
+                        targetModuleId,
+                        passage.Id);
+
+                if (assessment.IsAllowed)
+                {
+                    selectedPassage = passage;
+                    break;
+                }
+            }
+
+            if (selectedPassage == null)
+            {
+                return Reject(
+                    MovePlanningFailureReason.NoTraversablePassage);
+            }
+
+            var order = new MoveBrigadeOrder(
+                Guid.NewGuid(),
+                brigadeId,
+                source.Id,
+                targetModuleId,
+                selectedPassage.Id);
+
+            var reservation = new PhaseReservation(
+                order.OrderId,
+                actionPhase,
+                brigadeId);
+
+            if (!Draft.TryAddOrderWithReservation(order, reservation))
+            {
+                return Reject(
+                    MovePlanningFailureReason.PlanRegistrationFailed);
+            }
+
+            return MovePlanningResult.Success(order);
         }
 
         public TurnPlanningConfirmationResult ConfirmPlanning()

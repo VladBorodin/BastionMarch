@@ -955,14 +955,14 @@ Batchmode применяется при необходимости.
 
 ### Прогресс P3
 
-- [ ] P3.1. Игровая сессия BastionTurnSession и подключение к сцене.
+- [x] P3.1. Игровая сессия BastionTurnSession и подключение к сцене.
 - [ ] P3.2. Выбор бригады и планирование MoveBrigadeOrder.
 - [ ] P3.3. Отображение плана по Action Phase.
 - [ ] P3.4. Подтверждение и пошаговое исполнение хода через UI.
 - [ ] P3.5. Журнал результатов и обновление Presentation.
 - [ ] P3.6. Интеграционные PlayMode-тесты управляемого цикла.
 
-P3.1:
+### P3.1:
 
 BastionTurnSession координирует TurnCycle,
 TurnPlanDraft, TurnPlanningCoordinator,
@@ -975,6 +975,24 @@ BastionPrototypeBootstrap создаёт сессию
 
 Одна сессия управляет одним Bastion.
 Поддержка нескольких боевых машин не входит в P3.
+
+### P3.2. Планирование перемещения
+
+BastionTurnSession.TryPlanMove:
+- проверяет Planning и номер Action Phase;
+- проверяет участие и состояние бригады;
+- находит доступный прямой переход;
+- создаёт MoveBrigadeOrder;
+- добавляет Order и PhaseReservation совместно;
+- не изменяет состояние Bastion.
+
+В M1 допускается один MoveBrigadeOrder на бригаду
+за ход. Многошаговые маршруты появятся отдельно.
+
+PrototypeMovePlanningController — временный IMGUI
+интерфейс выбора бригады, фазы и целевого отсека.
+
+Исполнение и визуализация приказов относятся к P3.4–P3.5.
 
 ---
 

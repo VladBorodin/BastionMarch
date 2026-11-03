@@ -1,5 +1,6 @@
 
 using System;
+using System.Linq;
 using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Modules;
@@ -258,6 +259,199 @@ namespace BastionMarch.Simulation.EditModeTests.Turns
 
             Assert.That(session.Draft.ParticipantCount,
                 Is.Zero);
+        }
+        
+        [Test]
+        public void PlanMoveAddsOrderAndReservationWithoutWorldMutation()
+        {
+            BastionTurnSession session = CreateSession();
+
+            MovePlanningResult result =
+                session.TryPlanMove(_brigade.Id, _target.Id, 1);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Order, Is.Not.Null);
+            Assert.That(result.Order.BrigadeId, Is.EqualTo(_brigade.Id));
+            Assert.That(result.Order.SourceModuleId, Is.EqualTo(_source.Id));
+            Assert.That(result.Order.TargetModuleId, Is.EqualTo(_target.Id));
+            Assert.That(result.Order.PassageId, Is.EqualTo(_passage.Id));
+
+            Assert.That(session.Draft.OrderCount, Is.EqualTo(1));
+            Assert.That(session.Draft.ReservationCount, Is.EqualTo(1));
+
+            Assert.That(session.Draft.PhaseReservations[0].OrderId,
+                Is.EqualTo(result.Order.OrderId));
+            Assert.That(session.Draft.PhaseReservations[0].ActionPhase,
+                Is.EqualTo(1));
+
+            AssertLocation(_source);
+            Assert.That(session.Cycle.Stage, Is.EqualTo(TurnStage.Planning));
+        }
+
+        [Test]
+        public void BlockedPassageDoesNotModifyDraft()
+        {
+            BastionTurnSession session = CreateSession();
+            _passage.SetState(ModulePassageState.Locked);
+
+            MovePlanningResult result =
+                session.TryPlanMove(_brigade.Id, _target.Id, 1);
+
+            Assert.That(result.FailureReason,
+                Is.EqualTo(MovePlanningFailureReason.NoTraversablePassage));
+            Assert.That(session.Draft.OrderCount, Is.Zero);
+            Assert.That(session.Draft.ReservationCount, Is.Zero);
+            AssertLocation(_source);
+        }
+
+        [Test]
+        public void MissingPassageDoesNotModifyDraft()
+        {
+            BastionTurnSession session = CreateSession();
+
+            Assert.That(
+                _bastion.TryRemovePassage(_passage.Id, out _),
+                Is.True);
+
+            MovePlanningResult result =
+                session.TryPlanMove(_brigade.Id, _target.Id, 1);
+
+            Assert.That(result.FailureReason,
+                Is.EqualTo(MovePlanningFailureReason.NoTraversablePassage));
+            Assert.That(session.Draft.OrderCount, Is.Zero);
+            Assert.That(session.Draft.ReservationCount, Is.Zero);
+        }
+
+        [Test]
+        public void SameModuleCannotBeMoveTarget()
+        {
+            BastionTurnSession session = CreateSession();
+
+            MovePlanningResult result =
+                session.TryPlanMove(_brigade.Id, _source.Id, 1);
+
+            Assert.That(result.FailureReason,
+                Is.EqualTo(MovePlanningFailureReason.SameModule));
+            Assert.That(session.Draft.OrderCount, Is.Zero);
+        }
+
+        [Test]
+        public void OutOfRangePhaseDoesNotModifyDraft()
+        {
+            BastionTurnSession session = CreateSession();
+
+            MovePlanningResult result =
+                session.TryPlanMove(_brigade.Id, _target.Id, 3);
+
+            Assert.That(result.FailureReason,
+                Is.EqualTo(MovePlanningFailureReason.ActionPhaseOutOfRange));
+            Assert.That(session.Draft.OrderCount, Is.Zero);
+            Assert.That(session.Draft.ReservationCount, Is.Zero);
+        }
+
+        [Test]
+        public void UnknownBrigadeCannotBePlanned()
+        {
+            BastionTurnSession session = CreateSession();
+
+            MovePlanningResult result =
+                session.TryPlanMove(Guid.NewGuid(), _target.Id, 1);
+
+            Assert.That(result.FailureReason,
+                Is.EqualTo(MovePlanningFailureReason.BrigadeNotParticipant));
+            Assert.That(session.Draft.OrderCount, Is.Zero);
+        }
+
+        [Test]
+        public void SameBrigadeCannotReceiveSecondMoveThisTurn()
+        {
+            BastionTurnSession session = CreateSession();
+
+            Assert.That(
+                session.TryPlanMove(_brigade.Id, _target.Id, 1).IsSuccess,
+                Is.True);
+
+            MovePlanningResult second =
+                session.TryPlanMove(_brigade.Id, _target.Id, 2);
+
+            Assert.That(second.FailureReason,
+                Is.EqualTo(MovePlanningFailureReason.BrigadeMoveAlreadyPlanned));
+
+            Assert.That(session.Draft.OrderCount, Is.EqualTo(1));
+            Assert.That(session.Draft.ReservationCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void CannotPlanMoveAfterConfirmation()
+        {
+            BastionTurnSession session = CreateSession();
+
+            Assert.That(session.ConfirmPlanning().IsSuccess, Is.True);
+
+            MovePlanningResult result =
+                session.TryPlanMove(_brigade.Id, _target.Id, 1);
+
+            Assert.That(result.FailureReason,
+                Is.EqualTo(MovePlanningFailureReason.PlanningNotActive));
+            Assert.That(session.Draft.OrderCount, Is.Zero);
+        }
+
+        [Test]
+        public void DifferentBrigadesCanPlanMovesInSamePhase()
+        {
+            var second = new Brigade(
+                2, BrigadeType.Mechanic, 6, 6);
+
+            Assert.That(_bastion.TryAddBrigade(second), Is.True);
+
+            Assert.That(
+                _bastion.TryDeployBrigadeToModule(
+                    second.Id, _target.Id).IsSuccess,
+                Is.True);
+
+            BastionTurnSession session = CreateSession();
+
+            Assert.That(
+                session.TryPlanMove(_brigade.Id, _target.Id, 1).IsSuccess,
+                Is.True);
+
+            Assert.That(
+                session.TryPlanMove(second.Id, _source.Id, 1).IsSuccess,
+                Is.True);
+
+            Assert.That(session.Draft.OrderCount, Is.EqualTo(2));
+            Assert.That(session.Draft.ReservationCount, Is.EqualTo(2));
+
+            Assert.That(
+                session.Draft.PhaseReservations.All(r => r.ActionPhase == 1),
+                Is.True);
+
+            Assert.That(session.ConfirmPlanning().IsSuccess, Is.True);
+        }
+
+        [Test]
+        public void AtomicOrderRegistrationRejectsPhaseCollision()
+        {
+            BastionTurnSession session = CreateSession();
+
+            Assert.That(
+                session.TryPlanMove(_brigade.Id, _target.Id, 1).IsSuccess,
+                Is.True);
+
+            var secondOrder = CreateMove();
+
+            var secondReservation = new PhaseReservation(
+                secondOrder.OrderId,
+                1,
+                _brigade.Id);
+
+            Assert.That(
+                session.Draft.TryAddOrderWithReservation(
+                    secondOrder, secondReservation),
+                Is.False);
+
+            Assert.That(session.Draft.OrderCount, Is.EqualTo(1));
+            Assert.That(session.Draft.ReservationCount, Is.EqualTo(1));
         }
 
         private BastionTurnSession CreateSession()

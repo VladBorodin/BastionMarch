@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Linq;
 using BastionMarch.Presentation.Bastions;
@@ -11,14 +12,91 @@ using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Turns;
+using BastionMarch.Simulation.Turns.Planning;
+using BastionMarch.Simulation.Turns.Orders;
+using Object = UnityEngine.Object;
 
 namespace BastionMarch.Presentation.PlayModeTests
 {
     [TestFixture]
     public sealed class BastionPrototypeSceneTests
     {
-        private const string PrototypeSceneName =
-            "BastionPrototype";
+        private const string PrototypeSceneName = "BastionPrototype";
+
+        [UnityTest]
+        public IEnumerator PrototypeSceneCanPlanMoveFromSelectedModule()
+        {
+            BastionPrototypeBootstrap bootstrap = Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+
+            PrototypeMovePlanningController planning = Object.FindAnyObjectByType<PrototypeMovePlanningController>();
+
+            PrototypeRouteController routeController = Object.FindAnyObjectByType<PrototypeRouteController>();
+
+            ModuleSelectionController selection = Object.FindAnyObjectByType<ModuleSelectionController>();
+
+            BastionView bastionView = Object.FindAnyObjectByType<BastionView>();
+
+            Assert.That(bootstrap, Is.Not.Null);
+            Assert.That(planning, Is.Not.Null);
+            Assert.That(routeController, Is.Not.Null);
+            Assert.That(selection, Is.Not.Null);
+            Assert.That(bastionView, Is.Not.Null);
+
+            // Даём технической сцене построить маршрут.
+            yield return null;
+
+            Assert.That(routeController.CurrentBrigadeId.HasValue, Is.True);
+            Assert.That(routeController.CurrentRoute.IsSuccess, Is.True);
+            Assert.That(routeController.CurrentRoute.StepCount,
+                Is.GreaterThan(0));
+
+            Guid brigadeId = routeController.CurrentBrigadeId.Value;
+
+            // Берём первый шаг существующего доступного маршрута.
+            // Это гарантированно непосредственный соседний отсек.
+            Guid targetModuleId =
+                routeController.CurrentRoute.Steps[0].ToModuleId;
+
+            Assert.That(
+                bastionView.TryGetModuleView(
+                    targetModuleId, out ModuleView targetView),
+                Is.True);
+
+            Assert.That(planning.SelectBrigade(brigadeId), Is.True);
+            Assert.That(planning.SelectActionPhase(1), Is.True);
+
+            selection.Select(targetView);
+
+            MovePlanningResult result =
+                planning.TryPlanSelectedMove();
+
+            Assert.That(result.IsSuccess, Is.True);
+
+            Assert.That(bootstrap.TurnSession.Draft.OrderCount,
+                Is.EqualTo(1));
+
+            Assert.That(bootstrap.TurnSession.Draft.ReservationCount,
+                Is.EqualTo(1));
+
+            Assert.That(
+                bootstrap.TurnSession.Draft.Orders.Single(),
+                Is.TypeOf<MoveBrigadeOrder>());
+
+            Assert.That(
+                bootstrap.TurnSession.Cycle.Stage,
+                Is.EqualTo(TurnStage.Planning));
+
+            // Планирование не перемещает бригаду.
+            Assert.That(
+                bootstrap.Bastion.TryGetBrigadeLocation(
+                    brigadeId, out ModuleInstance actualModule),
+                Is.True);
+
+            Assert.That(actualModule.Id,
+                Is.EqualTo(routeController.CurrentRoute.SourceModuleId));
+
+            yield return null;
+        }
 
         [UnitySetUp]
         public IEnumerator LoadPrototypeScene()

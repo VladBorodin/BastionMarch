@@ -47,6 +47,22 @@ namespace BastionMarch.Presentation.Prototype
             TurnSession = new BastionTurnSession(Bastion, InitialBrigadeWorkProfiles.CreateCatalog());
 
             _bastionPresenter.Initialize(Bastion);
+
+            ModuleSelectionController moduleSelection = FindAnyObjectByType<ModuleSelectionController>();
+
+            if (moduleSelection == null)
+            {
+                throw new InvalidOperationException("Prototype scene requires ModuleSelectionController.");
+            }
+
+            PrototypeMovePlanningController planning = GetComponent<PrototypeMovePlanningController>();
+
+            if (planning == null)
+            {
+                planning = gameObject.AddComponent<PrototypeMovePlanningController>();
+            }
+
+            planning.Initialize(TurnSession, moduleSelection);
         }
 
         private void ResolvePresenter()
