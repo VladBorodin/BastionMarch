@@ -1,6 +1,8 @@
 using System;
 using BastionMarch.Presentation.Bastions;
 using BastionMarch.Simulation.Bastions;
+using BastionMarch.Simulation.Crew;
+using BastionMarch.Simulation.Turns;
 using UnityEngine;
 
 namespace BastionMarch.Presentation.Prototype
@@ -21,6 +23,12 @@ namespace BastionMarch.Presentation.Prototype
             private set;
         }
 
+        public BastionTurnSession TurnSession
+        {
+            get;
+            private set;
+        }
+
         private void Reset()
         {
             ResolvePresenter();
@@ -34,11 +42,11 @@ namespace BastionMarch.Presentation.Prototype
                     "Prototype bootstrap requires BastionPresenter.");
             }
 
-            Bastion =
-                PrototypeBastionFactory.Create();
+            Bastion = PrototypeBastionFactory.Create();
 
-            _bastionPresenter.Initialize(
-                Bastion);
+            TurnSession = new BastionTurnSession(Bastion, InitialBrigadeWorkProfiles.CreateCatalog());
+
+            _bastionPresenter.Initialize(Bastion);
         }
 
         private void ResolvePresenter()

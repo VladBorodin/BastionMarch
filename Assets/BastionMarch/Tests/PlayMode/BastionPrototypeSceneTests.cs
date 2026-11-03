@@ -10,6 +10,7 @@ using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Crew;
+using BastionMarch.Simulation.Turns;
 
 namespace BastionMarch.Presentation.PlayModeTests
 {
@@ -590,6 +591,30 @@ namespace BastionMarch.Presentation.PlayModeTests
                 Is.EqualTo(
                     routeController.CurrentRoute
                         .SourceModuleId));
+        }
+
+        [UnityTest]
+        public IEnumerator PrototypeSceneInitializesTurnSession()
+        {
+            BastionPrototypeBootstrap bootstrap = Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+
+            Assert.That(bootstrap, Is.Not.Null);
+            Assert.That(bootstrap.Bastion, Is.Not.Null);
+            Assert.That(bootstrap.TurnSession, Is.Not.Null);
+
+            BastionTurnSession session = bootstrap.TurnSession;
+
+            Assert.That(session.Bastion, Is.SameAs(bootstrap.Bastion));
+
+            Assert.That(session.Cycle.Stage, Is.EqualTo(TurnStage.Planning));
+
+            Assert.That(session.Cycle.TurnNumber, Is.EqualTo(1));
+
+            Assert.That(session.Draft.ParticipantCount, Is.EqualTo(bootstrap.Bastion.BrigadeCount));
+
+            Assert.That(session.ConfirmedPlan, Is.Null);
+
+            yield return null;
         }
     }
 }
