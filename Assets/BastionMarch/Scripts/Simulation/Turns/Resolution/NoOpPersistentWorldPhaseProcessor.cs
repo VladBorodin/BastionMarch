@@ -18,7 +18,7 @@ namespace BastionMarch.Simulation.Turns.Resolution
         {
         }
 
-        public PersistentWorldPhaseResult AdvancePhase(
+        public PersistentWorldPhaseResult PreparePhase(
             PersistentWorldPhaseContext context)
         {
             if (context == null)

@@ -17,7 +17,7 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
 
             var result =
                 NoOpPersistentWorldPhaseProcessor.Instance
-                    .AdvancePhase(context);
+                    .PreparePhase(context);
 
             Assert.That(result.TurnNumber, Is.EqualTo(1));
             Assert.That(result.ActionPhase, Is.EqualTo(1));
@@ -31,10 +31,10 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
             var processor =
                 NoOpPersistentWorldPhaseProcessor.Instance;
 
-            var first = processor.AdvancePhase(
+            var first = processor.PreparePhase(
                 new PersistentWorldPhaseContext(1, 2, 2));
 
-            var second = processor.AdvancePhase(
+            var second = processor.PreparePhase(
                 new PersistentWorldPhaseContext(2, 1, 2));
 
             Assert.That(first.TurnNumber, Is.EqualTo(1));
@@ -47,7 +47,7 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
         {
             Assert.Throws<ArgumentNullException>(() =>
                 NoOpPersistentWorldPhaseProcessor.Instance
-                    .AdvancePhase(null));
+                    .PreparePhase(null));
         }
 
         [Test]
@@ -140,7 +140,7 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
                 actionPhase: 2,
                 actionPhaseCount: 3);
 
-            var result = processor.AdvancePhase(context);
+            var result = processor.PreparePhase(context);
 
             Assert.That(processor.CallCount, Is.EqualTo(1));
             Assert.That(processor.LastContext, Is.SameAs(context));
@@ -151,10 +151,7 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
 
         private static PersistentWorldPhaseContext CreateContext()
         {
-            return new PersistentWorldPhaseContext(
-                turnNumber: 1,
-                actionPhase: 1,
-                actionPhaseCount: 2);
+            return new PersistentWorldPhaseContext(turnNumber: 1, actionPhase: 1, actionPhaseCount: 2);
         }
 
         private sealed class TestProcessor :
@@ -170,15 +167,12 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
                 private set;
             }
 
-            public PersistentWorldPhaseResult AdvancePhase(
-                PersistentWorldPhaseContext context)
+            public PersistentWorldPhaseResult PreparePhase(PersistentWorldPhaseContext context)
             {
                 CallCount++;
                 LastContext = context;
 
-                return new PersistentWorldPhaseResult(
-                    context,
-                    new[] { _processId });
+                return new PersistentWorldPhaseResult(context, new[] { _processId });
             }
         }
     }

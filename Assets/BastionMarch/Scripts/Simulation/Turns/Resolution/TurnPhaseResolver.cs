@@ -25,8 +25,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
         private readonly ConfirmedTurnPlan _plan;
         private readonly BrigadeWorkProfileCatalog _defaultWorkProfiles;
         private readonly OrderExecutionRegistry _registry;
-        private readonly Func<Guid, IBrigadeActivity>
-            _activityResolver;
+        private readonly Func<Guid, IBrigadeActivity> _activityResolver;
+        private readonly IPersistentWorldPhaseProcessor _persistentWorldProcessor;
 
         public OrderExecutionRegistry ExecutionRegistry =>
             _registry;
@@ -37,7 +37,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
             OrderExecutionRegistry registry,
             Func<Guid, IBrigadeActivity> activityResolver,
             Bastion bastion = null,
-            BrigadeWorkProfileCatalog defaultWorkProfiles = null)
+            BrigadeWorkProfileCatalog defaultWorkProfiles = null,
+            IPersistentWorldPhaseProcessor persistentWorldProcessor = null)
         {
             _cycle = cycle ?? throw new ArgumentNullException(nameof(cycle));
 
@@ -57,6 +58,8 @@ namespace BastionMarch.Simulation.Turns.Resolution
             }
 
             _defaultWorkProfiles = defaultWorkProfiles;
+
+            _persistentWorldProcessor = persistentWorldProcessor ?? NoOpPersistentWorldPhaseProcessor.Instance;
 
             ValidateCycleAndPlan();
         }
@@ -225,11 +228,16 @@ namespace BastionMarch.Simulation.Turns.Resolution
                 }
             }
 
-            // Stage 14 currently has no actual persistent
-            // world process implementation.
+            // Read-only preparation before any world mutation.
+            // Real persistent world commit is not implemented yet.
             PersistentWorldPhaseResult persistentResult =
-                NoOpPersistentWorldPhaseProcessor.Instance
-                    .AdvancePhase(context);
+                _persistentWorldProcessor.PreparePhase(context);
+
+            if (persistentResult == null)
+            {
+                throw new InvalidOperationException(
+                    "Persistent phase preparation returned null.");
+            }
 
             // Prepare the expected temporal transition
             // without changing TurnCycle.

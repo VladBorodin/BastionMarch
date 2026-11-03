@@ -394,3 +394,42 @@ Runtime progress Orders может переживать TurnEnd.
 Произвольная транзакционная world mutation,
 Activity execution и конкретные игровые Orders
 подключаются на соответствующих следующих этапах.
+
+## Stage 15.7.2 — Persistent phase preparation boundary
+
+TurnPhaseResolver принимает необязательный
+IPersistentWorldPhaseProcessor.
+
+По умолчанию используется
+NoOpPersistentWorldPhaseProcessor.Instance.
+
+Контракт текущей точки расширения изменён:
+
+AdvancePhase → PreparePhase.
+
+PreparePhase допускает только read-only подготовку
+результата Action Phase.
+
+Изменение Bastion, TurnCycle, OrderExecutionRegistry
+и иных mutable world states в PreparePhase запрещено
+контрактом.
+
+Если подготовка завершается исключением либо возвращает
+результат другой фазы, основной commit не выполняется.
+
+Повторная попытка обработки той же фазы допустима
+после отказа подготовки.
+
+Ограничения:
+
+- конкретные persistent процессы пока отсутствуют;
+- PersistentWorldPhaseResult сохраняет существующий
+  формат ProcessedProcessIds;
+- этот формат пока не подтверждает фактическую
+  world mutation;
+- отдельный world commit и общий rollback не реализованы;
+- нельзя подключать сюда изменяющие мир процессоры
+  снарядов, пожаров и других игровых эффектов.
+
+Перед боевой Simulation контракт будет расширяться
+на основании реальных требований к world execution.

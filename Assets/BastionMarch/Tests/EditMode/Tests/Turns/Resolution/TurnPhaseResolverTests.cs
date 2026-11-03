@@ -356,6 +356,109 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
                     new OrderExecutionRegistry()));
         }
 
+
+        [Test]
+        public void InjectedPersistentProcessorIsUsedForEachPhase()
+        {
+            var cycle = CreateCycle();
+            var plan = Confirm(cycle);
+            var registry = new OrderExecutionRegistry();
+
+            Guid processId = Guid.NewGuid();
+
+            var processor = new CallbackPersistentProcessor(
+                context => new PersistentWorldPhaseResult(
+                    context,
+                    new[] { processId }));
+
+            var resolver = new TurnPhaseResolver(
+                cycle,
+                plan,
+                registry,
+                id => null,
+                persistentWorldProcessor: processor);
+
+            PhaseResolutionResult first = resolver.ResolvePhase(1);
+            PhaseResolutionResult second = resolver.ResolvePhase(2);
+
+            Assert.That(processor.CallCount, Is.EqualTo(2));
+            Assert.That(first.ProcessedWorldProcessCount, Is.EqualTo(1));
+            Assert.That(second.ProcessedWorldProcessCount, Is.EqualTo(1));
+            Assert.That(first.ProcessedWorldProcessIds[0],
+                Is.EqualTo(processId));
+            Assert.That(second.ProcessedWorldProcessIds[0],
+                Is.EqualTo(processId));
+
+            Assert.That(cycle.Stage, Is.EqualTo(TurnStage.TurnEnd));
+        }
+
+        [Test]
+        public void PersistentPreparationFailureDoesNotPublishOrderProgress()
+        {
+            TurnBrigadeParticipant brigade = CreateParticipant();
+            var cycle = CreateCycle(brigade);
+            var draft = CreateDraft(cycle);
+
+            var order = new TestOrder(Guid.NewGuid(), 2);
+            AddOrder(draft, order, brigade, 1);
+
+            ConfirmedTurnPlan plan = Confirm(cycle, draft);
+            var registry = new OrderExecutionRegistry();
+
+            var processor = new CallbackPersistentProcessor(
+                context => throw new InvalidOperationException(
+                    "Injected persistent preparation failure."));
+
+            var resolver = new TurnPhaseResolver(
+                cycle,
+                plan,
+                registry,
+                id => null,
+                persistentWorldProcessor: processor);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                resolver.ResolvePhase(1));
+
+            Assert.That(processor.CallCount, Is.EqualTo(1));
+            Assert.That(cycle.CurrentActionPhase, Is.EqualTo(1));
+            Assert.That(cycle.Stage, Is.EqualTo(TurnStage.ActionResolution));
+            Assert.That(registry.Count, Is.Zero);
+            Assert.That(registry.TryGet(order.OrderId, out _), Is.False);
+        }
+
+        [Test]
+        public void WrongPersistentPhaseResultDoesNotCommitOrderProgress()
+        {
+            TurnBrigadeParticipant brigade = CreateParticipant();
+            var cycle = CreateCycle(brigade);
+            var draft = CreateDraft(cycle);
+
+            var order = new TestOrder(Guid.NewGuid(), 2);
+            AddOrder(draft, order, brigade, 1);
+
+            var registry = new OrderExecutionRegistry();
+
+            var processor = new CallbackPersistentProcessor(
+                context => new PersistentWorldPhaseResult(
+                    new PersistentWorldPhaseContext(
+                        context.TurnNumber,
+                        actionPhase: 2,
+                        context.ActionPhaseCount),
+                    Array.Empty<Guid>()));
+
+            var resolver = new TurnPhaseResolver(
+                cycle,
+                Confirm(cycle, draft),
+                registry,
+                id => null,
+                persistentWorldProcessor: processor);
+
+            Assert.Throws<ArgumentException>(() => resolver.ResolvePhase(1));
+
+            Assert.That(cycle.CurrentActionPhase, Is.EqualTo(1));
+            Assert.That(registry.Count, Is.Zero);
+        }
+
         private static TurnCycle CreateCycle(
             params TurnBrigadeParticipant[] participants)
         {
@@ -426,6 +529,32 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
             public TestActivity(Guid brigadeId)
                 : base(brigadeId)
             {
+            }
+        }
+
+        
+        private sealed class CallbackPersistentProcessor :
+            IPersistentWorldPhaseProcessor
+        {
+            private readonly Func<
+                PersistentWorldPhaseContext,
+                PersistentWorldPhaseResult> _prepare;
+
+            public int CallCount { get; private set; }
+
+            public CallbackPersistentProcessor(
+                Func<PersistentWorldPhaseContext,
+                    PersistentWorldPhaseResult> prepare)
+            {
+                _prepare = prepare ??
+                    throw new ArgumentNullException(nameof(prepare));
+            }
+
+            public PersistentWorldPhaseResult PreparePhase(
+                PersistentWorldPhaseContext context)
+            {
+                CallCount++;
+                return _prepare(context);
             }
         }
     }

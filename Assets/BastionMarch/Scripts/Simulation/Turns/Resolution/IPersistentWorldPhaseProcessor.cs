@@ -2,18 +2,21 @@
 namespace BastionMarch.Simulation.Turns.Resolution
 {
     /// <summary>
-    /// Точка расширения для обработки длительно
-    /// существующих процессов игрового мира.
+    /// Подготавливает read-only результат для
+    /// persistent world processes текущей Action Phase.
     ///
-    /// Вызывается после commit основных intents
-    /// и до завершения Action Phase.
+    /// PreparePhase не должен:
+    /// - изменять Bastion или другое world state;
+    /// - продвигать TurnCycle;
+    /// - изменять OrderExecutionRegistry;
+    /// - выполнять необратимые игровые эффекты.
     ///
-    /// Конкретная реализация владеет доступом
-    /// к соответствующей части world state.
+    /// Реальный world commit будет отдельным шагом,
+    /// когда появятся persistent игровые процессы.
     /// </summary>
     public interface IPersistentWorldPhaseProcessor
     {
-        PersistentWorldPhaseResult AdvancePhase(
+        PersistentWorldPhaseResult PreparePhase(
             PersistentWorldPhaseContext context);
     }
 }

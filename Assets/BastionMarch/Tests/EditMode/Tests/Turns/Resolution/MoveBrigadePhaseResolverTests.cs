@@ -293,6 +293,51 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
             AssertLocation(_first, _middle);
             Assert.That(_registry.Count, Is.EqualTo(1));
         }
+        
+        [Test]
+        public void PersistentPreparationFailureDoesNotMoveBrigade()
+        {
+            var processor = new FailOncePersistentProcessor();
+
+            MoveBrigadeOrder order = FirstMove();
+
+            TurnPhaseResolver resolver =
+                CreateResolverWithPersistentProcessor(
+                    id => null,
+                    processor,
+                    order);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                resolver.ResolvePhase(1));
+
+            // Ошибка подготовки не изменила мир.
+            AssertLocation(_first, _left);
+
+            Assert.That(_left.OccupyingBrigadeIds,
+                Has.Member(_first.Id));
+
+            Assert.That(_middle.OccupyingBrigadeIds,
+                Has.No.Member(_first.Id));
+
+            // Время и progress тоже не продвинулись.
+            Assert.That(_cycle.CurrentActionPhase, Is.EqualTo(1));
+            Assert.That(_registry.Count, Is.Zero);
+
+            // Повторное выполнение допустимо:
+            // первая попытка не была зафиксирована.
+            PhaseResolutionResult result = resolver.ResolvePhase(1);
+
+            Assert.That(processor.CallCount, Is.EqualTo(2));
+            Assert.That(result.CommittedOrderCount, Is.EqualTo(1));
+
+            AssertLocation(_first, _middle);
+
+            Assert.That(_registry.TryGet(
+                order.OrderId, out OrderExecutionState state), Is.True);
+
+            Assert.That(state.IsCompleted, Is.True);
+            Assert.That(_cycle.CurrentActionPhase, Is.EqualTo(2));
+        }
 
         private TurnPhaseResolver CreateResolver(
             params MoveBrigadeOrder[] orders)
@@ -302,6 +347,15 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
 
         private TurnPhaseResolver CreateResolver(
             Func<Guid, IBrigadeActivity> activityResolver,
+            params MoveBrigadeOrder[] orders)
+        {
+            return CreateResolverWithPersistentProcessor(
+                activityResolver, null, orders);
+        }
+
+        private TurnPhaseResolver CreateResolverWithPersistentProcessor(
+            Func<Guid, IBrigadeActivity> activityResolver,
+            IPersistentWorldPhaseProcessor processor,
             params MoveBrigadeOrder[] orders)
         {
             var participants = new[]
@@ -340,7 +394,8 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
                 plan,
                 _registry,
                 activityResolver,
-                _bastion);
+                _bastion,
+                persistentWorldProcessor: processor);
         }
 
         private MoveBrigadeOrder FirstMove()
@@ -410,6 +465,27 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
         {
             public TestActivity(Guid brigadeId) : base(brigadeId)
             {
+            }
+        }
+
+        private sealed class FailOncePersistentProcessor :
+            IPersistentWorldPhaseProcessor
+        {
+            public int CallCount { get; private set; }
+
+            public PersistentWorldPhaseResult PreparePhase(
+                PersistentWorldPhaseContext context)
+            {
+                CallCount++;
+
+                if (CallCount == 1)
+                {
+                    throw new InvalidOperationException(
+                        "Injected persistent preparation failure.");
+                }
+
+                return NoOpPersistentWorldPhaseProcessor.Instance
+                    .PreparePhase(context);
             }
         }
     }
