@@ -936,12 +936,25 @@ Stage 15 может использовать существующие опера
 
 ### Прогресс этапа 15
 
-- [ ] 15.1. BrigadeMoveAssessment и атомарный move.
-- [ ] 15.2. MoveBrigadeOrder.
-- [ ] 15.3. Activity transition после move.
-- [ ] 15.4. ModuleWorkActivity.
-- [ ] 15.5. Activity tick в свободной фазе.
-- [ ] 15.6. Интеграционный ход Move → Activity → TurnEnd.
+- [x] 15.1. BrigadeMoveAssessment и атомарный move.
+- [x] 15.2. MoveBrigadeOrder.
+- [x] 15.3. Activity transition после move.
+- [x] 15.4. ModuleWorkActivity.
+- [x] 15.5. Activity tick в свободной фазе.
+- [x] 15.6. Интеграционный ход Move → Activity → TurnEnd.
+
+### 15.7. Стабилизация перед P3
+
+- [ ] 15.7.1. Регрессионные тесты и актуализация документации.
+- [ ] 15.7.2. Минимальная подготовка TurnPhaseResolver к расширению.
+- [ ] 15.7.3. Автоматизация запуска тестов.
+
+Границы этапа:
+
+- Не вводить универсальный CommandBuffer.
+- Не разделять Bastion на самостоятельные mutable агрегаты.
+- Не реализовывать боевые механики раньше M1.
+- Не считать пакетную prevalidation универсальной транзакцией.
 
 ---
 
@@ -2002,7 +2015,7 @@ persistent projectile не обязателен.
 - [x] 12. Временная модель хода.
 - [x] 13. Orders, Activities и планирование.
 - [x] 14. Разрешение Action Phase.
-- [ ] 15. Первые игровые приказы и Activity.
+- [x] 15. Первые игровые приказы и Activity.
 
 #### Этап 11
 
@@ -2073,33 +2086,22 @@ persistent projectile не обязателен.
 
 # 11. Ближайшая точка старта
 
-Следующая реализация:
+Текущая реализация:
 
-```text
-Stage 13.1
-TurnPlanDraft foundation
-```
+Stage 15.7 — стабилизация Simulation перед P3.
 
-Перед кодом 13.1 зафиксированы следующие правила:
+Этапы Simulation 1–15 реализованы и проверены локальными
+Unity EditMode-тестами.
 
-- `TurnCycle` остаётся только временным ядром;
-- `TurnPlanDraft` является отдельным редактируемым агрегатом;
-- `(Brigade.Number, Brigade.Id)` — технический детерминированный порядок, а не инициатива;
-- `PhaseReservation` является единым источником занятости brigade Action Phase;
-- Order и Activity являются разными концепциями;
-- Stage 13 не создаёт новый persistent Activity registry;
-- фактический progress многофазных Orders начинает жить в execution layer Stage 14;
-- подтверждение плана выполняется через orchestration, а не через прямой вызов `TurnCycle.TryConfirmPlanning()` из Presentation.
+Следующая игровая контрольная точка — P3 → P4 → M1.
 
-На этапе 13 не реализуются:
+Цель стабилизации:
 
-- исполнение конкретных игровых Orders;
-- mutation мира по Action Phase;
-- оружие;
-- StatusEffect;
-- initiative;
-- AI;
-- persistent projectiles;
-- Unity UI планирования.
+- закрепить целостность Action Phase регрессионными тестами;
+- сохранить разделение assessment и mutation;
+- подготовить точку расширения persistent world processes;
+- настроить автоматизацию тестирования;
+- не выполнять преждевременный рефакторинг Bastion.
 
-Цель Stage 13 — создать проверяемую и неизменяемую модель намерений хода до начала их исполнения.
+После стабилизации основной приоритет — управляемый
+игроком небоевой вертикальный срез.

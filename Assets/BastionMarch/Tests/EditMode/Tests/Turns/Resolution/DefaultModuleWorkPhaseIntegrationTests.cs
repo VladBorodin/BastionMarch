@@ -321,6 +321,106 @@ namespace BastionMarch.Simulation.EditModeTests.Turns.Resolution
             AssertWorking(_brigade, _quarters, false);
         }
 
+        [Test]
+        public void StaleMovePreventsIndependentWorkStart()
+        {
+            Brigade second = AddBrigade(2, BrigadeType.Mechanic, _target);
+
+            BrigadeMoveAssessment move = _bastion.AssessBrigadeMove(_brigade.Id, _source.Id, _target.Id, _passage.Id);
+
+            Assert.That(move.IsAllowed, Is.True);
+
+            _passage.SetState(ModulePassageState.Locked);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                _bastion.CommitBrigadePhaseActions(
+                    new[] { move },
+                    new[]
+                    {
+                        new BrigadeWorkStartRequest(second.Id, _target.Id)
+                    }));
+
+            AssertWorking(_brigade, _source, false);
+            AssertWorking(second, _target, false);
+
+            Assert.That(_source.OccupyingBrigadeIds, Has.Member(_brigade.Id));
+            Assert.That(_passage.State, Is.EqualTo(ModulePassageState.Locked));
+        }
+
+        [Test]
+        public void InvalidWorkStartPreventsIndependentMove()
+        {
+            Brigade second = AddBrigade(2, BrigadeType.Mechanic, _target);
+
+            BrigadeMoveAssessment move = _bastion.AssessBrigadeMove(_brigade.Id, _source.Id, _target.Id, _passage.Id);
+
+            Assert.That(move.IsAllowed, Is.True);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                _bastion.CommitBrigadePhaseActions(
+                    new[] { move },
+                    new[]
+                    {
+                        new BrigadeWorkStartRequest(second.Id, _source.Id)
+                    }));
+
+            AssertWorking(_brigade, _source, false);
+            AssertWorking(second, _target, false);
+
+            Assert.That(_source.OccupyingBrigadeIds, Has.Member(_brigade.Id));
+        }
+
+        [Test]
+        public void InvalidSelectedActivityDoesNotCommitMove()
+        {
+            Brigade second = AddBrigade(2, BrigadeType.Mechanic, _target);
+
+            Assert.That(_bastion.TryStartBrigadeWork(second.Id).IsSuccess, Is.True);
+
+            TurnPhaseResolver resolver = CreateResolver(
+                move: CreateMove(),
+                enableDefaults: false,
+                activityResolver: id =>
+                    new ModuleWorkActivity(id, _source.Id),
+                second: second);
+
+            Assert.Throws<InvalidOperationException>(() => resolver.ResolvePhase(1));
+
+            AssertWorking(_brigade, _source, false);
+            AssertWorking(second, _target, true);
+
+            Assert.That(_cycle.Stage,
+                Is.EqualTo(TurnStage.ActionResolution));
+            Assert.That(_cycle.CurrentActionPhase, Is.EqualTo(1));
+            Assert.That(_registry.Count, Is.Zero);
+        }
+
+        [Test]
+        public void ActivityResolverExceptionDoesNotAdvancePhase()
+        {
+            Brigade second = AddBrigade(2, BrigadeType.Mechanic, _target);
+
+            TurnPhaseResolver resolver = CreateResolver(
+                move: CreateMove(),
+                enableDefaults: false,
+                activityResolver: id =>
+                {
+                    throw new InvalidOperationException(
+                        "Injected activity preparation failure.");
+                },
+                second: second);
+
+            Assert.Throws<InvalidOperationException>(() => resolver.ResolvePhase(1));
+
+            AssertWorking(_brigade, _source, false);
+            AssertWorking(second, _target, false);
+
+            Assert.That(_cycle.Stage,
+                Is.EqualTo(TurnStage.ActionResolution));
+            Assert.That(_cycle.CurrentActionPhase, Is.EqualTo(1));
+            Assert.That(_registry.Count, Is.Zero);
+        }
+
         private TurnPhaseResolver CreateResolver(
             MoveBrigadeOrder move = null,
             bool enableDefaults = true,

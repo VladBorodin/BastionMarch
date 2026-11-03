@@ -297,14 +297,31 @@ Stage 15 завершён, когда:
 7. свободная следующая фаза вызывает Activity tick;
 8. интеграционный сценарий Move → Activity → TurnEnd детерминирован и покрыт EditMode-тестами.
 
-### Прогресс этапа 15
+### Stage 15 — Completion
 
-- [x] 15.1. BrigadeMoveAssessment и атомарный move.
-- [x] 15.2. MoveBrigadeOrder.
-- [x] 15.3. Activity transition после move.
-- [x] 15.4. ModuleWorkActivity.
-- [x] 15.5. Activity tick в свободной фазе.
-- [x] 15.6. Интеграционный ход Move → default Activity → TurnEnd.
+Завершён минимальный игровой цикл Simulation:
+
+Planning → MoveBrigadeOrder → Action Phase move
+→ default ModuleWorkActivity → Activity tick → TurnEnd.
+
+Подтверждено:
+
+- одно перемещение между соседними модулями занимает одну фазу;
+- Move прекращает предыдущую работу;
+- default ModuleWork запускается только в свободную фазу;
+- результаты Orders и рабочих ticks отражаются в журнале;
+- пакет перемещений и начала работ проходит prevalidation;
+- промежуточные состояния не публикуются при ожидаемых
+  ошибках подготовки.
+
+Ограничения:
+
+- все операции рассчитаны на однопоточную Simulation M1;
+- универсальный rollback отсутствует;
+- persistent world processor пока NoOp;
+- конкретный WorkType не сохраняется как отдельное
+  назначение внутри Bastion;
+- полноценное управление через Unity UI относится к P3.
 
 ### Реализация Stage 15.2
 
