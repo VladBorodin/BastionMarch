@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using BastionMarch.Presentation.Bastions;
+using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Turns;
 using BastionMarch.Simulation.Turns.Planning;
@@ -14,6 +15,9 @@ namespace BastionMarch.Presentation.Prototype
     {
         private BastionTurnSession _session;
         private ModuleSelectionController _moduleSelection;
+        private TurnPlanView _turnPlanView;
+        private BastionPresenter _presenter;
+        private Vector2 _scrollPosition;
 
         private string _status = "Выберите бригаду и целевой отсек.";
 
@@ -23,15 +27,43 @@ namespace BastionMarch.Presentation.Prototype
 
         public string LastStatus => _status;
 
+        
         public void Initialize(
             BastionTurnSession session,
-            ModuleSelectionController moduleSelection)
+            ModuleSelectionController moduleSelection,
+            TurnPlanView turnPlanView,
+            BastionPresenter presenter)
         {
             _session = session ??
                 throw new ArgumentNullException(nameof(session));
 
             _moduleSelection = moduleSelection ??
                 throw new ArgumentNullException(nameof(moduleSelection));
+
+            _turnPlanView = turnPlanView ??
+                throw new ArgumentNullException(nameof(turnPlanView));
+
+            _presenter = presenter ??
+                throw new ArgumentNullException(nameof(presenter));
+
+            RefreshPlanView();
+        }
+
+        public void RefreshPlanView()
+        {
+            if (_session == null ||
+                _turnPlanView == null ||
+                _presenter == null ||
+                _presenter.CurrentState == null)
+            {
+                throw new InvalidOperationException(
+                    "Planning presentation is not initialized.");
+            }
+
+            _turnPlanView.Render(
+                TurnPlanPresentationStateFactory.Capture(
+                    _session.Draft,
+                    _presenter.CurrentState));
         }
 
         public bool SelectBrigade(Guid brigadeId)
@@ -87,6 +119,11 @@ namespace BastionMarch.Presentation.Prototype
                 ? $"Приказ добавлен в фазу {SelectedActionPhase}."
                 : $"Приказ отклонён: {result.FailureReason}";
 
+            if (result.IsSuccess)
+            {
+                RefreshPlanView();
+            }
+
             return result;
         }
 
@@ -100,12 +137,13 @@ namespace BastionMarch.Presentation.Prototype
 
             float x = Mathf.Max(10f, Screen.width - 350f);
 
-            GUILayout.BeginArea(
-                new Rect(x, 10f, 340f, 440f),
-                GUI.skin.box);
+            float panelHeight = Mathf.Clamp(Screen.height - 20f, 200f, 610f);
 
-            GUILayout.Label(
-                $"BastionMarch | Ход {_session.Cycle.TurnNumber}");
+            GUILayout.BeginArea(new Rect(x, 10f, 340f, panelHeight), GUI.skin.box);
+
+            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
+
+            GUILayout.Label($"BastionMarch | Ход {_session.Cycle.TurnNumber}");
 
             GUILayout.Label("P3.2 — Планирование перемещения");
 
@@ -191,11 +229,15 @@ namespace BastionMarch.Presentation.Prototype
 
             GUILayout.Space(8);
 
-            GUILayout.Label(
-                $"Приказов в плане: {_session.Draft.OrderCount}");
+            GUILayout.Label($"Приказов в плане: {_session.Draft.OrderCount}");
 
             GUILayout.Label(_status);
 
+            GUILayout.Space(12);
+
+            _turnPlanView?.DrawTimeline();
+
+            GUILayout.EndScrollView();
             GUILayout.EndArea();
         }
     }

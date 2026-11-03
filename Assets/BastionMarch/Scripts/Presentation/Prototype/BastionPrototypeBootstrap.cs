@@ -62,7 +62,21 @@ namespace BastionMarch.Presentation.Prototype
                 planning = gameObject.AddComponent<PrototypeMovePlanningController>();
             }
 
-            planning.Initialize(TurnSession, moduleSelection);
+            TurnPlanView turnPlanView =
+                FindAnyObjectByType<TurnPlanView>();
+
+            if (turnPlanView == null)
+            {
+                throw new InvalidOperationException(
+                    "Prototype scene requires TurnPlanView.");
+            }
+
+            planning.Initialize(
+                TurnSession,
+                moduleSelection,
+                turnPlanView,
+                _bastionPresenter);
+
         }
 
         private void ResolvePresenter()

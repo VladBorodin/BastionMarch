@@ -2,12 +2,12 @@ using System;
 using System.Collections;
 using System.Linq;
 using BastionMarch.Presentation.Bastions;
+using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Presentation.Prototype;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
-using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Crew;
@@ -94,6 +94,88 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             Assert.That(actualModule.Id,
                 Is.EqualTo(routeController.CurrentRoute.SourceModuleId));
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PlannedMoveUpdatesVisibleTimeline()
+        {
+            BastionPrototypeBootstrap bootstrap =
+                Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+
+            PrototypeMovePlanningController planning =
+                Object.FindAnyObjectByType<PrototypeMovePlanningController>();
+
+            PrototypeRouteController routes =
+                Object.FindAnyObjectByType<PrototypeRouteController>();
+
+            ModuleSelectionController selection =
+                Object.FindAnyObjectByType<ModuleSelectionController>();
+
+            BastionView bastionView =
+                Object.FindAnyObjectByType<BastionView>();
+
+            TurnPlanView planView =
+                Object.FindAnyObjectByType<TurnPlanView>();
+
+            Assert.That(bootstrap, Is.Not.Null);
+            Assert.That(planning, Is.Not.Null);
+            Assert.That(routes, Is.Not.Null);
+            Assert.That(selection, Is.Not.Null);
+            Assert.That(planView, Is.Not.Null);
+            Assert.That(planView.State, Is.Not.Null);
+
+            Assert.That(planView.State.Phases.Count,
+                Is.EqualTo(bootstrap.TurnSession.Cycle.ActionPhaseCount));
+
+            Assert.That(planView.State.Phases[0].Entries,
+                Is.Empty);
+
+            yield return null;
+
+            Assert.That(routes.CurrentBrigadeId.HasValue, Is.True);
+            Assert.That(routes.CurrentRoute.IsSuccess, Is.True);
+
+            Guid brigadeId = routes.CurrentBrigadeId.Value;
+
+            Guid targetId =
+                routes.CurrentRoute.Steps[0].ToModuleId;
+
+            Assert.That(
+                bastionView.TryGetModuleView(
+                    targetId, out ModuleView targetView),
+                Is.True);
+
+            Assert.That(planning.SelectBrigade(brigadeId),
+                Is.True);
+
+            Assert.That(planning.SelectActionPhase(1),
+                Is.True);
+
+            selection.Select(targetView);
+
+            TurnPlanPresentationState oldState = planView.State;
+
+            MovePlanningResult result =
+                planning.TryPlanSelectedMove();
+
+            Assert.That(result.IsSuccess, Is.True);
+
+            Assert.That(planView.State,
+                Is.Not.SameAs(oldState));
+
+            Assert.That(oldState.Phases[0].Entries, Is.Empty);
+
+            Assert.That(planView.State.Phases[0].Entries.Count,
+                Is.EqualTo(1));
+
+            Assert.That(
+                planView.State.Phases[0].Entries[0].OrderId,
+                Is.EqualTo(result.Order.OrderId));
+
+            Assert.That(bootstrap.TurnSession.Cycle.Stage,
+                Is.EqualTo(TurnStage.Planning));
 
             yield return null;
         }

@@ -956,7 +956,7 @@ Batchmode применяется при необходимости.
 ### Прогресс P3
 
 - [x] P3.1. Игровая сессия BastionTurnSession и подключение к сцене.
-- [ ] P3.2. Выбор бригады и планирование MoveBrigadeOrder.
+- [x] P3.2. Выбор бригады и планирование MoveBrigadeOrder.
 - [ ] P3.3. Отображение плана по Action Phase.
 - [ ] P3.4. Подтверждение и пошаговое исполнение хода через UI.
 - [ ] P3.5. Журнал результатов и обновление Presentation.
@@ -993,6 +993,25 @@ PrototypeMovePlanningController — временный IMGUI
 интерфейс выбора бригады, фазы и целевого отсека.
 
 Исполнение и визуализация приказов относятся к P3.4–P3.5.
+
+### P3.3. Временная шкала плана
+
+TurnPlanPresentationState содержит неизменяемые
+снимки всех Action Phase и назначенных приказов.
+
+TurnPlanPresentationStateFactory строит снимок
+из TurnPlanDraft и BastionPresentationState.
+
+TurnPlanView получает только Presentation-снимок.
+
+PrototypeMovePlanningController обновляет снимок
+после успешного добавления приказа.
+
+Временная шкала не исполняет приказы и не изменяет
+Simulation.
+
+Количество отображаемых фаз определяется
+ActionPhaseCount, без жёсткой привязки к двум фазам.
 
 ---
 
