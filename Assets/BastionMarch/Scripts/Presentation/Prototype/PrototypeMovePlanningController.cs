@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using BastionMarch.Presentation.Bastions;
 using BastionMarch.Presentation.Bastions.State;
+using BastionMarch.Presentation.Localization;
 using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Turns;
 using BastionMarch.Simulation.Turns.Planning;
@@ -142,10 +143,29 @@ namespace BastionMarch.Presentation.Prototype
             GUILayout.BeginArea(new Rect(x, 10f, 340f, panelHeight), GUI.skin.box);
 
             _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
+   
+            GUILayout.BeginHorizontal();
 
-            GUILayout.Label($"BastionMarch | Ход {_session.Cycle.TurnNumber}");
+            if (GUILayout.Button("RU"))
+            {
+                BastionTexts.TrySetLanguage("ru");
+            }
 
-            GUILayout.Label("P3.2 — Планирование перемещения");
+            if (GUILayout.Button("EN"))
+            {
+                BastionTexts.TrySetLanguage("en");
+            }
+
+            GUILayout.EndHorizontal();
+
+            GUILayout.Label(
+                BastionTexts.Ui(
+                    UiTextKeys.TurnHeader,
+                    _session.Cycle.TurnNumber));
+
+            GUILayout.Label(
+                BastionTexts.Ui(UiTextKeys.PlanningTitle));
+
 
             GUILayout.Space(8);
 
@@ -207,7 +227,7 @@ namespace BastionMarch.Presentation.Prototype
             GUILayout.Label(
                 target == null
                     ? "Цель: выберите отсек мышью"
-                    : $"Цель: {target.DefinitionId} " +
+                    : $"Цель: {BastionTexts.ModuleName(target.NameLocalizationKey)} " +
                       $"(X:{target.Position.X}, " +
                       $"этаж:{target.Position.Deck})");
 
