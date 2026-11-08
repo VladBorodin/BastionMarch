@@ -437,6 +437,49 @@ MonoBehaviour:
     m_Localized: Failed to add order to plan
     m_Metadata:
       m_Items: []
+  - m_Id: 26857496514560
+    m_Localized: Confirm plan
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097472
+    m_Localized: Plan confirmed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097473
+    m_Localized: Could not confirm plan.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097474
+    m_Localized: 'Current phase: {0}'
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857509097475
+    m_Localized: Resolve phase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097476
+    m_Localized: 'Phase {0} completed. Orders executed: {1}. Work ticks: {2}.'
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857509097477
+    m_Localized: Turn completed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291776
+    m_Localized: Start next turn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291777
+    m_Localized: Turn {0} started.
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857513291778
+    m_Localized: Could not start the next turn.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
@@ -459,3 +502,6 @@ MonoBehaviour:
         - id: 2172822097923
         - id: 2172822097924
         - id: 2172817903626
+        - id: 26857509097474
+        - id: 26857509097476
+        - id: 26857513291777

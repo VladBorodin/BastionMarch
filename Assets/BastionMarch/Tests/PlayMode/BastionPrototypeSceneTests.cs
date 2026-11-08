@@ -12,8 +12,9 @@ using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Bastions;
 using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Turns;
-using BastionMarch.Simulation.Turns.Planning;
 using BastionMarch.Simulation.Turns.Orders;
+using BastionMarch.Simulation.Turns.Planning;
+using BastionMarch.Simulation.Turns.Resolution;
 using Object = UnityEngine.Object;
 
 namespace BastionMarch.Presentation.PlayModeTests
@@ -773,6 +774,216 @@ namespace BastionMarch.Presentation.PlayModeTests
             Assert.That(session.Draft.ParticipantCount, Is.EqualTo(bootstrap.Bastion.BrigadeCount));
 
             Assert.That(session.ConfirmedPlan, Is.Null);
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PrototypeUiExecutesTurnAndStartsNextTurn()
+        {
+            BastionPrototypeBootstrap bootstrap =
+                Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+
+            PrototypeMovePlanningController planning =
+                Object.FindAnyObjectByType<PrototypeMovePlanningController>();
+
+            PrototypeRouteController routes =
+                Object.FindAnyObjectByType<PrototypeRouteController>();
+
+            ModuleSelectionController selection =
+                Object.FindAnyObjectByType<ModuleSelectionController>();
+
+            BastionPresenter presenter =
+                Object.FindAnyObjectByType<BastionPresenter>();
+
+            BastionView bastionView =
+                Object.FindAnyObjectByType<BastionView>();
+
+            TurnPlanView planView =
+                Object.FindAnyObjectByType<TurnPlanView>();
+
+            Assert.That(bootstrap, Is.Not.Null);
+            Assert.That(planning, Is.Not.Null);
+            Assert.That(routes, Is.Not.Null);
+            Assert.That(selection, Is.Not.Null);
+            Assert.That(presenter, Is.Not.Null);
+            Assert.That(bastionView, Is.Not.Null);
+            Assert.That(planView, Is.Not.Null);
+
+            yield return null;
+
+            Assert.That(routes.CurrentRoute.IsSuccess, Is.True);
+            Assert.That(routes.CurrentRoute.StepCount, Is.GreaterThan(0));
+
+            Guid brigadeId = routes.CurrentBrigadeId.Value;
+            Guid sourceId = routes.CurrentRoute.SourceModuleId;
+            Guid targetId =
+                routes.CurrentRoute.Steps[0].ToModuleId;
+
+            Assert.That(
+                bastionView.TryGetModuleView(
+                    targetId, out ModuleView targetView),
+                Is.True);
+
+            Assert.That(planning.SelectBrigade(brigadeId), Is.True);
+            Assert.That(planning.SelectActionPhase(1), Is.True);
+
+            selection.Select(targetView);
+
+            MovePlanningResult planned =
+                planning.TryPlanSelectedMove();
+
+            Assert.That(planned.IsSuccess, Is.True);
+
+            // До подтверждения и исполнения бригада не движется.
+            Assert.That(
+                bootstrap.Bastion.TryGetBrigadeLocation(
+                    brigadeId, out ModuleInstance beforeModule),
+                Is.True);
+
+            Assert.That(beforeModule.Id, Is.EqualTo(sourceId));
+
+            TurnPlanningConfirmationResult confirmation =
+                planning.ConfirmCurrentPlan();
+
+            Assert.That(confirmation.IsSuccess, Is.True);
+
+            Assert.That(bootstrap.TurnSession.Cycle.Stage,
+                Is.EqualTo(TurnStage.ActionResolution));
+
+            Assert.That(
+                bootstrap.TurnSession.Cycle.CurrentActionPhase,
+                Is.EqualTo(1));
+
+            // Подтверждение само по себе не выполняет приказ.
+            Assert.That(
+                bootstrap.Bastion.TryGetBrigadeLocation(
+                    brigadeId, out ModuleInstance confirmedModule),
+                Is.True);
+
+            Assert.That(confirmedModule.Id, Is.EqualTo(sourceId));
+
+            BastionPresentationState previousPresentation =
+                presenter.CurrentState;
+
+            PhaseResolutionResult first =
+                planning.ResolveActivePhase();
+
+            Assert.That(first.ActionPhase, Is.EqualTo(1));
+            Assert.That(first.CommittedOrderCount, Is.EqualTo(1));
+
+            // Вот здесь перемещение действительно произошло.
+            Assert.That(
+                bootstrap.Bastion.TryGetBrigadeLocation(
+                    brigadeId, out ModuleInstance movedModule),
+                Is.True);
+
+            Assert.That(movedModule.Id, Is.EqualTo(targetId));
+
+            Assert.That(
+                presenter.CurrentState,
+                Is.Not.SameAs(previousPresentation));
+
+            Assert.That(
+                presenter.CurrentState.TryGetBrigade(
+                    brigadeId, out BrigadePresentationState brigadeState),
+                Is.True);
+
+            Assert.That(
+                brigadeState.CurrentModuleId,
+                Is.EqualTo(targetId));
+
+            // Старый технический маршрут больше не актуален.
+            Assert.That(routes.CurrentRoute, Is.Null);
+
+            Assert.That(
+                bootstrap.TurnSession.Cycle.CurrentActionPhase,
+                Is.EqualTo(2));
+
+            PhaseResolutionResult second =
+                planning.ResolveActivePhase();
+
+            Assert.That(second.ActionPhase, Is.EqualTo(2));
+
+            Assert.That(bootstrap.TurnSession.Cycle.Stage,
+                Is.EqualTo(TurnStage.TurnEnd));
+
+            TurnTransitionResult next =
+                planning.StartNextTurn();
+
+            Assert.That(next.IsSuccess, Is.True);
+
+            Assert.That(bootstrap.TurnSession.Cycle.TurnNumber,
+                Is.EqualTo(2));
+
+            Assert.That(bootstrap.TurnSession.Cycle.Stage,
+                Is.EqualTo(TurnStage.Planning));
+
+            Assert.That(bootstrap.TurnSession.Draft.OrderCount,
+                Is.Zero);
+
+            Assert.That(planView.State.TurnNumber,
+                Is.EqualTo(2));
+
+            Assert.That(planView.State.Phases[0].Entries,
+                Is.Empty);
+
+            Assert.That(planning.SelectedBrigadeId,
+                Is.Null);
+
+            // Новый ход не возвращает бригаду на прежнее место.
+            Assert.That(
+                bootstrap.Bastion.TryGetBrigadeLocation(
+                    brigadeId, out ModuleInstance finalModule),
+                Is.True);
+
+            Assert.That(finalModule.Id, Is.EqualTo(targetId));
+
+            yield return null;
+        }
+        
+        [UnityTest]
+        public IEnumerator PrototypeUiCanCompleteTurnWithoutOrders()
+        {
+            BastionPrototypeBootstrap bootstrap =
+                Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+
+            PrototypeMovePlanningController planning =
+                Object.FindAnyObjectByType<PrototypeMovePlanningController>();
+
+            Assert.That(bootstrap, Is.Not.Null);
+            Assert.That(planning, Is.Not.Null);
+
+            Assert.That(bootstrap.TurnSession.Draft.OrderCount,
+                Is.Zero);
+
+            Assert.That(
+                planning.ConfirmCurrentPlan().IsSuccess,
+                Is.True);
+
+            int phaseCount =
+                bootstrap.TurnSession.Cycle.ActionPhaseCount;
+
+            for (int phase = 1; phase <= phaseCount; phase++)
+            {
+                PhaseResolutionResult result =
+                    planning.ResolveActivePhase();
+
+                Assert.That(result.ActionPhase,
+                    Is.EqualTo(phase));
+            }
+
+            Assert.That(bootstrap.TurnSession.Cycle.Stage,
+                Is.EqualTo(TurnStage.TurnEnd));
+
+            Assert.That(planning.StartNextTurn().IsSuccess,
+                Is.True);
+
+            Assert.That(bootstrap.TurnSession.Cycle.TurnNumber,
+                Is.EqualTo(2));
+
+            Assert.That(bootstrap.TurnSession.Cycle.Stage,
+                Is.EqualTo(TurnStage.Planning));
 
             yield return null;
         }

@@ -6,6 +6,7 @@ using BastionMarch.Presentation.Localization;
 using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Turns;
 using BastionMarch.Simulation.Turns.Planning;
+using BastionMarch.Simulation.Turns.Resolution;
 using UnityEngine;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
@@ -135,18 +136,89 @@ namespace BastionMarch.Presentation.Prototype
             return result;
         }
 
+        public TurnPlanningConfirmationResult ConfirmCurrentPlan()
+        {
+            if (_session == null)
+            {
+                throw new InvalidOperationException("Turn session is not initialized.");
+            }
+
+            TurnPlanningConfirmationResult result = _session.ConfirmPlanning();
+
+            SetStatus(result.IsSuccess ? UiTextKeys.TurnConfirmed : UiTextKeys.TurnConfirmFailed);
+
+            return result;
+        }
+
+        public PhaseResolutionResult ResolveActivePhase()
+        {
+            if (_session == null || _presenter == null || _session.Cycle.Stage != TurnStage.ActionResolution)
+            {
+                throw new InvalidOperationException("Action resolution is not active.");
+            }
+
+            PhaseResolutionResult result = _session.ResolveCurrentPhase();
+
+            // Simulation уже изменилась.
+            // Создаём новый снимок для Presentation.
+            _presenter.RefreshPresentation();
+
+            // Технический маршрут был построен из старого
+            // положения бригады и теперь может быть неверным.
+            PrototypeRouteController routes = FindAnyObjectByType<PrototypeRouteController>();
+
+            routes?.ClearRoute();
+
+            SetStatus(
+                UiTextKeys.TurnPhaseResolved,
+                result.ActionPhase,
+                result.CommittedOrderCount,
+                result.ModuleWorkTickCount);
+
+            return result;
+        }
+
         private void SetStatus(string key, params object[] arguments)
         {
             _statusKey = key;
             _statusArguments = arguments;
             _statusFailure = null;
         }
+        
+        public TurnTransitionResult StartNextTurn()
+        {
+            if (_session == null)
+            {
+                throw new InvalidOperationException("Turn session is not initialized.");
+            }
+
+            TurnTransitionResult result = _session.BeginNextTurn();
+
+            if (!result.IsSuccess)
+            {
+                SetStatus(UiTextKeys.TurnNextTurnFailed);
+                return result;
+            }
+
+            SelectedBrigadeId = null;
+            SelectedActionPhase = 1;
+            _scrollPosition = Vector2.zero;
+
+            _moduleSelection.ClearSelection();
+
+            // Новый TurnPlanDraft: обновляем временную шкалу.
+            RefreshPlanView();
+
+            SetStatus(
+                UiTextKeys.TurnNextTurnStarted,
+                result.CurrentTurnNumber);
+
+            return result;
+        }
 
         private void OnGUI()
         {
-            if (_session == null ||
-                _session.Cycle.Stage != TurnStage.Planning ||
-                !BastionTexts.IsReady)
+            if (_session == null || !BastionTexts.IsReady)
             {
                 return;
             }
@@ -180,6 +252,47 @@ namespace BastionMarch.Presentation.Prototype
             GUILayout.Label(BastionTexts.Ui(
                 UiTextKeys.TurnHeader,
                 _session.Cycle.TurnNumber));
+            
+            if (_session.Cycle.Stage != TurnStage.Planning)
+            {
+                if (_session.Cycle.Stage == TurnStage.ActionResolution)
+                {
+                    GUILayout.Label(BastionTexts.Ui(
+                        UiTextKeys.TurnCurrentPhase,
+                        _session.Cycle.CurrentActionPhase.Value));
+
+                    GUILayout.Space(8);
+
+                    if (GUILayout.Button(
+                            BastionTexts.Ui(UiTextKeys.TurnResolvePhase)))
+                    {
+                        ResolveActivePhase();
+                    }
+                }
+                else if (_session.Cycle.Stage == TurnStage.TurnEnd)
+                {
+                    GUILayout.Label(
+                        BastionTexts.Ui(UiTextKeys.TurnEnd));
+
+                    GUILayout.Space(8);
+
+                    if (GUILayout.Button(
+                            BastionTexts.Ui(UiTextKeys.TurnNextTurn)))
+                    {
+                        StartNextTurn();
+                    }
+                }
+
+                GUILayout.Space(8);
+                GUILayout.Label(LastStatus);
+
+                GUILayout.Space(12);
+                _turnPlanView?.DrawTimeline();
+
+                GUILayout.EndScrollView();
+                GUILayout.EndArea();
+                return;
+            }
 
             GUILayout.Label(BastionTexts.Ui(UiTextKeys.PlanningTitle));
             GUILayout.Space(8);
@@ -254,6 +367,12 @@ namespace BastionMarch.Presentation.Prototype
             }
 
             GUILayout.Space(8);
+
+            if (GUILayout.Button(
+                    BastionTexts.Ui(UiTextKeys.TurnConfirmPlan)))
+            {
+                ConfirmCurrentPlan();
+            }
             GUILayout.Label(BastionTexts.Ui(
                 UiTextKeys.OrderCount,
                 _session.Draft.OrderCount));

@@ -46,5 +46,15 @@ namespace BastionMarch.Presentation.Localization
         public const string DebugPositionValue = "module_debug.position_value";
         public const string DebugSizeValue = "module_debug.size_value";
         public const string DebugDurabilityValue = "module_debug.durability_value";
+        public const string TurnConfirmPlan = "turn.confirm_plan";
+        public const string TurnConfirmed = "turn.confirmed";
+        public const string TurnConfirmFailed = "turn.confirm_failed";
+        public const string TurnCurrentPhase = "turn.current_phase";
+        public const string TurnResolvePhase = "turn.resolve_phase";
+        public const string TurnPhaseResolved = "turn.phase_resolved";
+        public const string TurnEnd = "turn.turn_end";
+        public const string TurnNextTurn = "turn.next_turn";
+        public const string TurnNextTurnStarted = "turn.next_turn_started";
+        public const string TurnNextTurnFailed = "turn.next_turn_failed";
     }
 }

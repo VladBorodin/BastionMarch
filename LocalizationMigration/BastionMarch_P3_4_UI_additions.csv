@@ -1,0 +1,11 @@
+﻿Key,Id,English(en),Russian(ru)
+turn.confirm_plan,0,Confirm plan,Подтвердить план
+turn.confirmed,0,Plan confirmed.,План подтверждён.
+turn.confirm_failed,0,Could not confirm plan.,Не удалось подтвердить план.
+turn.current_phase,0,Current phase: {0},Текущая фаза: {0}
+turn.resolve_phase,0,Resolve phase,Выполнить фазу
+turn.phase_resolved,0,Phase {0} completed. Orders executed: {1}. Work ticks: {2}.,Фаза {0} завершена. Исполнено приказов: {1}. Тактов работы: {2}.
+turn.turn_end,0,Turn completed.,Ход завершён.
+turn.next_turn,0,Start next turn,Начать следующий ход
+turn.next_turn_started,0,Turn {0} started.,Начат ход {0}.
+turn.next_turn_failed,0,Could not start the next turn.,Не удалось начать следующий ход.

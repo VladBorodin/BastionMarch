@@ -15,6 +15,46 @@ MonoBehaviour:
   m_TableCollectionName: UI
   m_TableCollectionNameGuidString: 30e859a8001cac1418dc7e2708bf0543
   m_Entries:
+  - m_Id: 26857496514560
+    m_Key: turn.confirm_plan
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097472
+    m_Key: turn.confirmed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097473
+    m_Key: turn.confirm_failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097474
+    m_Key: turn.current_phase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097475
+    m_Key: turn.resolve_phase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097476
+    m_Key: turn.phase_resolved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857509097477
+    m_Key: turn.turn_end
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291776
+    m_Key: turn.next_turn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291777
+    m_Key: turn.next_turn_started
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291778
+    m_Key: turn.next_turn_failed
+    m_Metadata:
+      m_Items: []
   - m_Id: 2172780154880
     m_Key: planning.instructions
     m_Metadata:
