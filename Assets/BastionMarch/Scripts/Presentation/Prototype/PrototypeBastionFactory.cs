@@ -330,7 +330,7 @@ namespace BastionMarch.Presentation.Prototype
                     experience: 65,
                     morale: 85,
                     fatigue: 20,
-                    nickname: "Молот"),
+                    nickname: string.Empty),
                 startWorking: true);
 
             AddPrototypeBrigade(

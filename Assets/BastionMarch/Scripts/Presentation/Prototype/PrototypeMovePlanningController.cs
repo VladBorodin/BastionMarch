@@ -7,6 +7,8 @@ using BastionMarch.Simulation.Crew;
 using BastionMarch.Simulation.Turns;
 using BastionMarch.Simulation.Turns.Planning;
 using UnityEngine;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
 
 namespace BastionMarch.Presentation.Prototype
 {
@@ -160,10 +162,19 @@ namespace BastionMarch.Presentation.Prototype
             _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("RU"))
-                BastionTexts.TrySetLanguage("ru");
-            if (GUILayout.Button("EN"))
-                BastionTexts.TrySetLanguage("en");
+
+            foreach (Locale locale in
+                    LocalizationSettings.AvailableLocales.Locales)
+            {
+                string languageCode = locale.Identifier.Code;
+
+                if (GUILayout.Button(
+                        languageCode.ToUpperInvariant()))
+                {
+                    BastionTexts.TrySetLanguage(languageCode);
+                }
+            }
+
             GUILayout.EndHorizontal();
 
             GUILayout.Label(BastionTexts.Ui(
