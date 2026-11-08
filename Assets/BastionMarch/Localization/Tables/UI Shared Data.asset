@@ -1,0 +1,432 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: UI Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: UI
+  m_TableCollectionNameGuidString: 30e859a8001cac1418dc7e2708bf0543
+  m_Entries:
+  - m_Id: 2172780154880
+    m_Key: planning.instructions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709312
+    m_Key: planning.brigade_selected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709313
+    m_Key: planning.move_added
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709314
+    m_Key: planning.move_rejected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709315
+    m_Key: planning.turn_header
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709316
+    m_Key: planning.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709317
+    m_Key: planning.brigade_label
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709318
+    m_Key: planning.brigade_button
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709319
+    m_Key: planning.action_phase_label
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172813709320
+    m_Key: planning.target_empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903616
+    m_Key: planning.target_module
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903617
+    m_Key: planning.plan_move
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903618
+    m_Key: planning.select_brigade
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903619
+    m_Key: planning.select_target
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903620
+    m_Key: planning.order_count
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903621
+    m_Key: timeline.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903622
+    m_Key: timeline.no_plan
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903623
+    m_Key: timeline.phase_label
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903624
+    m_Key: timeline.no_orders
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903625
+    m_Key: timeline.move_entry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903626
+    m_Key: timeline.other_entry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903627
+    m_Key: timeline.unassigned_orders
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903628
+    m_Key: module_debug.select_module
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903629
+    m_Key: module_debug.header
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903630
+    m_Key: module_debug.instance_id
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903631
+    m_Key: module_debug.definition_id
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903632
+    m_Key: module_debug.name_key
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903633
+    m_Key: module_debug.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903634
+    m_Key: module_debug.type
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903635
+    m_Key: module_debug.category
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903636
+    m_Key: module_debug.position
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903637
+    m_Key: module_debug.size
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903638
+    m_Key: module_debug.durability
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903639
+    m_Key: module_debug.technical_state
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903640
+    m_Key: module_debug.control_state
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903641
+    m_Key: module_debug.requested_power
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903642
+    m_Key: module_debug.effective_power
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903643
+    m_Key: module_debug.power_priority
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172817903644
+    m_Key: module_debug.occupying_brigades
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097920
+    m_Key: module_debug.working_brigades
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097921
+    m_Key: module_debug.field
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097922
+    m_Key: module_debug.position_value
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097923
+    m_Key: module_debug.size_value
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097924
+    m_Key: module_debug.durability_value
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097925
+    m_Key: enum.BrigadeType.Recruit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097926
+    m_Key: enum.BrigadeType.Driver
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097927
+    m_Key: enum.BrigadeType.Officer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097928
+    m_Key: enum.BrigadeType.Gunner
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097929
+    m_Key: enum.BrigadeType.Mechanic
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097930
+    m_Key: enum.BrigadeType.Engineer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097931
+    m_Key: enum.BrigadeType.Signal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097932
+    m_Key: enum.BrigadeType.Medical
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097933
+    m_Key: enum.BrigadeType.Logistics
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097934
+    m_Key: enum.BrigadeType.Assault
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097935
+    m_Key: enum.ModuleCategory.Structure
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097936
+    m_Key: enum.ModuleCategory.Mobility
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097937
+    m_Key: enum.ModuleCategory.Power
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097938
+    m_Key: enum.ModuleCategory.Combat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097939
+    m_Key: enum.ModuleCategory.Logistics
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097940
+    m_Key: enum.ModuleCategory.Maintenance
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097941
+    m_Key: enum.ModuleCategory.Command
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097942
+    m_Key: enum.ModuleCategory.CrewSupport
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097943
+    m_Key: enum.ModuleCategory.Medical
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097944
+    m_Key: enum.ModuleCategory.Utility
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097945
+    m_Key: enum.ModuleType.MachineRoom
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097946
+    m_Key: enum.ModuleType.RepairBay
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097947
+    m_Key: enum.ModuleType.AmmoStorage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097948
+    m_Key: enum.ModuleType.CommandPost
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172822097949
+    m_Key: enum.ModuleType.CrewQuarters
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292224
+    m_Key: enum.ModuleType.Ventilation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292225
+    m_Key: enum.ModuleType.WeaponPlatform
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292226
+    m_Key: enum.ModuleType.MedicalBay
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292227
+    m_Key: enum.ModuleType.Corridor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292228
+    m_Key: enum.ModuleType.GeneratorRoom
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292229
+    m_Key: enum.ModuleType.Stairwell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292230
+    m_Key: enum.ModuleTechnicalState.Operational
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292231
+    m_Key: enum.ModuleTechnicalState.Damaged
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292232
+    m_Key: enum.ModuleTechnicalState.Critical
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292233
+    m_Key: enum.ModuleTechnicalState.Destroyed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292234
+    m_Key: enum.ModuleControlState.Friendly
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292235
+    m_Key: enum.ModuleControlState.Contested
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292236
+    m_Key: enum.ModuleControlState.Occupied
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292237
+    m_Key: enum.ModulePowerMode.Offline
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292238
+    m_Key: enum.ModulePowerMode.Standby
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292239
+    m_Key: enum.ModulePowerMode.Active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292240
+    m_Key: enum.PowerPriority.Critical
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292241
+    m_Key: enum.PowerPriority.High
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292242
+    m_Key: enum.PowerPriority.Normal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292243
+    m_Key: enum.PowerPriority.Low
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292244
+    m_Key: enum.MovePlanningFailureReason.None
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292245
+    m_Key: enum.MovePlanningFailureReason.PlanningNotActive
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292246
+    m_Key: enum.MovePlanningFailureReason.ActionPhaseOutOfRange
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292247
+    m_Key: enum.MovePlanningFailureReason.BrigadeNotParticipant
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292248
+    m_Key: enum.MovePlanningFailureReason.BrigadeUnavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292249
+    m_Key: enum.MovePlanningFailureReason.BrigadeNotDeployed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292250
+    m_Key: enum.MovePlanningFailureReason.BrigadeMoveAlreadyPlanned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292251
+    m_Key: enum.MovePlanningFailureReason.BrigadePhaseReserved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292252
+    m_Key: enum.MovePlanningFailureReason.TargetModuleNotFound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292253
+    m_Key: enum.MovePlanningFailureReason.SameModule
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292254
+    m_Key: enum.MovePlanningFailureReason.NoTraversablePassage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2172826292255
+    m_Key: enum.MovePlanningFailureReason.PlanRegistrationFailed
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 3240661180882616344
+  references:
+    version: 2
+    RefIds:
+    - rid: 3240661180882616344
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1794145074992

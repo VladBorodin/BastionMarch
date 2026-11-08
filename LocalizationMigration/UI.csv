@@ -1,0 +1,102 @@
+﻿Key,Id,English(en),Russian(ru)
+planning.instructions,0,Select a brigade and a target module.,Выберите бригаду и целевой отсек.
+planning.brigade_selected,0,Brigade selected.,Бригада выбрана.
+planning.move_added,0,Order added to phase {0}.,Приказ добавлен в фазу {0}.
+planning.move_rejected,0,Order rejected: {0},Приказ отклонён: {0}
+planning.turn_header,0,BastionMarch | Turn {0},BastionMarch | Ход {0}
+planning.title,0,Move planning,Планирование перемещения
+planning.brigade_label,0,Brigade:,Бригада:
+planning.brigade_button,0,#{0} {1},№{0} {1}
+planning.action_phase_label,0,Action phase:,Фаза действия:
+planning.target_empty,0,Target: select a module with the mouse,Цель: выберите отсек мышью
+planning.target_module,0,"Target: {0} (X: {1}, deck: {2})","Цель: {0} (X: {1}, палуба: {2})"
+planning.plan_move,0,Plan move,Запланировать переход
+planning.select_brigade,0,Select a brigade first.,Сначала выберите бригаду.
+planning.select_target,0,Select a target module first.,Сначала выберите целевой отсек.
+planning.order_count,0,Planned orders: {0},Приказов в плане: {0}
+timeline.title,0,Action phase plan:,План по фазам:
+timeline.no_plan,0,Plan not loaded yet.,План ещё не загружен.
+timeline.phase_label,0,Phase {0}:,Фаза {0}:
+timeline.no_orders,0,No scheduled orders,Нет назначенных приказов
+timeline.move_entry,0,"#{0}: move → {1} (X: {2}, deck: {3})","№{0}: переход → {1} (X: {2}, палуба: {3})"
+timeline.other_entry,0,#{0}: order,№{0}: приказ
+timeline.unassigned_orders,0,Orders without an assigned phase: {0},Приказов без назначенной фазы: {0}
+module_debug.select_module,0,Select a module,Выберите отсек
+module_debug.header,0,MODULE,МОДУЛЬ
+module_debug.instance_id,0,Instance ID,ID экземпляра
+module_debug.definition_id,0,Definition ID,ID типа модуля
+module_debug.name_key,0,Name key,Ключ названия
+module_debug.name,0,Name,Название
+module_debug.type,0,Type,Тип
+module_debug.category,0,Category,Категория
+module_debug.position,0,Position,Положение
+module_debug.size,0,Size,Размер
+module_debug.durability,0,Durability,Прочность
+module_debug.technical_state,0,Technical state,Техническое состояние
+module_debug.control_state,0,Control state,Контроль
+module_debug.requested_power,0,Requested power mode,Запрошенный режим питания
+module_debug.effective_power,0,Effective power mode,Фактический режим питания
+module_debug.power_priority,0,Power priority,Приоритет питания
+module_debug.occupying_brigades,0,Brigades in module,Бригад в отсеке
+module_debug.working_brigades,0,Working brigades,Работающих бригад
+module_debug.field,0,{0}: {1},{0}: {1}
+module_debug.position_value,0,"X={0}, deck={1}","X={0}, палуба={1}"
+module_debug.size_value,0,{0} × {1},{0} × {1}
+module_debug.durability_value,0,{0} / {1},{0} / {1}
+enum.BrigadeType.Recruit,0,Recruits,Новобранцы
+enum.BrigadeType.Driver,0,Drivers,Водители
+enum.BrigadeType.Officer,0,Officers,Офицеры
+enum.BrigadeType.Gunner,0,Gunners,Артиллеристы
+enum.BrigadeType.Mechanic,0,Mechanics,Механики
+enum.BrigadeType.Engineer,0,Engineers,Инженеры
+enum.BrigadeType.Signal,0,Signal corps,Связисты
+enum.BrigadeType.Medical,0,Medics,Медики
+enum.BrigadeType.Logistics,0,Logistics,Снабженцы
+enum.BrigadeType.Assault,0,Assault troops,Штурмовики
+enum.ModuleCategory.Structure,0,Structure,Конструкция
+enum.ModuleCategory.Mobility,0,Mobility,Движение
+enum.ModuleCategory.Power,0,Power,Энергетика
+enum.ModuleCategory.Combat,0,Combat,Вооружение
+enum.ModuleCategory.Logistics,0,Logistics,Снабжение
+enum.ModuleCategory.Maintenance,0,Maintenance,Обслуживание
+enum.ModuleCategory.Command,0,Command,Управление
+enum.ModuleCategory.CrewSupport,0,Crew support,Обеспечение экипажа
+enum.ModuleCategory.Medical,0,Medical,Медицина
+enum.ModuleCategory.Utility,0,Utility,Вспомогательные системы
+enum.ModuleType.MachineRoom,0,Engine room,Машинное отделение
+enum.ModuleType.RepairBay,0,Repair bay,Ремонтный отсек
+enum.ModuleType.AmmoStorage,0,Ammunition storage,Склад боеприпасов
+enum.ModuleType.CommandPost,0,Command post,Командный пункт
+enum.ModuleType.CrewQuarters,0,Crew quarters,Жилой отсек
+enum.ModuleType.Ventilation,0,Ventilation,Вентиляция
+enum.ModuleType.WeaponPlatform,0,Weapon platform,Орудийная платформа
+enum.ModuleType.MedicalBay,0,Medical bay,Медицинский отсек
+enum.ModuleType.Corridor,0,Corridor,Коридор
+enum.ModuleType.GeneratorRoom,0,Generator room,Генераторный отсек
+enum.ModuleType.Stairwell,0,Stairwell,Лестничный пролёт
+enum.ModuleTechnicalState.Operational,0,Operational,Исправен
+enum.ModuleTechnicalState.Damaged,0,Damaged,Повреждён
+enum.ModuleTechnicalState.Critical,0,Critical,Критическое состояние
+enum.ModuleTechnicalState.Destroyed,0,Destroyed,Разрушен
+enum.ModuleControlState.Friendly,0,Friendly control,Под контролем союзников
+enum.ModuleControlState.Contested,0,Contested,Оспаривается
+enum.ModuleControlState.Occupied,0,Occupied,Захвачен
+enum.ModulePowerMode.Offline,0,Offline,Отключён
+enum.ModulePowerMode.Standby,0,Standby,Ожидание
+enum.ModulePowerMode.Active,0,Active,Активен
+enum.PowerPriority.Critical,0,Critical,Критический
+enum.PowerPriority.High,0,High,Высокий
+enum.PowerPriority.Normal,0,Normal,Обычный
+enum.PowerPriority.Low,0,Low,Низкий
+enum.MovePlanningFailureReason.None,0,No error,Нет ошибки
+enum.MovePlanningFailureReason.PlanningNotActive,0,Planning is not active,Планирование сейчас недоступно
+enum.MovePlanningFailureReason.ActionPhaseOutOfRange,0,Action phase is out of range,Недопустимая фаза действия
+enum.MovePlanningFailureReason.BrigadeNotParticipant,0,Brigade does not participate in this turn,Бригада не участвует в ходе
+enum.MovePlanningFailureReason.BrigadeUnavailable,0,Brigade is unavailable,Бригада недоступна
+enum.MovePlanningFailureReason.BrigadeNotDeployed,0,Brigade is not deployed,Бригада не размещена в отсеке
+enum.MovePlanningFailureReason.BrigadeMoveAlreadyPlanned,0,This brigade already has a planned move,Перемещение этой бригады уже запланировано
+enum.MovePlanningFailureReason.BrigadePhaseReserved,0,This phase is reserved by another order,Фаза уже занята другим приказом
+enum.MovePlanningFailureReason.TargetModuleNotFound,0,Target module not found,Целевой отсек не найден
+enum.MovePlanningFailureReason.SameModule,0,Brigade is already in the target module,Бригада уже находится в этом отсеке
+enum.MovePlanningFailureReason.NoTraversablePassage,0,No traversable direct passage,Нет доступного прямого перехода
+enum.MovePlanningFailureReason.PlanRegistrationFailed,0,Failed to add order to plan,Не удалось добавить приказ в план

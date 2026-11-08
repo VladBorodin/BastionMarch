@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,29 +19,22 @@ namespace BastionMarch.Presentation.Bastions.State
             if (bastionState == null)
                 throw new ArgumentNullException(nameof(bastionState));
 
-            var orders = draft.Orders.ToDictionary(
-                order => order.OrderId);
-
+            var orders = draft.Orders.ToDictionary(order => order.OrderId);
             var participants = draft.Participants.ToDictionary(
                 participant => participant.BrigadeId);
 
-            var phases =
-                new List<TurnPlanPhasePresentationState>();
+            var phases = new List<TurnPlanPhasePresentationState>();
 
-            for (int phase = 1;
-                 phase <= draft.ActionPhaseCount;
-                 phase++)
+            for (int phase = 1; phase <= draft.ActionPhaseCount; phase++)
             {
-                var entries =
-                    new List<TurnPlanEntryPresentationState>();
+                var entries = new List<TurnPlanEntryPresentationState>();
 
                 foreach (PhaseReservation reservation in
-                    draft.PhaseReservations.Where(
-                        item => item.ActionPhase == phase))
+                         draft.PhaseReservations.Where(
+                             item => item.ActionPhase == phase))
                 {
                     if (!orders.TryGetValue(
-                            reservation.OrderId,
-                            out ITurnOrder order))
+                            reservation.OrderId, out ITurnOrder order))
                     {
                         throw new InvalidOperationException(
                             "Reservation references a missing order.");
@@ -56,7 +48,7 @@ namespace BastionMarch.Presentation.Bastions.State
                             "Reservation references a missing brigade.");
                     }
 
-                    string description;
+                    TurnPlanEntryPresentationState entry;
 
                     if (order is MoveBrigadeOrder move)
                     {
@@ -68,46 +60,41 @@ namespace BastionMarch.Presentation.Bastions.State
                                 "Move target is missing from the snapshot.");
                         }
 
-                        description =
-                            $"#{participant.BrigadeNumber} " +
-                            $"переход → {target.DefinitionId} " +
-                            $"(X:{target.Position.X}, " +
-                            $"палуба:{target.Position.Deck})";
-                    }
-                    else
-                    {
-                        description =
-                            $"#{participant.BrigadeNumber} " +
-                            order.GetType().Name;
-                    }
-
-                    entries.Add(
-                        new TurnPlanEntryPresentationState(
+                        entry = new TurnPlanEntryPresentationState(
                             order.OrderId,
                             reservation.BrigadeId,
                             participant.BrigadeNumber,
-                            description));
+                            TurnPlanEntryKind.Move,
+                            target.NameLocalizationKey,
+                            target.Position.X,
+                            target.Position.Deck);
+                    }
+                    else
+                    {
+                        entry = new TurnPlanEntryPresentationState(
+                            order.OrderId,
+                            reservation.BrigadeId,
+                            participant.BrigadeNumber,
+                            TurnPlanEntryKind.Other);
+                    }
+
+                    entries.Add(entry);
                 }
 
-                phases.Add(
-                    new TurnPlanPhasePresentationState(
-                        phase,
-                        entries
-                            .OrderBy(item => item.BrigadeNumber)
-                            .ThenBy(item => item.BrigadeId)
-                            .ThenBy(item => item.OrderId)));
+                phases.Add(new TurnPlanPhasePresentationState(
+                    phase,
+                    entries
+                        .OrderBy(item => item.BrigadeNumber)
+                        .ThenBy(item => item.BrigadeId)
+                        .ThenBy(item => item.OrderId)));
             }
 
-            int unscheduledCount =
-                draft.Orders.Count(order =>
-                    !draft.PhaseReservations.Any(
-                        reservation =>
-                            reservation.OrderId == order.OrderId));
+            int unscheduledCount = draft.Orders.Count(order =>
+                !draft.PhaseReservations.Any(reservation =>
+                    reservation.OrderId == order.OrderId));
 
             return new TurnPlanPresentationState(
-                draft.TurnNumber,
-                phases,
-                unscheduledCount);
+                draft.TurnNumber, phases, unscheduledCount);
         }
     }
 }

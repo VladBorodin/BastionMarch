@@ -2,40 +2,27 @@ using System;
 using System.Text;
 using BastionMarch.Presentation.Bastions;
 using BastionMarch.Presentation.Bastions.State;
+using BastionMarch.Presentation.Localization;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
 
 namespace BastionMarch.Presentation.UI
 {
-    /// <summary>
-    /// Разработческая панель текущего состояния
-    /// выбранного модуля.
-    ///
-    /// Не является финальным локализованным UI.
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class ModuleDebugPanel : MonoBehaviour
     {
         [Header("References")]
+        [SerializeField] private ModuleSelectionController _selectionController;
+        [SerializeField] private TMP_Text _moduleInfoText;
 
-        [SerializeField]
-        private ModuleSelectionController
-            _selectionController;
-
-        [SerializeField]
-        private TMP_Text _moduleInfoText;
-
-        private readonly StringBuilder _builder =
-            new StringBuilder(capacity: 512);
+        private readonly StringBuilder _builder = new StringBuilder(capacity: 512);
 
         private void Reset()
         {
             if (_moduleInfoText == null)
-            {
-                _moduleInfoText =
-                    GetComponentInChildren<TMP_Text>(
-                        includeInactive: true);
-            }
+                _moduleInfoText = GetComponentInChildren<TMP_Text>(true);
         }
 
         private void Awake()
@@ -46,160 +33,110 @@ namespace BastionMarch.Presentation.UI
         private void OnEnable()
         {
             if (_selectionController != null)
-            {
-                _selectionController.SelectionChanged +=
-                    HandleSelectionChanged;
-            }
+                _selectionController.SelectionChanged += HandleSelectionChanged;
+
+            LocalizationSettings.SelectedLocaleChanged += HandleLocaleChanged;
         }
 
         private void Start()
         {
-            Refresh(
-                _selectionController.SelectedState);
+            Refresh(_selectionController.SelectedState);
         }
 
         private void OnDisable()
         {
             if (_selectionController != null)
-            {
-                _selectionController.SelectionChanged -=
-                    HandleSelectionChanged;
-            }
+                _selectionController.SelectionChanged -= HandleSelectionChanged;
+
+            LocalizationSettings.SelectedLocaleChanged -= HandleLocaleChanged;
         }
 
-        private void HandleSelectionChanged(
-            ModulePresentationState module)
+        private void HandleSelectionChanged(ModulePresentationState module)
         {
             Refresh(module);
         }
 
-        public void Refresh(
-            ModulePresentationState module)
+        private void HandleLocaleChanged(Locale locale)
+        {
+            Refresh(_selectionController?.SelectedState);
+        }
+
+        public void Refresh(ModulePresentationState module)
         {
             ResolveReferences();
 
             if (module == null)
             {
-                _moduleInfoText.text =
-                    "Select a module";
-
+                _moduleInfoText.text = BastionTexts.Ui(
+                    UiTextKeys.DebugSelectModule);
                 return;
             }
 
             _builder.Clear();
+            _builder.AppendLine(BastionTexts.Ui(UiTextKeys.DebugHeader));
 
-            AppendLine(
-                "MODULE INSTANCE",
-                string.Empty);
-
-            AppendLine(
-                "Instance Id",
-                module.ModuleId.ToString());
-
-            AppendLine(
-                "Definition Id",
-                module.DefinitionId);
-
-            AppendLine(
-                "Name Key",
-                module.NameLocalizationKey);
-
-            AppendLine(
-                "Type",
-                module.Type.ToString());
-
-            AppendLine(
-                "Category",
-                module.Category.ToString());
-
-            AppendLine(
-                "Position",
-                $"X={module.Position.X}, " +
-                $"Deck={module.Position.Deck}");
-
-            AppendLine(
-                "Size",
-                $"{module.Size.Width}" +
-                " × " +
-                $"{module.Size.Height}");
-
-            AppendLine(
-                "Durability",
-                $"{module.CurrentDurability}" +
-                " / " +
-                $"{module.MaximumDurability}");
-
-            AppendLine(
-                "Technical State",
-                module.TechnicalState.ToString());
-
-            AppendLine(
-                "Control State",
-                module.ControlState.ToString());
-
-            AppendLine(
-                "Requested Power",
-                module.RequestedPowerMode.ToString());
-
-            AppendLine(
-                "Effective Power",
-                module.EffectivePowerMode.ToString());
-
-            AppendLine(
-                "Power Priority",
-                module.PowerPriority.ToString());
-
-            AppendLine(
-                "Occupying Brigades",
+            AppendLine(UiTextKeys.DebugInstanceId, module.ModuleId.ToString());
+            AppendLine(UiTextKeys.DebugDefinitionId, module.DefinitionId);
+            AppendLine(UiTextKeys.DebugNameKey, module.NameLocalizationKey);
+            AppendLine(UiTextKeys.DebugName,
+                BastionTexts.ModuleName(module.NameLocalizationKey));
+            AppendLine(UiTextKeys.DebugType,
+                BastionTexts.EnumLabel(module.Type));
+            AppendLine(UiTextKeys.DebugCategory,
+                BastionTexts.EnumLabel(module.Category));
+            AppendLine(UiTextKeys.DebugPosition,
+                BastionTexts.Ui(
+                    UiTextKeys.DebugPositionValue,
+                    module.Position.X,
+                    module.Position.Deck));
+            AppendLine(UiTextKeys.DebugSize,
+                BastionTexts.Ui(
+                    UiTextKeys.DebugSizeValue,
+                    module.Size.Width,
+                    module.Size.Height));
+            AppendLine(UiTextKeys.DebugDurability,
+                BastionTexts.Ui(
+                    UiTextKeys.DebugDurabilityValue,
+                    module.CurrentDurability,
+                    module.MaximumDurability));
+            AppendLine(UiTextKeys.DebugTechnicalState,
+                BastionTexts.EnumLabel(module.TechnicalState));
+            AppendLine(UiTextKeys.DebugControlState,
+                BastionTexts.EnumLabel(module.ControlState));
+            AppendLine(UiTextKeys.DebugRequestedPower,
+                BastionTexts.EnumLabel(module.RequestedPowerMode));
+            AppendLine(UiTextKeys.DebugEffectivePower,
+                BastionTexts.EnumLabel(module.EffectivePowerMode));
+            AppendLine(UiTextKeys.DebugPowerPriority,
+                BastionTexts.EnumLabel(module.PowerPriority));
+            AppendLine(UiTextKeys.DebugOccupyingBrigades,
                 module.OccupyingBrigadeCount.ToString());
-
-            AppendLine(
-                "Working Brigades",
+            AppendLine(UiTextKeys.DebugWorkingBrigades,
                 module.WorkingBrigadeCount.ToString());
 
-            _moduleInfoText.text =
-                _builder.ToString();
+            _moduleInfoText.text = _builder.ToString();
         }
 
-        private void AppendLine(
-            string label,
-            string value)
+        private void AppendLine(string labelKey, string value)
         {
-            if (string.IsNullOrEmpty(value))
-            {
-                _builder
-                    .AppendLine(label);
-
-                return;
-            }
-
-            _builder
-                .Append(label)
-                .Append(": ")
-                .AppendLine(value);
+            _builder.AppendLine(BastionTexts.Ui(
+                UiTextKeys.DebugField,
+                BastionTexts.Ui(labelKey),
+                value));
         }
 
         private void ResolveReferences()
         {
             if (_moduleInfoText == null)
-            {
-                _moduleInfoText =
-                    GetComponentInChildren<TMP_Text>(
-                        includeInactive: true);
-            }
+                _moduleInfoText = GetComponentInChildren<TMP_Text>(true);
 
             if (_selectionController == null)
-            {
                 throw new InvalidOperationException(
-                    "ModuleDebugPanel requires " +
-                    "ModuleSelectionController.");
-            }
+                    "ModuleDebugPanel requires ModuleSelectionController.");
 
             if (_moduleInfoText == null)
-            {
                 throw new InvalidOperationException(
                     "ModuleDebugPanel requires TMP_Text.");
-            }
         }
     }
 }

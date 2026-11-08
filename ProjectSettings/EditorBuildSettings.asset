@@ -12,4 +12,6 @@ EditorBuildSettings:
     path: Assets/BastionMarch/Scenes/BastionPrototype.unity
     guid: fdf5856577dd7fd47ae58d3857a4cb8a
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 47d701cd2de2c3d4ab5127bb1527da35, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+    com.unity.localization.settings: {fileID: 11400000, guid: 506d1fd9827c6de44a1e96f53e422333, type: 2}

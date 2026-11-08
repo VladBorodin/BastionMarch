@@ -1,27 +1,19 @@
-
 using System;
 using BastionMarch.Presentation.Bastions.State;
+using BastionMarch.Presentation.Localization;
 using UnityEngine;
 
 namespace BastionMarch.Presentation.Bastions
 {
-    /// <summary>
-    /// Read-only представление плана Action Phase.
-    ///
-    /// Не хранит TurnPlanDraft и не выполняет Orders.
-    /// IMGUI используется только в техническом прототипе.
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class TurnPlanView : MonoBehaviour
     {
         public TurnPlanPresentationState State { get; private set; }
-
         public bool IsVisible => gameObject.activeSelf;
 
         public void Render(TurnPlanPresentationState state)
         {
-            State = state ??
-                throw new ArgumentNullException(nameof(state));
+            State = state ?? throw new ArgumentNullException(nameof(state));
         }
 
         public void Clear()
@@ -39,48 +31,54 @@ namespace BastionMarch.Presentation.Bastions
             gameObject.SetActive(false);
         }
 
-        /// <summary>
-        /// Вызывается внутри GUILayout-панели контроллера.
-        /// Самостоятельный OnGUI не нужен.
-        /// </summary>
         public void DrawTimeline()
         {
             if (!IsVisible)
                 return;
 
-            GUILayout.Label("План по Action Phase:");
+            GUILayout.Label(BastionTexts.Ui(UiTextKeys.TimelineTitle));
 
             if (State == null)
             {
-                GUILayout.Label("План ещё не загружен.");
+                GUILayout.Label(BastionTexts.Ui(UiTextKeys.TimelineNoPlan));
                 return;
             }
 
-            foreach (TurnPlanPhasePresentationState phase
-                     in State.Phases)
+            foreach (TurnPlanPhasePresentationState phase in State.Phases)
             {
                 GUILayout.Space(4);
-                GUILayout.Label($"Фаза {phase.ActionPhase}:");
+                GUILayout.Label(BastionTexts.Ui(
+                    UiTextKeys.TimelinePhaseLabel, phase.ActionPhase));
 
                 if (phase.Entries.Count == 0)
                 {
-                    GUILayout.Label("  Нет назначенных приказов");
+                    GUILayout.Label(BastionTexts.Ui(UiTextKeys.TimelineNoOrders));
                     continue;
                 }
 
-                foreach (TurnPlanEntryPresentationState entry
-                         in phase.Entries)
+                foreach (TurnPlanEntryPresentationState entry in phase.Entries)
                 {
-                    GUILayout.Label("  " + entry.Description);
+                    string description = entry.Kind == TurnPlanEntryKind.Move
+                        ? BastionTexts.Ui(
+                            UiTextKeys.TimelineMoveEntry,
+                            entry.BrigadeNumber,
+                            BastionTexts.ModuleName(entry.TargetModuleNameKey),
+                            entry.TargetX,
+                            entry.TargetDeck)
+                        : BastionTexts.Ui(
+                            UiTextKeys.TimelineOtherEntry,
+                            entry.BrigadeNumber);
+
+                    GUILayout.Label(description);
                 }
             }
 
             if (State.UnscheduledOrderCount > 0)
             {
                 GUILayout.Space(6);
-                GUILayout.Label(
-                    $"Без назначенной фазы: " +
-                    $"{State.UnscheduledOrderCount}");
+                GUILayout.Label(BastionTexts.Ui(
+                    UiTextKeys.TimelineUnassignedOrders,
+                    State.UnscheduledOrderCount));
             }
         }
     }

@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,23 +23,16 @@ namespace BastionMarch.Presentation.PlayModeTests
         {
             var bastion = PrototypeBastionFactory.Create();
 
-            _bastionState =
-                BastionPresentationStateFactory.Capture(bastion);
-
-            _brigade = _bastionState.Brigades.First(
-                brigade => brigade.IsDeployed);
-
+            _bastionState = BastionPresentationStateFactory.Capture(bastion);
+            _brigade = _bastionState.Brigades.First(brigade => brigade.IsDeployed);
             _target = _bastionState.Modules.First(
-                module =>
-                    module.ModuleId != _brigade.CurrentModuleId.Value);
+                module => module.ModuleId != _brigade.CurrentModuleId.Value);
 
             _draft = new TurnPlanDraft(
                 1,
                 3,
                 _bastionState.Brigades.Select(brigade =>
-                    new TurnBrigadeParticipant(
-                        brigade.BrigadeId,
-                        brigade.Number)));
+                    new TurnBrigadeParticipant(brigade.BrigadeId, brigade.Number)));
         }
 
         [Test]
@@ -53,11 +45,8 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             for (int i = 0; i < 3; i++)
             {
-                Assert.That(state.Phases[i].ActionPhase,
-                    Is.EqualTo(i + 1));
-
-                Assert.That(state.Phases[i].Entries,
-                    Is.Empty);
+                Assert.That(state.Phases[i].ActionPhase, Is.EqualTo(i + 1));
+                Assert.That(state.Phases[i].Entries, Is.Empty);
             }
 
             Assert.That(state.UnscheduledOrderCount, Is.Zero);
@@ -67,56 +56,45 @@ namespace BastionMarch.Presentation.PlayModeTests
         public void MoveAppearsOnlyInReservedPhase()
         {
             MoveBrigadeOrder move = AddMove(3);
-
             var state = Capture();
 
             Assert.That(state.Phases[0].Entries, Is.Empty);
             Assert.That(state.Phases[1].Entries, Is.Empty);
+            Assert.That(state.Phases[2].Entries.Count, Is.EqualTo(1));
 
-            Assert.That(state.Phases[2].Entries.Count,
-                Is.EqualTo(1));
-
-            var entry = state.Phases[2].Entries[0];
+            TurnPlanEntryPresentationState entry = state.Phases[2].Entries[0];
 
             Assert.That(entry.OrderId, Is.EqualTo(move.OrderId));
-            Assert.That(entry.BrigadeId,
-                Is.EqualTo(_brigade.BrigadeId));
-            Assert.That(entry.BrigadeNumber,
-                Is.EqualTo(_brigade.Number));
-
-            Assert.That(entry.Description,
-                Does.Contain(_target.DefinitionId));
+            Assert.That(entry.BrigadeId, Is.EqualTo(_brigade.BrigadeId));
+            Assert.That(entry.BrigadeNumber, Is.EqualTo(_brigade.Number));
+            Assert.That(entry.Kind, Is.EqualTo(TurnPlanEntryKind.Move));
+            Assert.That(entry.TargetModuleNameKey,
+                Is.EqualTo(_target.NameLocalizationKey));
+            Assert.That(entry.TargetX, Is.EqualTo(_target.Position.X));
+            Assert.That(entry.TargetDeck, Is.EqualTo(_target.Position.Deck));
         }
 
         [Test]
         public void SnapshotDoesNotChangeAfterDraftMutation()
         {
             var before = Capture();
-
             AddMove(1);
 
-            Assert.That(before.Phases[0].Entries,
-                Is.Empty);
+            Assert.That(before.Phases[0].Entries, Is.Empty);
 
             var after = Capture();
-
-            Assert.That(after.Phases[0].Entries.Count,
-                Is.EqualTo(1));
-
-            Assert.That(before.Phases[0].Entries,
-                Is.Empty);
+            Assert.That(after.Phases[0].Entries.Count, Is.EqualTo(1));
+            Assert.That(before.Phases[0].Entries, Is.Empty);
         }
 
         [Test]
         public void SnapshotCollectionsAreReadOnly()
         {
             AddMove(2);
-
             var state = Capture();
 
             Assert.That(
-                ((IList<TurnPlanPhasePresentationState>)
-                    state.Phases).IsReadOnly,
+                ((IList<TurnPlanPhasePresentationState>)state.Phases).IsReadOnly,
                 Is.True);
 
             Assert.That(
@@ -143,10 +121,7 @@ namespace BastionMarch.Presentation.PlayModeTests
             Assert.That(
                 _draft.TryAddOrderWithReservation(
                     move,
-                    new PhaseReservation(
-                        move.OrderId,
-                        phase,
-                        _brigade.BrigadeId)),
+                    new PhaseReservation(move.OrderId, phase, _brigade.BrigadeId)),
                 Is.True);
 
             return move;

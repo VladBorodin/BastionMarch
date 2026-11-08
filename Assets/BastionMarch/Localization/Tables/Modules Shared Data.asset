@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: Modules Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: Modules
+  m_TableCollectionNameGuidString: 7a22999f424a43e46894c29f47b1dfda
+  m_Entries:
+  - m_Id: 1246166126592
+    m_Key: module.machine_room.small.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1246258401280
+    m_Key: module.machine_room.large.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1246270984192
+    m_Key: module.generator_room.standard.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1246270984193
+    m_Key: module.repair_bay.standard.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1246279372800
+    m_Key: module.ammo_storage.standard.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1246279372801
+    m_Key: module.crew_quarters.standard.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1246279372802
+    m_Key: module.ventilation.standard.name
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 3240661180882616345
+  references:
+    version: 2
+    RefIds:
+    - rid: 3240661180882616345
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1794145256628

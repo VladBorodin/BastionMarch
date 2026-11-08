@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Localization-Assets-Shared
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Localization-Assets-Shared
+  m_GUID: 9532b6e07f2ec734da2b8c86836a0368
+  m_SerializeEntries:
+  - m_GUID: 30e859a8001cac1418dc7e2708bf0543
+    m_Address: Assets/BastionMarch/Localization/Tables/UI Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a22999f424a43e46894c29f47b1dfda
+    m_Address: Assets/BastionMarch/Localization/Tables/Modules Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 1
+  m_Settings: {fileID: 11400000, guid: 2b2b3412df037f445bc02ce7c876a02a, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 1b0a8d27e2cc30b47a2bd17c2acb9f90, type: 2}
+    - {fileID: 11400000, guid: 04ae3766700f80f418953037b6922220, type: 2}
+    - {fileID: 11400000, guid: 9fec952979ea86941bd2cb82841657e2, type: 2}
