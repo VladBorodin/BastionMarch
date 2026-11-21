@@ -326,6 +326,87 @@ namespace BastionMarch.Simulation.Turns.Planning
             return true;
         }
 
+        public bool TryAddOrdersWithReservations(
+            IEnumerable<(ITurnOrder Order, PhaseReservation Reservation)> registrations)
+        {
+            if (registrations == null)
+                throw new ArgumentNullException(nameof(registrations));
+
+            var batch = registrations.ToArray();
+
+            if (batch.Length == 0)
+                return false;
+
+            var knownOrderIds = _orders
+                .Select(order => order.OrderId)
+                .ToHashSet();
+
+            var occupiedPhases = _phaseReservations
+                .Select(reservation => (
+                    reservation.BrigadeId,
+                    reservation.ActionPhase))
+                .ToHashSet();
+
+            // Проверяем весь пакет до изменения Draft.
+            foreach (var item in batch)
+            {
+                ITurnOrder order = item.Order;
+                PhaseReservation reservation = item.Reservation;
+
+                if (order == null || reservation == null)
+                {
+                    throw new ArgumentException(
+                        "Batch cannot contain null orders or reservations.",
+                        nameof(registrations));
+                }
+
+                if (order.OrderId == Guid.Empty ||
+                    order.RequiredPhases < 1 ||
+                    order.OrderId != reservation.OrderId)
+                {
+                    throw new ArgumentException(
+                        "Invalid order or reservation identity.",
+                        nameof(registrations));
+                }
+
+                if (order is IBrigadeScopedOrder brigadeOrder &&
+                    brigadeOrder.BrigadeId != reservation.BrigadeId)
+                {
+                    return false;
+                }
+
+                if (reservation.ActionPhase > ActionPhaseCount ||
+                    !Participants.Any(participant =>
+                        participant.BrigadeId == reservation.BrigadeId))
+                {
+                    return false;
+                }
+
+                if (!knownOrderIds.Add(order.OrderId))
+                    return false;
+
+                if (!occupiedPhases.Add((
+                        reservation.BrigadeId,
+                        reservation.ActionPhase)))
+                {
+                    return false;
+                }
+            }
+
+            // Все проверки пройдены.
+            _orders.AddRange(batch.Select(item => item.Order));
+
+            _orders.Sort((left, right) =>
+                left.OrderId.CompareTo(right.OrderId));
+
+            _phaseReservations.AddRange(
+                batch.Select(item => item.Reservation));
+
+            SortReservations();
+
+            return true;
+        }
+
         public TurnPlanOrderResult TryAddOrder(
             ITurnOrder order)
         {
