@@ -199,9 +199,10 @@ namespace BastionMarch.Presentation.Prototype
                             continue;
                         }
 
-                        ApplyPrototypePassageState(
-                            result.Passage,
-                            bastion.Passages.Count - 1);
+                        // Свободное перемещение по тестовому бастиону.
+                        // Состояния закрытых и повреждённых переходов
+                        // проверяются в отдельных тестах Simulation.
+                        result.Passage.SetState(ModulePassageState.Open);
 
                         if (boundary.IsVerticalPassage)
                         {
@@ -253,46 +254,7 @@ namespace BastionMarch.Presentation.Prototype
                         "Unsupported prototype passage index.");
             }
         }
-
-        private static void ApplyPrototypePassageState(
-            ModulePassage passage,
-            int passageIndex)
-        {
-            if (passage == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(passage));
-            }
-
-            switch (passageIndex % 5)
-            {
-                case 0:
-                    passage.SetState(
-                        ModulePassageState.Open);
-                    break;
-
-                case 1:
-                    passage.SetState(
-                        ModulePassageState.Closed);
-                    break;
-
-                case 2:
-                    passage.SetState(
-                        ModulePassageState.Locked);
-                    break;
-
-                case 3:
-                    passage.SetState(
-                        ModulePassageState.Blocked);
-                    break;
-
-                case 4:
-                    passage.SetState(
-                        ModulePassageState.Destroyed);
-                    break;
-            }
-        }
-
+        
         private static void InstallPrototypeBrigades(
             Bastion bastion,
             IReadOnlyList<ModuleInstance> modules)

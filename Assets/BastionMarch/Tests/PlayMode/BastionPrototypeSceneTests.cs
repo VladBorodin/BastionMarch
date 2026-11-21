@@ -987,5 +987,37 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             yield return null;
         }
+
+        [UnityTest]
+        public IEnumerator PrototypeBrigadesHaveReachableModules()
+        {
+            BastionPrototypeBootstrap bootstrap =
+                Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+
+            Assert.That(bootstrap, Is.Not.Null);
+
+            foreach (Brigade brigade in bootstrap.Bastion.Brigades)
+            {
+                Assert.That(
+                    bootstrap.Bastion.TryGetBrigadeLocation(
+                        brigade.Id,
+                        out ModuleInstance source),
+                    Is.True);
+
+                bool hasReachableModule =
+                    bootstrap.Bastion.Modules.Any(module =>
+                        module.Id != source.Id &&
+                        bootstrap.Bastion.FindModuleRoute(
+                            source.Id,
+                            module.Id).IsSuccess);
+
+                Assert.That(
+                    hasReachableModule,
+                    Is.True,
+                    $"Brigade #{brigade.Number} has no reachable modules.");
+            }
+
+            yield return null;
+        }
     }
 }
