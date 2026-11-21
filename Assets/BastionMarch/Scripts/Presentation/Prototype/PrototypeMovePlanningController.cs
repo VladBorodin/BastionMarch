@@ -20,6 +20,7 @@ namespace BastionMarch.Presentation.Prototype
         private ModuleSelectionController _moduleSelection;
         private TurnPlanView _turnPlanView;
         private BastionPresenter _presenter;
+        private PrototypeRouteController _routeController;
         private Vector2 _scrollPosition;
 
         private string _statusKey = UiTextKeys.Instructions;
@@ -43,16 +44,71 @@ namespace BastionMarch.Presentation.Prototype
             TurnPlanView turnPlanView,
             BastionPresenter presenter)
         {
+            if (_moduleSelection != null)
+            {
+                _moduleSelection.SelectionChanged -= HandleSelectedModuleChanged;
+            }
+
             _session = session ??
                 throw new ArgumentNullException(nameof(session));
+
             _moduleSelection = moduleSelection ??
                 throw new ArgumentNullException(nameof(moduleSelection));
+
             _turnPlanView = turnPlanView ??
                 throw new ArgumentNullException(nameof(turnPlanView));
+
             _presenter = presenter ??
                 throw new ArgumentNullException(nameof(presenter));
 
+            _routeController =
+                FindAnyObjectByType<PrototypeRouteController>();
+
+            if (_routeController == null)
+            {
+                throw new InvalidOperationException(
+                    "PrototypeRouteController is required.");
+            }
+
+            _moduleSelection.SelectionChanged += HandleSelectedModuleChanged;
+
             RefreshPlanView();
+        }
+
+        private void HandleSelectedModuleChanged(
+            ModulePresentationState selectedModule)
+        {
+            RefreshRoutePreview();
+        }
+
+        public RoutePresentationState RefreshRoutePreview()
+        {
+            if (_routeController == null)
+            {
+                throw new InvalidOperationException(
+                    "Route controller is not initialized.");
+            }
+
+            if (_session == null ||
+                _session.Cycle.Stage != TurnStage.Planning ||
+                !SelectedBrigadeId.HasValue ||
+                _moduleSelection.SelectedState == null)
+            {
+                _routeController.ClearRoute();
+                return null;
+            }
+
+            return _routeController.ShowRouteForBrigade(
+                SelectedBrigadeId.Value,
+                _moduleSelection.SelectedState.ModuleId);
+        }
+
+        private void OnDestroy()
+        {
+            if (_moduleSelection != null)
+            {
+                _moduleSelection.SelectionChanged -= HandleSelectedModuleChanged;
+            }
         }
 
         public void RefreshPlanView()
@@ -88,6 +144,7 @@ namespace BastionMarch.Presentation.Prototype
 
             SelectedBrigadeId = brigadeId;
             SetStatus(UiTextKeys.BrigadeSelected);
+            RefreshRoutePreview();
             return true;
         }
 

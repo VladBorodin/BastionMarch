@@ -1019,5 +1019,87 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             yield return null;
         }
+
+        [UnityTest]
+        public IEnumerator SelectingBrigadeAndTargetPreviewsMultiStepRoute()
+        {
+            BastionPrototypeBootstrap bootstrap = Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+            PrototypeMovePlanningController planning = Object.FindAnyObjectByType<PrototypeMovePlanningController>();
+            ModuleSelectionController selection = Object.FindAnyObjectByType<ModuleSelectionController>();
+            PrototypeRouteController routes = Object.FindAnyObjectByType<PrototypeRouteController>();
+            BastionView bastionView = Object.FindAnyObjectByType<BastionView>();
+            RouteView routeView = Object.FindAnyObjectByType<RouteView>();
+
+            Assert.That(bootstrap, Is.Not.Null);
+            Assert.That(planning, Is.Not.Null);
+            Assert.That(selection, Is.Not.Null);
+            Assert.That(routes, Is.Not.Null);
+            Assert.That(bastionView, Is.Not.Null);
+            Assert.That(routeView, Is.Not.Null);
+
+            Guid brigadeId = Guid.Empty;
+            Guid targetId = Guid.Empty;
+            int expectedSteps = 0;
+
+            foreach (Brigade brigade in bootstrap.Bastion.Brigades)
+            {
+                if (!bootstrap.Bastion.TryGetBrigadeLocation(
+                        brigade.Id, out ModuleInstance source))
+                {
+                    continue;
+                }
+
+                foreach (ModuleInstance target in bootstrap.Bastion.Modules)
+                {
+                    ModuleRouteSearchResult result =
+                        bootstrap.Bastion.FindModuleRoute(
+                            source.Id, target.Id);
+
+                    if (!result.IsSuccess || result.Route.StepCount < 2)
+                    {
+                        continue;
+                    }
+
+                    brigadeId = brigade.Id;
+                    targetId = target.Id;
+                    expectedSteps = result.Route.StepCount;
+                    break;
+                }
+
+                if (brigadeId != Guid.Empty)
+                    break;
+            }
+
+            Assert.That(brigadeId, Is.Not.EqualTo(Guid.Empty),
+                "Prototype must contain a multi-step route.");
+
+            Assert.That(
+                bastionView.TryGetModuleView(
+                    targetId, out ModuleView targetView),
+                Is.True);
+
+            Assert.That(planning.SelectBrigade(brigadeId), Is.True);
+
+            selection.Select(targetView);
+
+            Assert.That(routes.CurrentBrigadeId,
+                Is.EqualTo(brigadeId));
+
+            Assert.That(routes.CurrentRoute, Is.Not.Null);
+            Assert.That(routes.CurrentRoute.IsSuccess, Is.True);
+            Assert.That(routes.CurrentRoute.StepCount,
+                Is.EqualTo(expectedSteps));
+
+            // Центр исходного отсека +
+            // центр перехода и отсека на каждом шаге.
+            Assert.That(routeView.RenderedPointCount,
+                Is.EqualTo(1 + expectedSteps * 2));
+
+            // Предпросмотр не создаёт приказов.
+            Assert.That(bootstrap.TurnSession.Draft.OrderCount,
+                Is.Zero);
+
+            yield return null;
+        }
     }
 }
