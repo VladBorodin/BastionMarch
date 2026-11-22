@@ -1,0 +1,1069 @@
+diff --git a/Assets/BastionMarch/Localization/Tables/UI Shared Data.asset b/Assets/BastionMarch/Localization/Tables/UI Shared Data.asset
+index a26cb3d3e14453310e259c8bf833ae55a65395b8..09dd253eb6c29505475d2f0cb343bb2672679592 100644
+--- a/Assets/BastionMarch/Localization/Tables/UI Shared Data.asset	
++++ b/Assets/BastionMarch/Localization/Tables/UI Shared Data.asset	
+@@ -459,6 +459,170 @@ MonoBehaviour:
+     m_Key: enum.MovePlanningFailureReason.PlanRegistrationFailed
+     m_Metadata:
+       m_Items: []
++  - m_Id: 26857513291779
++    m_Key: journal.title
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291780
++    m_Key: journal.empty
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291781
++    m_Key: journal.move
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291782
++    m_Key: journal.order
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291783
++    m_Key: journal.location
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291784
++    m_Key: journal.unknown_module
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291785
++    m_Key: journal.completed
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291786
++    m_Key: journal.progressed
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291787
++    m_Key: journal.rejected
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291788
++    m_Key: journal.work
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291789
++    m_Key: enum.ModulePassageTraversalFailureReason.None
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291790
++    m_Key: enum.ModulePassageTraversalFailureReason.PassageNotFound
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291791
++    m_Key: enum.ModulePassageTraversalFailureReason.SourceModuleNotFound
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291792
++    m_Key: enum.ModulePassageTraversalFailureReason.TargetModuleNotFound
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291793
++    m_Key: enum.ModulePassageTraversalFailureReason.SameModule
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291794
++    m_Key: enum.ModulePassageTraversalFailureReason.PassageDoesNotConnectModules
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291795
++    m_Key: enum.ModulePassageTraversalFailureReason.DirectionNotAllowed
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291796
++    m_Key: enum.ModulePassageTraversalFailureReason.PassageClosed
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291797
++    m_Key: enum.ModulePassageTraversalFailureReason.PassageLocked
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291798
++    m_Key: enum.ModulePassageTraversalFailureReason.PassageBlocked
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291799
++    m_Key: enum.ModulePassageTraversalFailureReason.PassageDestroyed
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291800
++    m_Key: enum.BrigadeMoveFailureReason.None
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291801
++    m_Key: enum.BrigadeMoveFailureReason.BrigadeNotFound
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291802
++    m_Key: enum.BrigadeMoveFailureReason.BrigadeDisbanded
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291803
++    m_Key: enum.BrigadeMoveFailureReason.BrigadeNotDeployed
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291804
++    m_Key: enum.BrigadeMoveFailureReason.SourceMismatch
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291805
++    m_Key: enum.BrigadeMoveFailureReason.SourceModuleNotFound
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291806
++    m_Key: enum.BrigadeMoveFailureReason.TargetModuleNotFound
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291807
++    m_Key: enum.BrigadeMoveFailureReason.SameModule
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291808
++    m_Key: enum.BrigadeMoveFailureReason.ModulesNotAdjacent
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291809
++    m_Key: enum.BrigadeMoveFailureReason.SourceOccupancyMissing
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291810
++    m_Key: enum.BrigadeMoveFailureReason.WorkingStateInconsistent
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291811
++    m_Key: enum.BrigadeMoveFailureReason.TargetAlreadyOccupied
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291812
++    m_Key: enum.BrigadeMoveFailureReason.PassageNotFound
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291813
++    m_Key: enum.BrigadeMoveFailureReason.PassageTraversalRejected
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291814
++    m_Key: enum.OrderPhaseAssessmentFailureReason.None
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291815
++    m_Key: enum.OrderPhaseAssessmentFailureReason.ExecutionOrderMismatch
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291816
++    m_Key: enum.OrderPhaseAssessmentFailureReason.ExecutionDurationMismatch
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291817
++    m_Key: enum.OrderPhaseAssessmentFailureReason.ExecutionAlreadyCompleted
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291818
++    m_Key: enum.OrderPhaseAssessmentFailureReason.ExecutionAlreadyFailed
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291819
++    m_Key: enum.OrderPhaseAssessmentFailureReason.MoveDomainRejected
++    m_Metadata:
++      m_Items: []
+   m_Metadata:
+     m_Items: []
+   m_KeyGenerator:
+diff --git a/Assets/BastionMarch/Localization/Tables/UI_en.asset b/Assets/BastionMarch/Localization/Tables/UI_en.asset
+index c5a46b6de28d28827cad6131fac410c79b818791..d5bcf52f78e2530ffe2dfcbac94174e76e8b9eb4 100644
+--- a/Assets/BastionMarch/Localization/Tables/UI_en.asset
++++ b/Assets/BastionMarch/Localization/Tables/UI_en.asset
+@@ -480,6 +480,176 @@ MonoBehaviour:
+     m_Localized: Could not start the next turn.
+     m_Metadata:
+       m_Items: []
++  - m_Id: 26857513291779
++    m_Localized: "Turn journal"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291780
++    m_Localized: "No orders or module work this phase."
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291781
++    m_Localized: "Brigade #{0} \u2192 {1}"
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616346
++  - m_Id: 26857513291782
++    m_Localized: "Order"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291783
++    m_Localized: "{0} (X {1}, deck {2})"
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616346
++  - m_Id: 26857513291784
++    m_Localized: "Unknown compartment"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291785
++    m_Localized: "Completed \u00b7 {0}"
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616346
++  - m_Id: 26857513291786
++    m_Localized: "In progress \u00b7 {0}"
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616346
++  - m_Id: 26857513291787
++    m_Localized: "Rejected \u00b7 {0}. {1}."
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616346
++  - m_Id: 26857513291788
++    m_Localized: "Brigade #{0} worked in {1} with {2} crew."
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616346
++  - m_Id: 26857513291789
++    m_Localized: "No error"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291790
++    m_Localized: "Passage no longer exists"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291791
++    m_Localized: "Starting compartment no longer exists"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291792
++    m_Localized: "Destination no longer exists"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291793
++    m_Localized: "Brigade is already in the destination compartment"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291794
++    m_Localized: "Passage does not connect these compartments"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291795
++    m_Localized: "Passage only allows movement in the opposite direction"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291796
++    m_Localized: "Passage is closed"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291797
++    m_Localized: "Passage is locked"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291798
++    m_Localized: "Passage is blocked"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291799
++    m_Localized: "Passage is destroyed"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291800
++    m_Localized: "No error"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291801
++    m_Localized: "Brigade no longer exists"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291802
++    m_Localized: "Brigade has disbanded"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291803
++    m_Localized: "Brigade is not deployed"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291804
++    m_Localized: "Brigade is in a different compartment"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291805
++    m_Localized: "Starting compartment no longer exists"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291806
++    m_Localized: "Destination no longer exists"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291807
++    m_Localized: "Brigade is already in the destination compartment"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291808
++    m_Localized: "Compartments are not adjacent"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291809
++    m_Localized: "Starting compartment has no record of the brigade"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291810
++    m_Localized: "Work assignment disagrees with brigade placement"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291811
++    m_Localized: "Destination already lists this brigade"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291812
++    m_Localized: "Passage no longer exists"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291813
++    m_Localized: "Brigade cannot use this passage"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291814
++    m_Localized: "No error"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291815
++    m_Localized: "Execution refers to another order"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291816
++    m_Localized: "Order duration has changed"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291817
++    m_Localized: "Order has already finished"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291818
++    m_Localized: "Order has already failed"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291819
++    m_Localized: "Brigade cannot make this move"
++    m_Metadata:
++      m_Items: []
+   references:
+     version: 2
+     RefIds:
+@@ -505,3 +675,9 @@ MonoBehaviour:
+         - id: 26857509097474
+         - id: 26857509097476
+         - id: 26857513291777
++        - id: 26857513291781
++        - id: 26857513291783
++        - id: 26857513291785
++        - id: 26857513291786
++        - id: 26857513291787
++        - id: 26857513291788
+diff --git a/Assets/BastionMarch/Localization/Tables/UI_ru.asset b/Assets/BastionMarch/Localization/Tables/UI_ru.asset
+index fa4e1b38ebda676e4c8a5946c4d0f6fdb6c4ed88..1d5cd44cfa5dce70ef7171827ab8820a785c74da 100644
+--- a/Assets/BastionMarch/Localization/Tables/UI_ru.asset
++++ b/Assets/BastionMarch/Localization/Tables/UI_ru.asset
+@@ -522,6 +522,176 @@ MonoBehaviour:
+       \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0445\u043E\u0434."
+     m_Metadata:
+       m_Items: []
++  - m_Id: 26857513291779
++    m_Localized: "\u0416\u0443\u0440\u043d\u0430\u043b \u0445\u043e\u0434\u0430"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291780
++    m_Localized: "\u0412 \u044d\u0442\u043e\u0439 \u0444\u0430\u0437\u0435 \u043d\u0435 \u0431\u044b\u043b\u043e \u043f\u0440\u0438\u043a\u0430\u0437\u043e\u0432 \u0438 \u0440\u0430\u0431\u043e\u0442\u044b \u0432 \u043e\u0442\u0441\u0435\u043a\u0430\u0445."
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291781
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u2116{0} \u2192 {1}"
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616347
++  - m_Id: 26857513291782
++    m_Localized: "\u041f\u0440\u0438\u043a\u0430\u0437"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291783
++    m_Localized: "{0} (X {1}, \u043f\u0430\u043b\u0443\u0431\u0430 {2})"
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616347
++  - m_Id: 26857513291784
++    m_Localized: "\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0439 \u043e\u0442\u0441\u0435\u043a"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291785
++    m_Localized: "\u0412\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u043e \u00b7 {0}"
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616347
++  - m_Id: 26857513291786
++    m_Localized: "\u0412\u044b\u043f\u043e\u043b\u043d\u044f\u0435\u0442\u0441\u044f \u00b7 {0}"
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616347
++  - m_Id: 26857513291787
++    m_Localized: "\u041e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u043e \u00b7 {0}. {1}."
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616347
++  - m_Id: 26857513291788
++    m_Localized: "\u0412 \u043e\u0442\u0441\u0435\u043a\u0435 {1} \u0440\u0430\u0431\u043e\u0442\u0430\u043b\u0430 \u0431\u0440\u0438\u0433\u0430\u0434\u0430 \u2116{0}, {2} \u0447\u0435\u043b."
++    m_Metadata:
++      m_Items:
++      - rid: 3240661180882616347
++  - m_Id: 26857513291789
++    m_Localized: "\u041d\u0435\u0442 \u043e\u0448\u0438\u0431\u043a\u0438"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291790
++    m_Localized: "\u041f\u0440\u043e\u0445\u043e\u0434 \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291791
++    m_Localized: "\u0418\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u043e\u0442\u0441\u0435\u043a \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291792
++    m_Localized: "\u0426\u0435\u043b\u0435\u0432\u043e\u0439 \u043e\u0442\u0441\u0435\u043a \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291793
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u0443\u0436\u0435 \u0432 \u0446\u0435\u043b\u0435\u0432\u043e\u043c \u043e\u0442\u0441\u0435\u043a\u0435"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291794
++    m_Localized: "\u041f\u0440\u043e\u0445\u043e\u0434 \u043d\u0435 \u0441\u043e\u0435\u0434\u0438\u043d\u044f\u0435\u0442 \u044d\u0442\u0438 \u043e\u0442\u0441\u0435\u043a\u0438"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291795
++    m_Localized: "\u041f\u0440\u043e\u0445\u043e\u0434 \u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d \u0442\u043e\u043b\u044c\u043a\u043e \u0432 \u043e\u0431\u0440\u0430\u0442\u043d\u043e\u043c \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0438"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291796
++    m_Localized: "\u041f\u0440\u043e\u0445\u043e\u0434 \u0437\u0430\u043a\u0440\u044b\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291797
++    m_Localized: "\u041f\u0440\u043e\u0445\u043e\u0434 \u0437\u0430\u043f\u0435\u0440\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291798
++    m_Localized: "\u041f\u0440\u043e\u0445\u043e\u0434 \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291799
++    m_Localized: "\u041f\u0440\u043e\u0445\u043e\u0434 \u0440\u0430\u0437\u0440\u0443\u0448\u0435\u043d"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291800
++    m_Localized: "\u041d\u0435\u0442 \u043e\u0448\u0438\u0431\u043a\u0438"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291801
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291802
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u0440\u0430\u0441\u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0430"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291803
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u043d\u0435 \u0440\u0430\u0437\u043c\u0435\u0449\u0435\u043d\u0430 \u0432 \u043e\u0442\u0441\u0435\u043a\u0435"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291804
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0434\u0440\u0443\u0433\u043e\u043c \u043e\u0442\u0441\u0435\u043a\u0435"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291805
++    m_Localized: "\u0418\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u043e\u0442\u0441\u0435\u043a \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291806
++    m_Localized: "\u0426\u0435\u043b\u0435\u0432\u043e\u0439 \u043e\u0442\u0441\u0435\u043a \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291807
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u0443\u0436\u0435 \u0432 \u0446\u0435\u043b\u0435\u0432\u043e\u043c \u043e\u0442\u0441\u0435\u043a\u0435"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291808
++    m_Localized: "\u041e\u0442\u0441\u0435\u043a\u0438 \u043d\u0435 \u0433\u0440\u0430\u043d\u0438\u0447\u0430\u0442 \u0434\u0440\u0443\u0433 \u0441 \u0434\u0440\u0443\u0433\u043e\u043c"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291809
++    m_Localized: "\u0412 \u0438\u0441\u0445\u043e\u0434\u043d\u043e\u043c \u043e\u0442\u0441\u0435\u043a\u0435 \u0431\u0440\u0438\u0433\u0430\u0434\u0430 \u043d\u0435 \u0447\u0438\u0441\u043b\u0438\u0442\u0441\u044f"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291810
++    m_Localized: "\u041d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 \u043d\u0430 \u0440\u0430\u0431\u043e\u0442\u0443 \u043d\u0435 \u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0440\u0430\u0437\u043c\u0435\u0449\u0435\u043d\u0438\u044e \u0431\u0440\u0438\u0433\u0430\u0434\u044b"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291811
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u0443\u0436\u0435 \u0447\u0438\u0441\u043b\u0438\u0442\u0441\u044f \u0432 \u0446\u0435\u043b\u0435\u0432\u043e\u043c \u043e\u0442\u0441\u0435\u043a\u0435"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291812
++    m_Localized: "\u041f\u0440\u043e\u0445\u043e\u0434 \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291813
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u043f\u0440\u043e\u0439\u0442\u0438 \u0447\u0435\u0440\u0435\u0437 \u044d\u0442\u043e\u0442 \u043f\u0440\u043e\u0445\u043e\u0434"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291814
++    m_Localized: "\u041d\u0435\u0442 \u043e\u0448\u0438\u0431\u043a\u0438"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291815
++    m_Localized: "\u0418\u0441\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435 \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0441\u044f \u043a \u0434\u0440\u0443\u0433\u043e\u043c\u0443 \u043f\u0440\u0438\u043a\u0430\u0437\u0443"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291816
++    m_Localized: "\u0414\u043b\u0438\u0442\u0435\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u043f\u0440\u0438\u043a\u0430\u0437\u0430 \u0438\u0437\u043c\u0435\u043d\u0438\u043b\u0430\u0441\u044c"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291817
++    m_Localized: "\u041f\u0440\u0438\u043a\u0430\u0437 \u0443\u0436\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291818
++    m_Localized: "\u041f\u0440\u0438\u043a\u0430\u0437 \u0440\u0430\u043d\u0435\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043b\u0441\u044f \u043d\u0435\u0443\u0434\u0430\u0447\u0435\u0439"
++    m_Metadata:
++      m_Items: []
++  - m_Id: 26857513291819
++    m_Localized: "\u0411\u0440\u0438\u0433\u0430\u0434\u0430 \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0432\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u0445\u043e\u0434"
++    m_Metadata:
++      m_Items: []
+   references:
+     version: 2
+     RefIds:
+@@ -547,3 +717,9 @@ MonoBehaviour:
+         - id: 26857509097474
+         - id: 26857509097476
+         - id: 26857513291777
++        - id: 26857513291781
++        - id: 26857513291783
++        - id: 26857513291785
++        - id: 26857513291786
++        - id: 26857513291787
++        - id: 26857513291788
+diff --git a/Assets/BastionMarch/Scripts/Presentation/Bastion/State/PhaseJournalPresentationState.cs b/Assets/BastionMarch/Scripts/Presentation/Bastion/State/PhaseJournalPresentationState.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..da818c7b6786468e104875ac2eab8cffdde37d4b
+--- /dev/null
++++ b/Assets/BastionMarch/Scripts/Presentation/Bastion/State/PhaseJournalPresentationState.cs
+@@ -0,0 +1,105 @@
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using BastionMarch.Presentation.Localization;
++using BastionMarch.Simulation.Bastions;
++using BastionMarch.Simulation.Turns.Orders;
++using BastionMarch.Simulation.Turns.Planning;
++using BastionMarch.Simulation.Turns.Resolution;
++
++namespace BastionMarch.Presentation.Bastions.State
++{
++    public sealed class PhaseJournalPresentationState
++    {
++        private readonly (OrderPhaseJournalEntry Result, int? BrigadeNumber,
++            bool IsMove, ModulePresentationState Target)[] _orders;
++        private readonly (int BrigadeNumber, ModulePresentationState Module, int Personnel)[] _work;
++
++        public int TurnNumber { get; }
++        public int ActionPhase { get; }
++        public bool IsEmpty => _orders.Length == 0 && _work.Length == 0;
++
++        public PhaseJournalPresentationState(PhaseResolutionResult result,
++            ConfirmedTurnPlan plan, BastionPresentationState bastion)
++        {
++            if (result == null) throw new ArgumentNullException(nameof(result));
++            if (plan == null) throw new ArgumentNullException(nameof(plan));
++            if (bastion == null) throw new ArgumentNullException(nameof(bastion));
++            if (plan.TurnNumber != result.TurnNumber)
++                throw new ArgumentException("Plan and result belong to different turns.", nameof(plan));
++
++            TurnNumber = result.TurnNumber;
++            ActionPhase = result.ActionPhase;
++            var orders = plan.Orders.ToDictionary(order => order.OrderId);
++            var brigadeNumbers = plan.Participants.ToDictionary(p => p.BrigadeId, p => p.BrigadeNumber);
++
++            _orders = result.OrderEntries.Select(outcome =>
++            {
++                ITurnOrder order = orders[outcome.OrderId];
++                int? number = order is IBrigadeScopedOrder scoped
++                    ? brigadeNumbers[scoped.BrigadeId] : (int?)null;
++                ModulePresentationState target = null;
++                if (order is MoveBrigadeOrder move)
++                    bastion.TryGetModule(move.TargetModuleId, out target);
++                return (outcome, number, order is MoveBrigadeOrder, target);
++            }).ToArray();
++
++            _work = result.ModuleWorkTicks.Select(tick =>
++            {
++                bastion.TryGetModule(tick.ModuleId, out var module);
++                return (brigadeNumbers[tick.BrigadeId], module, tick.WorkingPersonnel);
++            }).ToArray();
++        }
++
++        // Resolve labels on display so changing locale also updates earlier phases.
++        public IEnumerable<string> GetLocalizedEntries()
++        {
++            foreach (var order in _orders)
++            {
++                string description;
++                if (order.IsMove)
++                    description = BastionTexts.Ui(UiTextKeys.JournalMove,
++                        order.BrigadeNumber.Value, Location(order.Target));
++                else if (order.BrigadeNumber.HasValue)
++                    description = BastionTexts.Ui(UiTextKeys.TimelineOtherEntry, order.BrigadeNumber.Value);
++                else
++                    description = BastionTexts.Ui(UiTextKeys.JournalOrder);
++
++                if (!order.Result.WasCommitted)
++                {
++                    yield return BastionTexts.Ui(UiTextKeys.JournalRejected,
++                        description, FailureReason(order.Result));
++                    continue;
++                }
++
++                string key = order.Result.OutcomeKind == OrderExecutionOutcomeKind.Completed
++                    ? UiTextKeys.JournalCompleted : UiTextKeys.JournalProgressed;
++                yield return BastionTexts.Ui(key, description);
++            }
++
++            foreach (var work in _work)
++                yield return BastionTexts.Ui(UiTextKeys.JournalWork,
++                    work.BrigadeNumber, Location(work.Module), work.Personnel);
++        }
++
++        private static string Location(ModulePresentationState module)
++        {
++            if (module == null)
++                return BastionTexts.Ui(UiTextKeys.JournalUnknownModule);
++
++            return BastionTexts.Ui(UiTextKeys.JournalLocation,
++                BastionTexts.ModuleName(module.NameLocalizationKey), module.Position.X, module.Position.Deck);
++        }
++
++        private static string FailureReason(OrderPhaseJournalEntry entry)
++        {
++            if (entry.MoveTraversalFailureReason is ModulePassageTraversalFailureReason passage &&
++                passage != ModulePassageTraversalFailureReason.None)
++                return BastionTexts.EnumLabel(passage);
++            if (entry.MoveFailureReason is BrigadeMoveFailureReason move && move != BrigadeMoveFailureReason.None)
++                return BastionTexts.EnumLabel(move);
++
++            return BastionTexts.EnumLabel(entry.AssessmentFailureReason);
++        }
++    }
++}
+diff --git a/Assets/BastionMarch/Scripts/Presentation/Bastion/State/PhaseJournalPresentationState.cs.meta b/Assets/BastionMarch/Scripts/Presentation/Bastion/State/PhaseJournalPresentationState.cs.meta
+new file mode 100644
+index 0000000000000000000000000000000000000000..27ff874fe540115a870a41ef672d55b1ff7f8fcf
+--- /dev/null
++++ b/Assets/BastionMarch/Scripts/Presentation/Bastion/State/PhaseJournalPresentationState.cs.meta
+@@ -0,0 +1,2 @@
++fileFormatVersion: 2
++guid: df7ea47e8d24418ab19b9ff468354029
+diff --git a/Assets/BastionMarch/Scripts/Presentation/Bastion/TurnPlanView.cs b/Assets/BastionMarch/Scripts/Presentation/Bastion/TurnPlanView.cs
+index 1f45806cc2f2edab3f4fb1b826ec29c38c6c230d..cf332ac0f1fb2c6dd7a003e536b70f2f62af2201 100644
+--- a/Assets/BastionMarch/Scripts/Presentation/Bastion/TurnPlanView.cs
++++ b/Assets/BastionMarch/Scripts/Presentation/Bastion/TurnPlanView.cs
+@@ -1,4 +1,5 @@
+ using System;
++using System.Collections.Generic;
+ using BastionMarch.Presentation.Bastions.State;
+ using BastionMarch.Presentation.Localization;
+ using UnityEngine;
+@@ -8,17 +9,33 @@ namespace BastionMarch.Presentation.Bastions
+     [DisallowMultipleComponent]
+     public sealed class TurnPlanView : MonoBehaviour
+     {
++        private readonly SortedDictionary<int, PhaseJournalPresentationState> _journal =
++            new SortedDictionary<int, PhaseJournalPresentationState>();
++
+         public TurnPlanPresentationState State { get; private set; }
++        public IReadOnlyCollection<PhaseJournalPresentationState> Journal => _journal.Values;
+         public bool IsVisible => gameObject.activeSelf;
+ 
+         public void Render(TurnPlanPresentationState state)
+         {
+-            State = state ?? throw new ArgumentNullException(nameof(state));
++            if (state == null) throw new ArgumentNullException(nameof(state));
++            if (State?.TurnNumber != state.TurnNumber)
++                _journal.Clear();
++            State = state;
++        }
++
++        public void RecordPhase(PhaseJournalPresentationState phase)
++        {
++            if (phase == null) throw new ArgumentNullException(nameof(phase));
++            if (State?.TurnNumber != phase.TurnNumber)
++                throw new ArgumentException("Phase belongs to another turn.", nameof(phase));
++            _journal[phase.ActionPhase] = phase;
+         }
+ 
+         public void Clear()
+         {
+             State = null;
++            _journal.Clear();
+         }
+ 
+         public void Show()
+@@ -31,6 +48,24 @@ namespace BastionMarch.Presentation.Bastions
+             gameObject.SetActive(false);
+         }
+ 
++        public void DrawJournal()
++        {
++            if (!IsVisible || _journal.Count == 0)
++                return;
++
++            GUILayout.Label(BastionTexts.Ui(UiTextKeys.JournalTitle));
++            foreach (var phase in _journal.Values)
++            {
++                GUILayout.Space(4);
++                GUILayout.Label(BastionTexts.Ui(UiTextKeys.TimelinePhaseLabel, phase.ActionPhase));
++                if (phase.IsEmpty)
++                    GUILayout.Label(BastionTexts.Ui(UiTextKeys.JournalEmpty));
++                else
++                    foreach (string line in phase.GetLocalizedEntries())
++                        GUILayout.Label(line);
++            }
++        }
++
+         public void DrawTimeline()
+         {
+             if (!IsVisible)
+diff --git a/Assets/BastionMarch/Scripts/Presentation/Localization/UiTextKeys.cs b/Assets/BastionMarch/Scripts/Presentation/Localization/UiTextKeys.cs
+index 9079983fc07cf8f99712f77e914aec15ddb07ad4..3bfd866d7603f1d546b1bbadea4d623775118096 100644
+--- a/Assets/BastionMarch/Scripts/Presentation/Localization/UiTextKeys.cs
++++ b/Assets/BastionMarch/Scripts/Presentation/Localization/UiTextKeys.cs
+@@ -56,5 +56,15 @@ namespace BastionMarch.Presentation.Localization
+         public const string TurnNextTurn = "turn.next_turn";
+         public const string TurnNextTurnStarted = "turn.next_turn_started";
+         public const string TurnNextTurnFailed = "turn.next_turn_failed";
++        public const string JournalTitle = "journal.title";
++        public const string JournalEmpty = "journal.empty";
++        public const string JournalMove = "journal.move";
++        public const string JournalOrder = "journal.order";
++        public const string JournalLocation = "journal.location";
++        public const string JournalUnknownModule = "journal.unknown_module";
++        public const string JournalCompleted = "journal.completed";
++        public const string JournalProgressed = "journal.progressed";
++        public const string JournalRejected = "journal.rejected";
++        public const string JournalWork = "journal.work";
+     }
+ }
+diff --git a/Assets/BastionMarch/Scripts/Presentation/Prototype/PrototypeMovePlanningController.cs b/Assets/BastionMarch/Scripts/Presentation/Prototype/PrototypeMovePlanningController.cs
+index 26df3322e89eaa191f65f67053e27a13432dde72..db5a5b03fe2e4fb01eac44af6b8c191c86a341c7 100644
+--- a/Assets/BastionMarch/Scripts/Presentation/Prototype/PrototypeMovePlanningController.cs
++++ b/Assets/BastionMarch/Scripts/Presentation/Prototype/PrototypeMovePlanningController.cs
+@@ -72,6 +72,7 @@ namespace BastionMarch.Presentation.Prototype
+ 
+             _moduleSelection.SelectionChanged += HandleSelectedModuleChanged;
+ 
++            _turnPlanView.Clear();
+             RefreshPlanView();
+         }
+ 
+@@ -216,6 +217,10 @@ namespace BastionMarch.Presentation.Prototype
+ 
+             PhaseResolutionResult result = _session.ResolveCurrentPhase();
+ 
++            // Keep the phase's module labels even if a later refresh removes a module.
++            _turnPlanView.RecordPhase(new PhaseJournalPresentationState(
++                result, _session.ConfirmedPlan, _presenter.CurrentState));
++
+             // Simulation уже изменилась.
+             // Создаём новый снимок для Presentation.
+             _presenter.RefreshPresentation();
+@@ -344,6 +349,7 @@ namespace BastionMarch.Presentation.Prototype
+                 GUILayout.Label(LastStatus);
+ 
+                 GUILayout.Space(12);
++                _turnPlanView?.DrawJournal();
+                 _turnPlanView?.DrawTimeline();
+ 
+                 GUILayout.EndScrollView();
+diff --git a/Assets/BastionMarch/Tests/PlayMode/BastionLocalizationCatalogTests.cs b/Assets/BastionMarch/Tests/PlayMode/BastionLocalizationCatalogTests.cs
+index 04fe72b80afd37cfae80f43ca892924a291e012f..8b74ef96082e6cd5352a2c99225cb6c2fb1976a7 100644
+--- a/Assets/BastionMarch/Tests/PlayMode/BastionLocalizationCatalogTests.cs
++++ b/Assets/BastionMarch/Tests/PlayMode/BastionLocalizationCatalogTests.cs
+@@ -7,6 +7,7 @@ using BastionMarch.Simulation.Modules;
+ using BastionMarch.Simulation.Modules.Catalog;
+ using BastionMarch.Simulation.Power;
+ using BastionMarch.Simulation.Turns.Planning;
++using BastionMarch.Simulation.Turns.Resolution;
+ using NUnit.Framework;
+ using UnityEngine.TestTools;
+ 
+@@ -35,6 +36,9 @@ namespace BastionMarch.Presentation.PlayModeTests
+                     CheckEnum<ModulePowerMode>();
+                     CheckEnum<PowerPriority>();
+                     CheckEnum<MovePlanningFailureReason>();
++                    CheckEnum<ModulePassageTraversalFailureReason>();
++                    CheckEnum<BrigadeMoveFailureReason>();
++                    CheckEnum<OrderPhaseAssessmentFailureReason>();
+                 }
+             }
+             finally
+diff --git a/Assets/BastionMarch/Tests/PlayMode/BastionPrototypeSceneTests.cs b/Assets/BastionMarch/Tests/PlayMode/BastionPrototypeSceneTests.cs
+index 5e6e4b8f4541d6511d41c563cfd4d2a5b48d88b1..8091334735ed20406432804bcdf825573ff9f18e 100644
+--- a/Assets/BastionMarch/Tests/PlayMode/BastionPrototypeSceneTests.cs
++++ b/Assets/BastionMarch/Tests/PlayMode/BastionPrototypeSceneTests.cs
+@@ -3,6 +3,7 @@ using System.Collections;
+ using System.Linq;
+ using BastionMarch.Presentation.Bastions;
+ using BastionMarch.Presentation.Bastions.State;
++using BastionMarch.Presentation.Localization;
+ using BastionMarch.Presentation.Prototype;
+ using NUnit.Framework;
+ using UnityEngine;
+@@ -872,6 +873,20 @@ namespace BastionMarch.Presentation.PlayModeTests
+             Assert.That(first.ActionPhase, Is.EqualTo(1));
+             Assert.That(first.CommittedOrderCount, Is.EqualTo(1));
+ 
++            PhaseJournalPresentationState firstJournal = planView.Journal.Single();
++            Assert.That(firstJournal.ActionPhase, Is.EqualTo(1));
++            while (!BastionTexts.IsReady) yield return null;
++            Assert.That(bootstrap.Bastion.TryGetBrigade(brigadeId, out Brigade movedBrigade), Is.True);
++            string location = BastionTexts.Ui(UiTextKeys.JournalLocation,
++                BastionTexts.ModuleName(targetView.State.NameLocalizationKey),
++                targetView.State.Position.X, targetView.State.Position.Deck);
++            string move = BastionTexts.Ui(UiTextKeys.JournalMove, movedBrigade.Number, location);
++            Assert.That(firstJournal.GetLocalizedEntries(),
++                Does.Contain(BastionTexts.Ui(UiTextKeys.JournalCompleted, move)));
++            planning.RefreshPlanView();
++            Assert.That(planning.StartNextTurn().IsSuccess, Is.False);
++            Assert.That(planView.Journal.Single(), Is.SameAs(firstJournal));
++
+             // Вот здесь перемещение действительно произошло.
+             Assert.That(
+                 bootstrap.Bastion.TryGetBrigadeLocation(
+@@ -905,6 +920,8 @@ namespace BastionMarch.Presentation.PlayModeTests
+ 
+             Assert.That(second.ActionPhase, Is.EqualTo(2));
+ 
++            Assert.That(planView.Journal.Select(p => p.ActionPhase), Is.EqualTo(new[] { 1, 2 }));
++            Assert.That(planView.Journal.First(), Is.SameAs(firstJournal));
+             Assert.That(bootstrap.TurnSession.Cycle.Stage,
+                 Is.EqualTo(TurnStage.TurnEnd));
+ 
+@@ -924,6 +941,7 @@ namespace BastionMarch.Presentation.PlayModeTests
+ 
+             Assert.That(planView.State.TurnNumber,
+                 Is.EqualTo(2));
++            Assert.That(planView.Journal, Is.Empty);
+ 
+             Assert.That(planView.State.Phases[0].Entries,
+                 Is.Empty);
+@@ -942,6 +960,62 @@ namespace BastionMarch.Presentation.PlayModeTests
+             yield return null;
+         }
+         
++        [UnityTest]
++        public IEnumerator PhaseJournalShowsBlockedMoveAndModuleWorkInBothLocales()
++        {
++            var bootstrap = Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
++            var planning = Object.FindAnyObjectByType<PrototypeMovePlanningController>();
++            var selection = Object.FindAnyObjectByType<ModuleSelectionController>();
++            var bastionView = Object.FindAnyObjectByType<BastionView>();
++            var timeline = Object.FindAnyObjectByType<TurnPlanView>();
++            var bastion = bootstrap.Bastion;
++            // In the prototype brigade 2 is idle beside brigade 1, which works in the repair bay.
++            Brigade mover = bastion.Brigades.Single(b => b.Number == 2);
++            Brigade worker = bastion.Brigades.Single(b => b.Number == 1);
++            Assert.That(bastion.TryGetBrigadeLocation(mover.Id, out var source), Is.True);
++            Guid neighbor = bastion.Passages.First(p => p.State == ModulePassageState.Open &&
++                p.ConnectsModule(source.Id)).GetOtherModuleId(source.Id);
++            Assert.That(bastionView.TryGetModuleView(neighbor, out var target), Is.True);
++            Assert.That(planning.SelectBrigade(mover.Id), Is.True);
++            selection.Select(target);
++            var route = planning.TryPlanSelectedMove();
++            Assert.That(route.IsSuccess, Is.True);
++            Assert.That(planning.ConfirmCurrentPlan().IsSuccess, Is.True);
++            Assert.That(timeline.Journal, Is.Empty);
++            Assert.That(bastion.TryGetPassage(route.RoutePlan.NextStep.PassageId, out var passage), Is.True);
++            passage.SetState(ModulePassageState.Blocked);
++
++            var result = planning.ResolveActivePhase();
++            Assert.That(result.RejectedOrderCount, Is.EqualTo(1));
++            var work = result.ModuleWorkTicks.Single(t => t.BrigadeId == worker.Id);
++            var phase = timeline.Journal.Single();
++            while (!BastionTexts.IsReady) yield return null;
++            string original = BastionTexts.CurrentLanguageCode;
++            try
++            {
++                foreach (string code in new[] { "ru", "en" })
++                {
++                    Assert.That(BastionTexts.TrySetLanguage(code), Is.True);
++                    string[] lines = phase.GetLocalizedEntries().ToArray();
++                    Assert.That(lines.Length, Is.EqualTo(result.OrderEntryCount + result.ModuleWorkTickCount));
++                    Assert.That(lines[0], Does.Contain(code == "ru" ? "Отклонено" : "Rejected"));
++                    Assert.That(lines[0], Does.Contain(code == "ru" ? "Проход заблокирован" : "Passage is blocked"));
++                    Assert.That(lines[0], Does.Contain(BastionTexts.ModuleName(target.State.NameLocalizationKey)));
++                    Assert.That(bastionView.TryGetModuleView(work.ModuleId, out var workplace), Is.True);
++                    string location = BastionTexts.Ui(UiTextKeys.JournalLocation,
++                        BastionTexts.ModuleName(workplace.State.NameLocalizationKey),
++                        workplace.State.Position.X, workplace.State.Position.Deck);
++                    Assert.That(lines, Does.Contain(BastionTexts.Ui(UiTextKeys.JournalWork,
++                        worker.Number, location, work.WorkingPersonnel)));
++                }
++            }
++            finally
++            {
++                if (!string.IsNullOrEmpty(original))
++                    BastionTexts.TrySetLanguage(original);
++            }
++        }
++
+         [UnityTest]
+         public IEnumerator PlannedRouteMovesBrigadeAcrossTwoTurns()
+         {
+@@ -1159,4 +1233,4 @@ namespace BastionMarch.Presentation.PlayModeTests
+             yield return null;
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/Docs/00_DevelopmentRoadmap.md b/Docs/00_DevelopmentRoadmap.md
+index 24cc36f753f528a982f6aa793b507b600526d6e6..153a108c517d045c72f0a9512703d528688d6f07 100644
+--- a/Docs/00_DevelopmentRoadmap.md
++++ b/Docs/00_DevelopmentRoadmap.md
+@@ -958,8 +958,8 @@ Batchmode применяется при необходимости.
+ - [x] P3.1. Игровая сессия BastionTurnSession и подключение к сцене.
+ - [x] P3.2. Выбор бригады и планирование MoveBrigadeOrder.
+ - [x] P3.3. Отображение плана по Action Phase.
+-- [ ] P3.4. Подтверждение и пошаговое исполнение хода через UI.
+-- [ ] P3.5. Журнал результатов и обновление Presentation.
++- [x] P3.4. Подтверждение и пошаговое исполнение хода через UI.
++- [ ] P3.5. Журнал результатов и обновление Presentation. Реализация готова к проверке в Unity Test Runner.
+ - [ ] P3.6. Интеграционные PlayMode-тесты управляемого цикла.
+ 
+ ### P3.1:
+@@ -986,8 +986,10 @@ BastionTurnSession.TryPlanMove:
+ - добавляет Order и PhaseReservation совместно;
+ - не изменяет состояние Bastion.
+ 
+-В M1 допускается один MoveBrigadeOrder на бригаду
+-за ход. Многошаговые маршруты появятся отдельно.
++Кнопка планирования передаёт конечный отсек и начальную фазу в
++`BastionTurnSession.TryPlanRoute`. Каждый шаг занимает одну фазу.
++Если ход закончился в промежуточном отсеке, первый шаг нового хода
++появляется в плане автоматически.
+ 
+ PrototypeMovePlanningController — временный IMGUI
+ интерфейс выбора бригады, фазы и целевого отсека.
+@@ -1028,11 +1030,11 @@ Simulation не зависит от локализации.
+ 
+ ### P3.4. Подтверждение и исполнение хода через UI
+ 
+-- [ ] P3.4.1. Подтверждение плана через интерфейс.
+-- [ ] P3.4.2. Пошаговое выполнение Action Phase.
+-- [ ] P3.4.3. Обновление Presentation после исполнения.
+-- [ ] P3.4.4. Начало следующего хода через интерфейс.
+-- [ ] P3.4.5. PlayMode-тест управляемого цикла.
++- [x] P3.4.1. Подтверждение плана через интерфейс.
++- [x] P3.4.2. Пошаговое выполнение Action Phase.
++- [x] P3.4.3. Обновление Presentation после исполнения.
++- [x] P3.4.4. Начало следующего хода через интерфейс.
++- [x] P3.4.5. PlayMode-тест управляемого цикла.
+ 
+ Используется существующий BastionTurnSession.
+ Simulation не содержит Unity API.
+@@ -2188,4 +2190,4 @@ Unity EditMode-тестами.
+ - не выполнять преждевременный рефакторинг Bastion.
+ 
+ После стабилизации основной приоритет — управляемый
+-игроком небоевой вертикальный срез.
+\ No newline at end of file
++игроком небоевой вертикальный срез.
+diff --git a/Docs/13_PresentationArchitecture.md b/Docs/13_PresentationArchitecture.md
+index 072c69f060e50b89dbebd643fb43e746402dd54d..f86e78ed3809bd4ccf68787c2b5a6a379f6094a7 100644
+--- a/Docs/13_PresentationArchitecture.md
++++ b/Docs/13_PresentationArchitecture.md
+@@ -186,4 +186,22 @@ BlockingAssessments сохраняются отдельно для будуще
+ отображения причин невозможности перемещения.
+ 
+ PrototypeRouteController используется только тестовой
+-Presentation-сценой для визуальной проверки маршрутизации.
+\ No newline at end of file
++Presentation-сценой для визуальной проверки маршрутизации.
++
++## Журнал фаз текущего хода
++
++После выполнения фазы панель хода показывает результат каждого приказа.
++Для перехода указаны номер бригады, целевой отсек и координаты.
++Если переход сорвался, журнал берёт причину из результата Simulation.
++Например, если проход закрыли после подтверждения плана, запись объясняет,
++почему бригада осталась на месте.
++
++В журнал попадает работа, подтверждённая `ModuleWorkActivityTick`.
++Запись содержит номер бригады, отсек и фактическое число работников.
++У фазы без приказов и работы есть отдельная строка.
++
++`PhaseJournalPresentationState` связывает `PhaseResolutionResult`
++с подтверждённым планом и снимком отсеков для данной фазы.
++Записи остаются доступны до конца хода. При смене языка подписи уже
++выполненных фаз переводятся заново. При успешном начале следующего хода
++панель открывает новый журнал.
+diff --git a/LocalizationMigration/UI.csv b/LocalizationMigration/UI.csv
+index 5dd856f9d101234294eb709e5c0955bdefc06c44..a10964b2d7ace34a937b48a58502cf53c31c06ac 100644
+--- a/LocalizationMigration/UI.csv
++++ b/LocalizationMigration/UI.csv
+@@ -100,3 +100,44 @@ enum.MovePlanningFailureReason.TargetModuleNotFound,0,Target module not found,Ц
+ enum.MovePlanningFailureReason.SameModule,0,Brigade is already in the target module,Бригада уже находится в этом отсеке
+ enum.MovePlanningFailureReason.NoTraversablePassage,0,No traversable direct passage,Нет доступного прямого перехода
+ enum.MovePlanningFailureReason.PlanRegistrationFailed,0,Failed to add order to plan,Не удалось добавить приказ в план
++journal.title,0,Turn journal,Журнал хода
++journal.empty,0,No orders or module work this phase.,В этой фазе не было приказов и работы в отсеках.
++journal.move,0,Brigade #{0} → {1},Бригада №{0} → {1}
++journal.order,0,Order,Приказ
++journal.location,0,"{0} (X {1}, deck {2})","{0} (X {1}, палуба {2})"
++journal.unknown_module,0,Unknown compartment,Неизвестный отсек
++journal.completed,0,Completed · {0},Выполнено · {0}
++journal.progressed,0,In progress · {0},Выполняется · {0}
++journal.rejected,0,Rejected · {0}. {1}.,Отклонено · {0}. {1}.
++journal.work,0,Brigade #{0} worked in {1} with {2} crew.,"В отсеке {1} работала бригада №{0}, {2} чел."
++enum.ModulePassageTraversalFailureReason.None,0,No error,Нет ошибки
++enum.ModulePassageTraversalFailureReason.PassageNotFound,0,Passage no longer exists,Проход больше не существует
++enum.ModulePassageTraversalFailureReason.SourceModuleNotFound,0,Starting compartment no longer exists,Исходный отсек больше не существует
++enum.ModulePassageTraversalFailureReason.TargetModuleNotFound,0,Destination no longer exists,Целевой отсек больше не существует
++enum.ModulePassageTraversalFailureReason.SameModule,0,Brigade is already in the destination compartment,Бригада уже в целевом отсеке
++enum.ModulePassageTraversalFailureReason.PassageDoesNotConnectModules,0,Passage does not connect these compartments,Проход не соединяет эти отсеки
++enum.ModulePassageTraversalFailureReason.DirectionNotAllowed,0,Passage only allows movement in the opposite direction,Проход доступен только в обратном направлении
++enum.ModulePassageTraversalFailureReason.PassageClosed,0,Passage is closed,Проход закрыт
++enum.ModulePassageTraversalFailureReason.PassageLocked,0,Passage is locked,Проход заперт
++enum.ModulePassageTraversalFailureReason.PassageBlocked,0,Passage is blocked,Проход заблокирован
++enum.ModulePassageTraversalFailureReason.PassageDestroyed,0,Passage is destroyed,Проход разрушен
++enum.BrigadeMoveFailureReason.None,0,No error,Нет ошибки
++enum.BrigadeMoveFailureReason.BrigadeNotFound,0,Brigade no longer exists,Бригада больше не существует
++enum.BrigadeMoveFailureReason.BrigadeDisbanded,0,Brigade has disbanded,Бригада расформирована
++enum.BrigadeMoveFailureReason.BrigadeNotDeployed,0,Brigade is not deployed,Бригада не размещена в отсеке
++enum.BrigadeMoveFailureReason.SourceMismatch,0,Brigade is in a different compartment,Бригада находится в другом отсеке
++enum.BrigadeMoveFailureReason.SourceModuleNotFound,0,Starting compartment no longer exists,Исходный отсек больше не существует
++enum.BrigadeMoveFailureReason.TargetModuleNotFound,0,Destination no longer exists,Целевой отсек больше не существует
++enum.BrigadeMoveFailureReason.SameModule,0,Brigade is already in the destination compartment,Бригада уже в целевом отсеке
++enum.BrigadeMoveFailureReason.ModulesNotAdjacent,0,Compartments are not adjacent,Отсеки не граничат друг с другом
++enum.BrigadeMoveFailureReason.SourceOccupancyMissing,0,Starting compartment has no record of the brigade,В исходном отсеке бригада не числится
++enum.BrigadeMoveFailureReason.WorkingStateInconsistent,0,Work assignment disagrees with brigade placement,Назначение на работу не соответствует размещению бригады
++enum.BrigadeMoveFailureReason.TargetAlreadyOccupied,0,Destination already lists this brigade,Бригада уже числится в целевом отсеке
++enum.BrigadeMoveFailureReason.PassageNotFound,0,Passage no longer exists,Проход больше не существует
++enum.BrigadeMoveFailureReason.PassageTraversalRejected,0,Brigade cannot use this passage,Бригада не может пройти через этот проход
++enum.OrderPhaseAssessmentFailureReason.None,0,No error,Нет ошибки
++enum.OrderPhaseAssessmentFailureReason.ExecutionOrderMismatch,0,Execution refers to another order,Исполнение относится к другому приказу
++enum.OrderPhaseAssessmentFailureReason.ExecutionDurationMismatch,0,Order duration has changed,Длительность приказа изменилась
++enum.OrderPhaseAssessmentFailureReason.ExecutionAlreadyCompleted,0,Order has already finished,Приказ уже выполнен
++enum.OrderPhaseAssessmentFailureReason.ExecutionAlreadyFailed,0,Order has already failed,Приказ ранее завершился неудачей
++enum.OrderPhaseAssessmentFailureReason.MoveDomainRejected,0,Brigade cannot make this move,Бригада не может выполнить переход

@@ -7,6 +7,7 @@ using BastionMarch.Simulation.Modules;
 using BastionMarch.Simulation.Modules.Catalog;
 using BastionMarch.Simulation.Power;
 using BastionMarch.Simulation.Turns.Planning;
+using BastionMarch.Simulation.Turns.Resolution;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
@@ -35,6 +36,9 @@ namespace BastionMarch.Presentation.PlayModeTests
                     CheckEnum<ModulePowerMode>();
                     CheckEnum<PowerPriority>();
                     CheckEnum<MovePlanningFailureReason>();
+                    CheckEnum<ModulePassageTraversalFailureReason>();
+                    CheckEnum<BrigadeMoveFailureReason>();
+                    CheckEnum<OrderPhaseAssessmentFailureReason>();
                 }
             }
             finally

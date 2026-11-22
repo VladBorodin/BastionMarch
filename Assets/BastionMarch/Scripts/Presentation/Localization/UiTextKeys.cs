@@ -56,5 +56,15 @@ namespace BastionMarch.Presentation.Localization
         public const string TurnNextTurn = "turn.next_turn";
         public const string TurnNextTurnStarted = "turn.next_turn_started";
         public const string TurnNextTurnFailed = "turn.next_turn_failed";
+        public const string JournalTitle = "journal.title";
+        public const string JournalEmpty = "journal.empty";
+        public const string JournalMove = "journal.move";
+        public const string JournalOrder = "journal.order";
+        public const string JournalLocation = "journal.location";
+        public const string JournalUnknownModule = "journal.unknown_module";
+        public const string JournalCompleted = "journal.completed";
+        public const string JournalProgressed = "journal.progressed";
+        public const string JournalRejected = "journal.rejected";
+        public const string JournalWork = "journal.work";
     }
 }

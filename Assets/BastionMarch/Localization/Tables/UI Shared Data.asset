@@ -459,6 +459,170 @@ MonoBehaviour:
     m_Key: enum.MovePlanningFailureReason.PlanRegistrationFailed
     m_Metadata:
       m_Items: []
+  - m_Id: 26857513291779
+    m_Key: journal.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291780
+    m_Key: journal.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291781
+    m_Key: journal.move
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291782
+    m_Key: journal.order
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291783
+    m_Key: journal.location
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291784
+    m_Key: journal.unknown_module
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291785
+    m_Key: journal.completed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291786
+    m_Key: journal.progressed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291787
+    m_Key: journal.rejected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291788
+    m_Key: journal.work
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291789
+    m_Key: enum.ModulePassageTraversalFailureReason.None
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291790
+    m_Key: enum.ModulePassageTraversalFailureReason.PassageNotFound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291791
+    m_Key: enum.ModulePassageTraversalFailureReason.SourceModuleNotFound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291792
+    m_Key: enum.ModulePassageTraversalFailureReason.TargetModuleNotFound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291793
+    m_Key: enum.ModulePassageTraversalFailureReason.SameModule
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291794
+    m_Key: enum.ModulePassageTraversalFailureReason.PassageDoesNotConnectModules
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291795
+    m_Key: enum.ModulePassageTraversalFailureReason.DirectionNotAllowed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291796
+    m_Key: enum.ModulePassageTraversalFailureReason.PassageClosed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291797
+    m_Key: enum.ModulePassageTraversalFailureReason.PassageLocked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291798
+    m_Key: enum.ModulePassageTraversalFailureReason.PassageBlocked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291799
+    m_Key: enum.ModulePassageTraversalFailureReason.PassageDestroyed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291800
+    m_Key: enum.BrigadeMoveFailureReason.None
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291801
+    m_Key: enum.BrigadeMoveFailureReason.BrigadeNotFound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291802
+    m_Key: enum.BrigadeMoveFailureReason.BrigadeDisbanded
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291803
+    m_Key: enum.BrigadeMoveFailureReason.BrigadeNotDeployed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291804
+    m_Key: enum.BrigadeMoveFailureReason.SourceMismatch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291805
+    m_Key: enum.BrigadeMoveFailureReason.SourceModuleNotFound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291806
+    m_Key: enum.BrigadeMoveFailureReason.TargetModuleNotFound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291807
+    m_Key: enum.BrigadeMoveFailureReason.SameModule
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291808
+    m_Key: enum.BrigadeMoveFailureReason.ModulesNotAdjacent
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291809
+    m_Key: enum.BrigadeMoveFailureReason.SourceOccupancyMissing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291810
+    m_Key: enum.BrigadeMoveFailureReason.WorkingStateInconsistent
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291811
+    m_Key: enum.BrigadeMoveFailureReason.TargetAlreadyOccupied
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291812
+    m_Key: enum.BrigadeMoveFailureReason.PassageNotFound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291813
+    m_Key: enum.BrigadeMoveFailureReason.PassageTraversalRejected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291814
+    m_Key: enum.OrderPhaseAssessmentFailureReason.None
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291815
+    m_Key: enum.OrderPhaseAssessmentFailureReason.ExecutionOrderMismatch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291816
+    m_Key: enum.OrderPhaseAssessmentFailureReason.ExecutionDurationMismatch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291817
+    m_Key: enum.OrderPhaseAssessmentFailureReason.ExecutionAlreadyCompleted
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291818
+    m_Key: enum.OrderPhaseAssessmentFailureReason.ExecutionAlreadyFailed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291819
+    m_Key: enum.OrderPhaseAssessmentFailureReason.MoveDomainRejected
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

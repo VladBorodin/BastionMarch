@@ -72,6 +72,7 @@ namespace BastionMarch.Presentation.Prototype
 
             _moduleSelection.SelectionChanged += HandleSelectedModuleChanged;
 
+            _turnPlanView.Clear();
             RefreshPlanView();
         }
 
@@ -162,7 +163,7 @@ namespace BastionMarch.Presentation.Prototype
             return true;
         }
 
-        public MovePlanningResult TryPlanSelectedMove()
+        public RoutePlanningResult TryPlanSelectedMove()
         {
             if (_session == null ||
                 _moduleSelection == null ||
@@ -173,7 +174,7 @@ namespace BastionMarch.Presentation.Prototype
                     "Select a brigade and a target module first.");
             }
 
-            MovePlanningResult result = _session.TryPlanMove(
+            RoutePlanningResult result = _session.TryPlanRoute(
                 SelectedBrigadeId.Value,
                 _moduleSelection.SelectedState.ModuleId,
                 SelectedActionPhase);
@@ -215,6 +216,10 @@ namespace BastionMarch.Presentation.Prototype
             }
 
             PhaseResolutionResult result = _session.ResolveCurrentPhase();
+
+            // Keep the phase's module labels even if a later refresh removes a module.
+            _turnPlanView.RecordPhase(new PhaseJournalPresentationState(
+                result, _session.ConfirmedPlan, _presenter.CurrentState));
 
             // Simulation уже изменилась.
             // Создаём новый снимок для Presentation.
@@ -344,6 +349,7 @@ namespace BastionMarch.Presentation.Prototype
                 GUILayout.Label(LastStatus);
 
                 GUILayout.Space(12);
+                _turnPlanView?.DrawJournal();
                 _turnPlanView?.DrawTimeline();
 
                 GUILayout.EndScrollView();

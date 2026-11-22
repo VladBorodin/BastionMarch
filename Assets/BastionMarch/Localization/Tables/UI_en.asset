@@ -28,12 +28,12 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 2172813709313
-    m_Localized: Order added to phase {0}.
+    m_Localized: Route planned from phase {0}.
     m_Metadata:
       m_Items:
       - rid: 3240661180882616346
   - m_Id: 2172813709314
-    m_Localized: 'Order rejected: {0}'
+    m_Localized: Could not plan the route. {0}
     m_Metadata:
       m_Items:
       - rid: 3240661180882616346
@@ -69,7 +69,7 @@ MonoBehaviour:
       m_Items:
       - rid: 3240661180882616346
   - m_Id: 2172817903617
-    m_Localized: Plan move
+    m_Localized: Plan route
     m_Metadata:
       m_Items: []
   - m_Id: 2172817903618
@@ -480,6 +480,176 @@ MonoBehaviour:
     m_Localized: Could not start the next turn.
     m_Metadata:
       m_Items: []
+  - m_Id: 26857513291779
+    m_Localized: "Turn journal"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291780
+    m_Localized: "No orders or module work this phase."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291781
+    m_Localized: "Brigade #{0} \u2192 {1}"
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857513291782
+    m_Localized: "Order"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291783
+    m_Localized: "{0} (X {1}, deck {2})"
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857513291784
+    m_Localized: "Unknown compartment"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291785
+    m_Localized: "Completed \u00b7 {0}"
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857513291786
+    m_Localized: "In progress \u00b7 {0}"
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857513291787
+    m_Localized: "Rejected \u00b7 {0}. {1}."
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857513291788
+    m_Localized: "Brigade #{0} worked in {1} with {2} crew."
+    m_Metadata:
+      m_Items:
+      - rid: 3240661180882616346
+  - m_Id: 26857513291789
+    m_Localized: "No error"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291790
+    m_Localized: "Passage no longer exists"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291791
+    m_Localized: "Starting compartment no longer exists"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291792
+    m_Localized: "Destination no longer exists"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291793
+    m_Localized: "Brigade is already in the destination compartment"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291794
+    m_Localized: "Passage does not connect these compartments"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291795
+    m_Localized: "Passage only allows movement in the opposite direction"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291796
+    m_Localized: "Passage is closed"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291797
+    m_Localized: "Passage is locked"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291798
+    m_Localized: "Passage is blocked"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291799
+    m_Localized: "Passage is destroyed"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291800
+    m_Localized: "No error"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291801
+    m_Localized: "Brigade no longer exists"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291802
+    m_Localized: "Brigade has disbanded"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291803
+    m_Localized: "Brigade is not deployed"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291804
+    m_Localized: "Brigade is in a different compartment"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291805
+    m_Localized: "Starting compartment no longer exists"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291806
+    m_Localized: "Destination no longer exists"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291807
+    m_Localized: "Brigade is already in the destination compartment"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291808
+    m_Localized: "Compartments are not adjacent"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291809
+    m_Localized: "Starting compartment has no record of the brigade"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291810
+    m_Localized: "Work assignment disagrees with brigade placement"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291811
+    m_Localized: "Destination already lists this brigade"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291812
+    m_Localized: "Passage no longer exists"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291813
+    m_Localized: "Brigade cannot use this passage"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291814
+    m_Localized: "No error"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291815
+    m_Localized: "Execution refers to another order"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291816
+    m_Localized: "Order duration has changed"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291817
+    m_Localized: "Order has already finished"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291818
+    m_Localized: "Order has already failed"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26857513291819
+    m_Localized: "Brigade cannot make this move"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
@@ -505,3 +675,9 @@ MonoBehaviour:
         - id: 26857509097474
         - id: 26857509097476
         - id: 26857513291777
+        - id: 26857513291781
+        - id: 26857513291783
+        - id: 26857513291785
+        - id: 26857513291786
+        - id: 26857513291787
+        - id: 26857513291788

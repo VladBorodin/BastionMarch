@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 using BastionMarch.Presentation.Bastions;
 using BastionMarch.Presentation.Bastions.State;
+using BastionMarch.Presentation.Localization;
 using BastionMarch.Presentation.Prototype;
 using NUnit.Framework;
 using UnityEngine;
@@ -68,7 +69,7 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             selection.Select(targetView);
 
-            MovePlanningResult result =
+            RoutePlanningResult result =
                 planning.TryPlanSelectedMove();
 
             Assert.That(result.IsSuccess, Is.True);
@@ -158,7 +159,7 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             TurnPlanPresentationState oldState = planView.State;
 
-            MovePlanningResult result =
+            RoutePlanningResult result =
                 planning.TryPlanSelectedMove();
 
             Assert.That(result.IsSuccess, Is.True);
@@ -173,7 +174,7 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             Assert.That(
                 planView.State.Phases[0].Entries[0].OrderId,
-                Is.EqualTo(result.Order.OrderId));
+                Is.EqualTo(bootstrap.TurnSession.Draft.Orders.Single().OrderId));
 
             Assert.That(bootstrap.TurnSession.Cycle.Stage,
                 Is.EqualTo(TurnStage.Planning));
@@ -830,7 +831,7 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             selection.Select(targetView);
 
-            MovePlanningResult planned =
+            RoutePlanningResult planned =
                 planning.TryPlanSelectedMove();
 
             Assert.That(planned.IsSuccess, Is.True);
@@ -872,6 +873,20 @@ namespace BastionMarch.Presentation.PlayModeTests
             Assert.That(first.ActionPhase, Is.EqualTo(1));
             Assert.That(first.CommittedOrderCount, Is.EqualTo(1));
 
+            PhaseJournalPresentationState firstJournal = planView.Journal.Single();
+            Assert.That(firstJournal.ActionPhase, Is.EqualTo(1));
+            while (!BastionTexts.IsReady) yield return null;
+            Assert.That(bootstrap.Bastion.TryGetBrigade(brigadeId, out Brigade movedBrigade), Is.True);
+            string location = BastionTexts.Ui(UiTextKeys.JournalLocation,
+                BastionTexts.ModuleName(targetView.State.NameLocalizationKey),
+                targetView.State.Position.X, targetView.State.Position.Deck);
+            string move = BastionTexts.Ui(UiTextKeys.JournalMove, movedBrigade.Number, location);
+            Assert.That(firstJournal.GetLocalizedEntries(),
+                Does.Contain(BastionTexts.Ui(UiTextKeys.JournalCompleted, move)));
+            planning.RefreshPlanView();
+            Assert.That(planning.StartNextTurn().IsSuccess, Is.False);
+            Assert.That(planView.Journal.Single(), Is.SameAs(firstJournal));
+
             // Вот здесь перемещение действительно произошло.
             Assert.That(
                 bootstrap.Bastion.TryGetBrigadeLocation(
@@ -905,6 +920,8 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             Assert.That(second.ActionPhase, Is.EqualTo(2));
 
+            Assert.That(planView.Journal.Select(p => p.ActionPhase), Is.EqualTo(new[] { 1, 2 }));
+            Assert.That(planView.Journal.First(), Is.SameAs(firstJournal));
             Assert.That(bootstrap.TurnSession.Cycle.Stage,
                 Is.EqualTo(TurnStage.TurnEnd));
 
@@ -924,6 +941,7 @@ namespace BastionMarch.Presentation.PlayModeTests
 
             Assert.That(planView.State.TurnNumber,
                 Is.EqualTo(2));
+            Assert.That(planView.Journal, Is.Empty);
 
             Assert.That(planView.State.Phases[0].Entries,
                 Is.Empty);
@@ -942,6 +960,119 @@ namespace BastionMarch.Presentation.PlayModeTests
             yield return null;
         }
         
+        [UnityTest]
+        public IEnumerator PhaseJournalShowsBlockedMoveAndModuleWorkInBothLocales()
+        {
+            var bootstrap = Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+            var planning = Object.FindAnyObjectByType<PrototypeMovePlanningController>();
+            var selection = Object.FindAnyObjectByType<ModuleSelectionController>();
+            var bastionView = Object.FindAnyObjectByType<BastionView>();
+            var timeline = Object.FindAnyObjectByType<TurnPlanView>();
+            var bastion = bootstrap.Bastion;
+            // In the prototype brigade 2 is idle beside brigade 1, which works in the repair bay.
+            Brigade mover = bastion.Brigades.Single(b => b.Number == 2);
+            Brigade worker = bastion.Brigades.Single(b => b.Number == 1);
+            Assert.That(bastion.TryGetBrigadeLocation(mover.Id, out var source), Is.True);
+            Guid neighbor = bastion.Passages.First(p => p.State == ModulePassageState.Open &&
+                p.ConnectsModule(source.Id)).GetOtherModuleId(source.Id);
+            Assert.That(bastionView.TryGetModuleView(neighbor, out var target), Is.True);
+            Assert.That(planning.SelectBrigade(mover.Id), Is.True);
+            selection.Select(target);
+            var route = planning.TryPlanSelectedMove();
+            Assert.That(route.IsSuccess, Is.True);
+            Assert.That(planning.ConfirmCurrentPlan().IsSuccess, Is.True);
+            Assert.That(timeline.Journal, Is.Empty);
+            Assert.That(bastion.TryGetPassage(route.RoutePlan.NextStep.PassageId, out var passage), Is.True);
+            passage.SetState(ModulePassageState.Blocked);
+
+            var result = planning.ResolveActivePhase();
+            Assert.That(result.RejectedOrderCount, Is.EqualTo(1));
+            var work = result.ModuleWorkTicks.Single(t => t.BrigadeId == worker.Id);
+            var phase = timeline.Journal.Single();
+            while (!BastionTexts.IsReady) yield return null;
+            string original = BastionTexts.CurrentLanguageCode;
+            try
+            {
+                foreach (string code in new[] { "ru", "en" })
+                {
+                    Assert.That(BastionTexts.TrySetLanguage(code), Is.True);
+                    string[] lines = phase.GetLocalizedEntries().ToArray();
+                    Assert.That(lines.Length, Is.EqualTo(result.OrderEntryCount + result.ModuleWorkTickCount));
+                    Assert.That(lines[0], Does.Contain(code == "ru" ? "Отклонено" : "Rejected"));
+                    Assert.That(lines[0], Does.Contain(code == "ru" ? "Проход заблокирован" : "Passage is blocked"));
+                    Assert.That(lines[0], Does.Contain(BastionTexts.ModuleName(target.State.NameLocalizationKey)));
+                    Assert.That(bastionView.TryGetModuleView(work.ModuleId, out var workplace), Is.True);
+                    string location = BastionTexts.Ui(UiTextKeys.JournalLocation,
+                        BastionTexts.ModuleName(workplace.State.NameLocalizationKey),
+                        workplace.State.Position.X, workplace.State.Position.Deck);
+                    Assert.That(lines, Does.Contain(BastionTexts.Ui(UiTextKeys.JournalWork,
+                        worker.Number, location, work.WorkingPersonnel)));
+                }
+            }
+            finally
+            {
+                if (!string.IsNullOrEmpty(original))
+                    BastionTexts.TrySetLanguage(original);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator PlannedRouteMovesBrigadeAcrossTwoTurns()
+        {
+            var bootstrap = Object.FindAnyObjectByType<BastionPrototypeBootstrap>();
+            var planning = Object.FindAnyObjectByType<PrototypeMovePlanningController>();
+            var routes = Object.FindAnyObjectByType<PrototypeRouteController>();
+            var selection = Object.FindAnyObjectByType<ModuleSelectionController>();
+            var bastionView = Object.FindAnyObjectByType<BastionView>();
+            var routeView = Object.FindAnyObjectByType<RouteView>();
+            var timeline = Object.FindAnyObjectByType<TurnPlanView>();
+
+            Assert.That(routes.ShowLongestReachableBrigadeRoute(), Is.True);
+            Assert.That(routes.CurrentRoute.StepCount, Is.GreaterThanOrEqualTo(2));
+            Guid brigadeId = routes.CurrentBrigadeId.Value;
+            Guid targetId = routes.CurrentRoute.Steps[1].ToModuleId;
+            Assert.That(bastionView.TryGetModuleView(targetId, out ModuleView targetView),
+                Is.True);
+
+            Assert.That(planning.SelectBrigade(brigadeId), Is.True);
+            int startPhase = bootstrap.TurnSession.Cycle.ActionPhaseCount;
+            Assert.That(planning.SelectActionPhase(startPhase), Is.True);
+            selection.Select(targetView);
+
+            RoutePresentationState preview = routes.CurrentRoute;
+            Assert.That(preview.StepCount, Is.EqualTo(2));
+
+            RoutePlanningResult result = planning.TryPlanSelectedMove();
+            Assert.That(result.IsSuccess, Is.True, result.FailureReason.ToString());
+            Assert.That(routeView.State.ModuleIds, Is.EqualTo(preview.ModuleIds));
+            Assert.That(routeView.RenderedPointCount, Is.EqualTo(1 + 2 * preview.StepCount));
+            Assert.That(timeline.State.Phases.Last().Entries.Single().BrigadeId,
+                Is.EqualTo(brigadeId));
+
+            Assert.That(planning.ConfirmCurrentPlan().IsSuccess, Is.True);
+            for (int phase = 1; phase < startPhase; phase++)
+            {
+                Assert.That(planning.ResolveActivePhase().CommittedOrderCount, Is.Zero);
+            }
+
+            Assert.That(planning.ResolveActivePhase().CommittedOrderCount, Is.EqualTo(1));
+            Assert.That(bootstrap.Bastion.TryGetBrigadeLocation(brigadeId, out var midway),
+                Is.True);
+            Assert.That(midway.Id, Is.EqualTo(preview.Steps[0].ToModuleId));
+
+            Assert.That(planning.StartNextTurn().IsSuccess, Is.True);
+            Assert.That(timeline.State.Phases[0].Entries.Single().BrigadeId,
+                Is.EqualTo(brigadeId));
+            Assert.That(planning.ConfirmCurrentPlan().IsSuccess, Is.True);
+            Assert.That(planning.ResolveActivePhase().CommittedOrderCount, Is.EqualTo(1));
+            Assert.That(bootstrap.Bastion.TryGetBrigadeLocation(brigadeId, out var destination),
+                Is.True);
+            Assert.That(destination.Id, Is.EqualTo(targetId));
+            Assert.That(result.RoutePlan.IsCompleted, Is.True);
+
+            yield return null;
+        }
+
         [UnityTest]
         public IEnumerator PrototypeUiCanCompleteTurnWithoutOrders()
         {

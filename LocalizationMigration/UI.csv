@@ -1,8 +1,8 @@
 ﻿Key,Id,English(en),Russian(ru)
 planning.instructions,0,Select a brigade and a target module.,Выберите бригаду и целевой отсек.
 planning.brigade_selected,0,Brigade selected.,Бригада выбрана.
-planning.move_added,0,Order added to phase {0}.,Приказ добавлен в фазу {0}.
-planning.move_rejected,0,Order rejected: {0},Приказ отклонён: {0}
+planning.move_added,0,Route planned from phase {0}.,Маршрут запланирован с фазы {0}.
+planning.move_rejected,0,Could not plan the route. {0},Не удалось запланировать маршрут. {0}
 planning.turn_header,0,BastionMarch | Turn {0},BastionMarch | Ход {0}
 planning.title,0,Move planning,Планирование перемещения
 planning.brigade_label,0,Brigade:,Бригада:
@@ -10,7 +10,7 @@ planning.brigade_button,0,#{0} {1},№{0} {1}
 planning.action_phase_label,0,Action phase:,Фаза действия:
 planning.target_empty,0,Target: select a module with the mouse,Цель: выберите отсек мышью
 planning.target_module,0,"Target: {0} (X: {1}, deck: {2})","Цель: {0} (X: {1}, палуба: {2})"
-planning.plan_move,0,Plan move,Запланировать переход
+planning.plan_move,0,Plan route,Запланировать маршрут
 planning.select_brigade,0,Select a brigade first.,Сначала выберите бригаду.
 planning.select_target,0,Select a target module first.,Сначала выберите целевой отсек.
 planning.order_count,0,Planned orders: {0},Приказов в плане: {0}
@@ -100,3 +100,44 @@ enum.MovePlanningFailureReason.TargetModuleNotFound,0,Target module not found,Ц
 enum.MovePlanningFailureReason.SameModule,0,Brigade is already in the target module,Бригада уже находится в этом отсеке
 enum.MovePlanningFailureReason.NoTraversablePassage,0,No traversable direct passage,Нет доступного прямого перехода
 enum.MovePlanningFailureReason.PlanRegistrationFailed,0,Failed to add order to plan,Не удалось добавить приказ в план
+journal.title,0,Turn journal,Журнал хода
+journal.empty,0,No orders or module work this phase.,В этой фазе не было приказов и работы в отсеках.
+journal.move,0,Brigade #{0} → {1},Бригада №{0} → {1}
+journal.order,0,Order,Приказ
+journal.location,0,"{0} (X {1}, deck {2})","{0} (X {1}, палуба {2})"
+journal.unknown_module,0,Unknown compartment,Неизвестный отсек
+journal.completed,0,Completed · {0},Выполнено · {0}
+journal.progressed,0,In progress · {0},Выполняется · {0}
+journal.rejected,0,Rejected · {0}. {1}.,Отклонено · {0}. {1}.
+journal.work,0,Brigade #{0} worked in {1} with {2} crew.,"В отсеке {1} работала бригада №{0}, {2} чел."
+enum.ModulePassageTraversalFailureReason.None,0,No error,Нет ошибки
+enum.ModulePassageTraversalFailureReason.PassageNotFound,0,Passage no longer exists,Проход больше не существует
+enum.ModulePassageTraversalFailureReason.SourceModuleNotFound,0,Starting compartment no longer exists,Исходный отсек больше не существует
+enum.ModulePassageTraversalFailureReason.TargetModuleNotFound,0,Destination no longer exists,Целевой отсек больше не существует
+enum.ModulePassageTraversalFailureReason.SameModule,0,Brigade is already in the destination compartment,Бригада уже в целевом отсеке
+enum.ModulePassageTraversalFailureReason.PassageDoesNotConnectModules,0,Passage does not connect these compartments,Проход не соединяет эти отсеки
+enum.ModulePassageTraversalFailureReason.DirectionNotAllowed,0,Passage only allows movement in the opposite direction,Проход доступен только в обратном направлении
+enum.ModulePassageTraversalFailureReason.PassageClosed,0,Passage is closed,Проход закрыт
+enum.ModulePassageTraversalFailureReason.PassageLocked,0,Passage is locked,Проход заперт
+enum.ModulePassageTraversalFailureReason.PassageBlocked,0,Passage is blocked,Проход заблокирован
+enum.ModulePassageTraversalFailureReason.PassageDestroyed,0,Passage is destroyed,Проход разрушен
+enum.BrigadeMoveFailureReason.None,0,No error,Нет ошибки
+enum.BrigadeMoveFailureReason.BrigadeNotFound,0,Brigade no longer exists,Бригада больше не существует
+enum.BrigadeMoveFailureReason.BrigadeDisbanded,0,Brigade has disbanded,Бригада расформирована
+enum.BrigadeMoveFailureReason.BrigadeNotDeployed,0,Brigade is not deployed,Бригада не размещена в отсеке
+enum.BrigadeMoveFailureReason.SourceMismatch,0,Brigade is in a different compartment,Бригада находится в другом отсеке
+enum.BrigadeMoveFailureReason.SourceModuleNotFound,0,Starting compartment no longer exists,Исходный отсек больше не существует
+enum.BrigadeMoveFailureReason.TargetModuleNotFound,0,Destination no longer exists,Целевой отсек больше не существует
+enum.BrigadeMoveFailureReason.SameModule,0,Brigade is already in the destination compartment,Бригада уже в целевом отсеке
+enum.BrigadeMoveFailureReason.ModulesNotAdjacent,0,Compartments are not adjacent,Отсеки не граничат друг с другом
+enum.BrigadeMoveFailureReason.SourceOccupancyMissing,0,Starting compartment has no record of the brigade,В исходном отсеке бригада не числится
+enum.BrigadeMoveFailureReason.WorkingStateInconsistent,0,Work assignment disagrees with brigade placement,Назначение на работу не соответствует размещению бригады
+enum.BrigadeMoveFailureReason.TargetAlreadyOccupied,0,Destination already lists this brigade,Бригада уже числится в целевом отсеке
+enum.BrigadeMoveFailureReason.PassageNotFound,0,Passage no longer exists,Проход больше не существует
+enum.BrigadeMoveFailureReason.PassageTraversalRejected,0,Brigade cannot use this passage,Бригада не может пройти через этот проход
+enum.OrderPhaseAssessmentFailureReason.None,0,No error,Нет ошибки
+enum.OrderPhaseAssessmentFailureReason.ExecutionOrderMismatch,0,Execution refers to another order,Исполнение относится к другому приказу
+enum.OrderPhaseAssessmentFailureReason.ExecutionDurationMismatch,0,Order duration has changed,Длительность приказа изменилась
+enum.OrderPhaseAssessmentFailureReason.ExecutionAlreadyCompleted,0,Order has already finished,Приказ уже выполнен
+enum.OrderPhaseAssessmentFailureReason.ExecutionAlreadyFailed,0,Order has already failed,Приказ ранее завершился неудачей
+enum.OrderPhaseAssessmentFailureReason.MoveDomainRejected,0,Brigade cannot make this move,Бригада не может выполнить переход

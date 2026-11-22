@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using BastionMarch.Presentation.Bastions.State;
 using BastionMarch.Presentation.Localization;
 using UnityEngine;
@@ -8,17 +9,33 @@ namespace BastionMarch.Presentation.Bastions
     [DisallowMultipleComponent]
     public sealed class TurnPlanView : MonoBehaviour
     {
+        private readonly SortedDictionary<int, PhaseJournalPresentationState> _journal =
+            new SortedDictionary<int, PhaseJournalPresentationState>();
+
         public TurnPlanPresentationState State { get; private set; }
+        public IReadOnlyCollection<PhaseJournalPresentationState> Journal => _journal.Values;
         public bool IsVisible => gameObject.activeSelf;
 
         public void Render(TurnPlanPresentationState state)
         {
-            State = state ?? throw new ArgumentNullException(nameof(state));
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            if (State?.TurnNumber != state.TurnNumber)
+                _journal.Clear();
+            State = state;
+        }
+
+        public void RecordPhase(PhaseJournalPresentationState phase)
+        {
+            if (phase == null) throw new ArgumentNullException(nameof(phase));
+            if (State?.TurnNumber != phase.TurnNumber)
+                throw new ArgumentException("Phase belongs to another turn.", nameof(phase));
+            _journal[phase.ActionPhase] = phase;
         }
 
         public void Clear()
         {
             State = null;
+            _journal.Clear();
         }
 
         public void Show()
@@ -29,6 +46,24 @@ namespace BastionMarch.Presentation.Bastions
         public void Hide()
         {
             gameObject.SetActive(false);
+        }
+
+        public void DrawJournal()
+        {
+            if (!IsVisible || _journal.Count == 0)
+                return;
+
+            GUILayout.Label(BastionTexts.Ui(UiTextKeys.JournalTitle));
+            foreach (var phase in _journal.Values)
+            {
+                GUILayout.Space(4);
+                GUILayout.Label(BastionTexts.Ui(UiTextKeys.TimelinePhaseLabel, phase.ActionPhase));
+                if (phase.IsEmpty)
+                    GUILayout.Label(BastionTexts.Ui(UiTextKeys.JournalEmpty));
+                else
+                    foreach (string line in phase.GetLocalizedEntries())
+                        GUILayout.Label(line);
+            }
         }
 
         public void DrawTimeline()
